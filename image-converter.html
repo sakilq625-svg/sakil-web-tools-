@@ -8,9 +8,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="style.css">
     
-    <!-- Heavy Duty Client-Side Drivers -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     
@@ -132,10 +131,10 @@
 
     <header class="navbar">
         <div class="nav-container">
-            <a href="../index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span></a>
+            <a href="index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span></a>
             <nav class="nav-menu">
-                <a href="../index.html" class="nav-link">Home</a>
-                <a href="../index.html#image-tools" class="nav-link active">Image Tools</a>
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="index.html#image-tools" class="nav-link active">Image Tools</a>
                 <a href="about.html" class="nav-link">About</a>
                 <a href="contact.html" class="nav-link">Contact</a>
             </nav>
@@ -150,7 +149,6 @@
         </div>
 
         <div class="tool-layout">
-            <!-- Left Area -->
             <div class="workspace-area">
                 <div class="upload-box" id="dropzone" onclick="document.getElementById('fileInput').click()">
                     <i class="fa-solid fa-file-shield"></i>
@@ -165,7 +163,6 @@
                 </div>
             </div>
 
-            <!-- Right Control Panel -->
             <div class="control-panel" id="controlPanel">
                 <h3>Conversion Config</h3>
                 <div class="meta-info" id="fileMeta">Loading file details...</div>
@@ -175,7 +172,6 @@
                     <select id="formatSelect" class="select-box"></select>
                 </div>
 
-                <!-- Targeted Compression Box -->
                 <div class="size-panel">
                     <div class="input-group">
                         <label style="color: #047857;"><i class="fa-solid fa-weight-hanging"></i> Target File Size (Optional KB)</label>
