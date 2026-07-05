@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Compressor - Sakil Web Tools</title>
+    <meta name="description" content="Optimize and reduce image file size online in KB/MB with premium real-time quality control.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../style.css">
+    
+    <style>
+        .tool-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        @media (min-width: 992px) {
+            .tool-layout { grid-template-columns: 1.2fr 1fr; }
+        }
+        .upload-box {
+            border: 2px dashed var(--border-color);
+            border-radius: 20px;
+            padding: 4rem 2rem;
+            text-align: center;
+            background: var(--bg-secondary);
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+        .upload-box:hover, .upload-box.dragover {
+            border-color: var(--accent-color);
+            background: rgba(99, 102, 241, 0.02);
+        }
+        .upload-box i {
+            font-size: 3rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+        .preview-pane {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.5rem;
+            display: none;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .preview-pane img {
+            max-width: 100%;
+            max-height: 350px;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            object-fit: contain;
+        }
+        .stats-badge {
+            display: flex;
+            justify-content: space-between;
+            background: var(--bg-primary);
+            padding: 0.75rem 1.2rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .control-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            display: none;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .custom-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: var(--border-color);
+            outline: none;
+        }
+        .custom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .custom-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        .btn-compress {
+            background: var(--accent-gradient);
+            color: #fff;
+            border: none;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: opacity var(--transition-speed);
+        }
+        .btn-compress:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="../index.html" class="logo">
+                <i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span>
+            </a>
+            <nav class="nav-menu" id="navMenu">
+                <a href="../index.html" class="nav-link">Home</a>
+                <a href="../index.html#image-tools" class="nav-link active">Image Tools</a>
+                <a href="../index.html#pdf-tools" class="nav-link">PDF Tools</a>
+                <a href="../index.html#utility-tools" class="nav-link">Utilities</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+            </nav>
+            <div class="nav-actions">
+                <button id="theme-toggle" class="theme-btn"><i class="fa-solid fa-moon"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container" style="padding-top: 8rem;">
+        <div class="section-header">
+            <h2><i class="fa-solid fa-file-image"></i> Image Compressor</h2>
+            <p>Reduce file size instantly while retaining premium high-resolution visual quality.</p>
+        </div>
+
+        <div class="tool-layout">
+            <div class="workspace-area">
+                <div class="upload-box" id="dropzone">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <h3>Choose an image file to compress</h3>
+                    <p>Supports JPG, JPEG, and PNG formats</p>
+                    <input type="file" id="fileInput" accept="image/jpeg, image/jpg, image/png" style="display: none;">
+                </div>
+
+                <div class="preview-pane" id="previewPane">
+                    <img id="imagePreview" src="" alt="Compressed Preview">
+                    <div class="stats-badge">
+                        <span>Original Size: <canvas id="old-size" style="display:inline;"></canvas><span id="origSizeText">0 KB</span></span>
+                        <span style="color: var(--util-icon-color);">Compressed Size: <span id="compSizeText">0 KB</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-panel" id="controlPanel">
+                <h3>Compression Control</h3>
+                
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label for="qualitySlider">Compression Quality</label>
+                        <span id="qualityVal">80%</span>
+                    </div>
+                    <input type="range" id="qualitySlider" class="custom-slider" min="10" max="100" value="80">
+                </div>
+
+                <button class="btn-compress" id="downloadBtn">
+                    <i class="fa-solid fa-file-download"></i> Download Compressed Image
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Core Theme Synchronization
+        const htmlElement = document.documentElement;
+        const themeBtn = document.getElementById('theme-toggle');
+        const themeIcon = themeBtn.querySelector('i');
+        
+        const applyTheme = (theme) => {
+            htmlElement.setAttribute('data-theme', theme);
+            themeIcon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            if(theme === 'dark') themeIcon.style.color = '#fbbf24'; else themeIcon.style.color = '';
+        };
+        applyTheme(localStorage.getItem('sakil-tools-theme') || 'light');
+        themeBtn.addEventListener('click', () => {
+            const nextTheme = htmlElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('sakil-tools-theme', nextTheme);
+            applyTheme(nextTheme);
+        });
+
+        // ===================================================
+        // PREMIUM IMAGE COMPRESSION LOGIC (CLIENT SIDE)
+        // ===================================================
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const previewPane = document.getElementById('previewPane');
+        const controlPanel = document.getElementById('controlPanel');
+        const imagePreview = document.getElementById('imagePreview');
+        
+        const origSizeText = document.getElementById('origSizeText');
+        const compSizeText = document.getElementById('compSizeText');
+        const qualitySlider = document.getElementById('qualitySlider');
+        const qualityVal = document.getElementById('qualityVal');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        let activeImage = new Image();
+        let fileType = "image/jpeg";
+        let originalFileName = "sakil-compressed";
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if(e.dataTransfer.files.length) handleCompressFile(e.dataTransfer.files[0]);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if(e.target.files.length) handleCompressFile(e.target.files[0]);
+        });
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function handleCompressFile(file) {
+            if (!file.type.match('image/jpeg') && !file.type.match('image/png')) {
+                alert('Please upload a valid JPG or PNG image.');
+                return;
+            }
+            fileType = file.type;
+            originalFileName = file.name.split('.').slice(0, -1).join('.') + '-compressed';
+            origSizeText.textContent = formatSize(file.size);
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                activeImage.src = event.target.result;
+                activeImage.onload = () => {
+                    dropzone.style.display = 'none';
+                    previewPane.style.display = 'flex';
+                    controlPanel.style.display = 'flex';
+                    compressExecution();
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function compressExecution() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = activeImage.width;
+            canvas.height = activeImage.height;
+            ctx.drawImage(activeImage, 0, 0, canvas.width, canvas.height);
+            
+            const quality = parseFloat(qualitySlider.value) / 100;
+            // Native conversion to web friendly compressed standard
+            const compressedDataUrl = canvas.toDataURL(fileType, quality);
+            
+            imagePreview.src = compressedDataUrl;
+            
+            // Calculate approximate compressed file size
+            const head = compressedDataUrl.split(',')[0];
+            const base64Length = compressedDataUrl.length - head.length - 1;
+            const approxBytes = Math.round(base64Length * 0.75);
+            compSizeText.textContent = formatSize(approxBytes);
+        }
+
+        qualitySlider.addEventListener('input', (e) => {
+            qualityVal.textContent = e.target.value + '%';
+            if(activeImage.src) compressExecution();
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `${originalFileName}.${fileType === 'image/png' ? 'png' : 'jpg'}`;
+            link.href = imagePreview.src;
+            link.click();
+        });
+    </script>
+</body>
+</html>

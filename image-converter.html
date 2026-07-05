@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Converter & Size Controller - Sakil Web Tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../style.css">
+    
+    <!-- Heavy Duty Client-Side Drivers -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    
+    <style>
+        .tool-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        @media (min-width: 992px) {
+            .tool-layout { grid-template-columns: 1.2fr 1fr; }
+        }
+        .upload-box {
+            border: 2px dashed var(--border-color);
+            border-radius: 20px;
+            padding: 5rem 2rem;
+            text-align: center;
+            background: var(--bg-secondary);
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+        .upload-box:hover { border-color: var(--accent-color); }
+        .upload-box i { font-size: 3.5rem; color: var(--accent-color); margin-bottom: 1rem; }
+        
+        .preview-pane {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.5rem;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .preview-pane img, .preview-pane .pdf-icon-preview {
+            max-width: 100%;
+            max-height: 350px;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+        }
+        .pdf-icon-preview {
+            font-size: 5rem;
+            color: #ef4444;
+            padding: 3rem;
+            background: var(--bg-primary);
+            border-radius: 12px;
+        }
+        
+        .control-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            display: none;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .meta-info {
+            background: var(--bg-primary);
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border-left: 4px solid var(--accent-color);
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .input-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
+        
+        .select-box, .input-box {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            outline: none;
+            font-weight: 500;
+        }
+        .select-box { cursor: pointer; }
+        .input-box:focus { border-color: var(--accent-color); }
+        
+        .size-panel {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px dashed #10b981;
+            padding: 1.2rem;
+            border-radius: 12px;
+            margin-top: 0.2rem;
+        }
+        
+        .btn-action {
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .status-loading {
+            display: none;
+            font-size: 0.9rem;
+            color: var(--accent-color);
+            text-align: center;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="../index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span></a>
+            <nav class="nav-menu">
+                <a href="../index.html" class="nav-link">Home</a>
+                <a href="../index.html#image-tools" class="nav-link active">Image Tools</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+            </nav>
+            <div class="nav-actions"><button id="theme-toggle" class="theme-btn"><i class="fa-solid fa-moon"></i></button></div>
+        </div>
+    </header>
+
+    <main class="main-container" style="padding-top: 8rem;">
+        <div class="section-header">
+            <h2><i class="fa-solid fa-repeat"></i> Universal Converter & Size Reducer</h2>
+            <p>Convert file extensions and restrict target KB/MB sizes instantly.</p>
+        </div>
+
+        <div class="tool-layout">
+            <!-- Left Area -->
+            <div class="workspace-area">
+                <div class="upload-box" id="dropzone" onclick="document.getElementById('fileInput').click()">
+                    <i class="fa-solid fa-file-shield"></i>
+                    <h3>Select Image or PDF Document</h3>
+                    <p>Supports JPG, PNG, WEBP, or PDF inputs</p>
+                    <input type="file" id="fileInput" accept="image/*, application/pdf" style="display: none;">
+                </div>
+
+                <div class="preview-pane" id="previewPane">
+                    <div id="visualPreview"></div>
+                    <button class="btn-action" style="background:#ef4444; padding:0.5rem 1rem; font-size:0.85rem;" onclick="location.reload()"><i class="fa-solid fa-trash"></i> Clear File</button>
+                </div>
+            </div>
+
+            <!-- Right Control Panel -->
+            <div class="control-panel" id="controlPanel">
+                <h3>Conversion Config</h3>
+                <div class="meta-info" id="fileMeta">Loading file details...</div>
+                
+                <div class="input-group">
+                    <label for="formatSelect">Convert To</label>
+                    <select id="formatSelect" class="select-box"></select>
+                </div>
+
+                <!-- Targeted Compression Box -->
+                <div class="size-panel">
+                    <div class="input-group">
+                        <label style="color: #047857;"><i class="fa-solid fa-weight-hanging"></i> Target File Size (Optional KB)</label>
+                        <input type="number" id="targetKbInput" class="input-box" placeholder="e.g. 200 (Leave blank for Max Quality)" min="10">
+                        <span style="font-size:0.75rem; color: var(--text-secondary); margin-top:0.2rem;">System will auto-compress to stay under your target KB.</span>
+                    </div>
+                </div>
+
+                <button class="btn-action" id="convertBtn"><i class="fa-solid fa-wand-magic-sparkles"></i> Process & Download</button>
+                <div class="status-loading" id="statusLoading"><i class="fa-solid fa-circle-notch fa-spin"></i> Rendering assets inside browser, please wait...</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        // Theme Engine
+        const htmlElement = document.documentElement;
+        const themeBtn = document.getElementById('theme-toggle');
+        const applyTheme = (theme) => {
+            htmlElement.setAttribute('data-theme', theme);
+            themeBtn.querySelector('i').className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        };
+        applyTheme(localStorage.getItem('sakil-tools-theme') || 'light');
+        themeBtn.addEventListener('click', () => {
+            const next = htmlElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('sakil-tools-theme', next);
+            applyTheme(next);
+        });
+
+        // App Selectors
+        const fileInput = document.getElementById('fileInput');
+        const dropzone = document.getElementById('dropzone');
+        const previewPane = document.getElementById('previewPane');
+        const controlPanel = document.getElementById('controlPanel');
+        const visualPreview = document.getElementById('visualPreview');
+        const fileMeta = document.getElementById('fileMeta');
+        const formatSelect = document.getElementById('formatSelect');
+        const targetKbInput = document.getElementById('targetKbInput');
+        const convertBtn = document.getElementById('convertBtn');
+        const statusLoading = document.getElementById('statusLoading');
+
+        let loadedFileData = null; 
+        let isPdfInput = false;
+        let fileName = "sakil-converted";
+        let imageElementForPdf = new Image();
+
+        fileInput.addEventListener('change', (e) => {
+            if(e.target.files.length) handleIncomingFile(e.target.files[0]);
+        });
+
+        function handleIncomingFile(file) {
+            fileName = file.name.split('.').slice(0, -1).join('.') + '-converted';
+            const fileSize = (file.size / 1024).toFixed(1) + " KB";
+            formatSelect.innerHTML = ""; 
+
+            if (file.type === "application/pdf") {
+                isPdfInput = true;
+                loadedFileData = file;
+                fileMeta.innerHTML = `<strong>File:</strong> ${file.name}<br><strong>Type:</strong> PDF<br><strong>Size:</strong> ${fileSize}`;
+                visualPreview.innerHTML = `<div class="pdf-icon-preview"><i class="fa-solid fa-file-pdf"></i></div>`;
+                formatSelect.innerHTML = `
+                    <option value="image/jpeg">JPG (.jpg)</option>
+                    <option value="image/png">PNG (.png)</option>
+                `;
+                showWorkspace();
+            } else if (file.type.startsWith("image/")) {
+                isPdfInput = false;
+                fileMeta.innerHTML = `<strong>File:</strong> ${file.name}<br><strong>Type:</strong> Image (${file.type.split('/')[1].toUpperCase()})<br><strong>Size:</strong> ${fileSize}`;
+                formatSelect.innerHTML = `
+                    <option value="application/pdf">PDF (.pdf)</option>
+                    <option value="image/jpeg">JPG (.jpg)</option>
+                    <option value="image/png">PNG (.png)</option>
+                    <option value="image/webp">WEBP (.webp)</option>
+                `;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    imageElementForPdf.src = event.target.result;
+                    visualPreview.innerHTML = `<img src="${event.target.result}" alt="Preview">`;
+                    showWorkspace();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function showWorkspace() {
+            dropzone.style.display = 'none';
+            previewPane.style.display = 'flex';
+            controlPanel.style.display = 'flex';
+        }
+
+        convertBtn.addEventListener('click', async () => {
+            const targetFormat = formatSelect.value;
+            const maxAllowedKb = parseInt(targetKbInput.value);
+            
+            convertBtn.style.display = 'none';
+            statusLoading.style.display = 'block';
+
+            try {
+                if (isPdfInput) {
+                    // ==========================================
+                    // RUNNER: PDF TO IMAGE WITH KB LIMITS
+                    // ==========================================
+                    const fileReader = new FileReader();
+                    fileReader.onload = async function() {
+                        const typedarray = new Uint8Array(this.result);
+                        const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                        const page = await pdf.getPage(1);
+                        const viewport = page.getViewport({ scale: 2.0 }); 
+                        
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+
+                        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+                        let finalDataUrl = canvas.toDataURL(targetFormat, 0.95);
+                        
+                        // Handle strict KB filtering on images extracted from PDF
+                        if (maxAllowedKb && targetFormat !== "image/png") {
+                            finalDataUrl = optimizeCanvasToKb(canvas, targetFormat, maxAllowedKb);
+                        }
+
+                        const ext = targetFormat === "image/png" ? "png" : "jpg";
+                        triggerDownload(finalDataUrl, `${fileName}.${ext}`);
+                        resetLoadingState();
+                    };
+                    fileReader.readAsArrayBuffer(loadedFileData);
+
+                } else {
+                    // ==========================================
+                    // RUNNER: IMAGE TO IMAGE OR IMAGE TO PDF
+                    // ==========================================
+                    if (targetFormat === "application/pdf") {
+                        // IMAGE TO PDF WITH KB SIZE REDUCTION
+                        const canvas = document.createElement('canvas');
+                        canvas.width = imageElementForPdf.width;
+                        canvas.height = imageElementForPdf.height;
+                        canvas.getContext('2d').drawImage(imageElementForPdf, 0, 0);
+
+                        let imgQuality = 0.9;
+                        let imgDataUrl = canvas.toDataURL("image/jpeg", imgQuality);
+                        
+                        // Check if compression for intermediate image asset is needed
+                        if (maxAllowedKb) {
+                            imgDataUrl = optimizeCanvasToKb(canvas, "image/jpeg", maxAllowedKb * 0.85); // buffer for PDF wrapper structure
+                        }
+
+                        const pdfDoc = await PDFLib.PDFDocument.create();
+                        const compressedBuffer = await fetch(imgDataUrl).then(res => res.arrayBuffer());
+                        const embedImage = await pdfDoc.embedJpg(compressedBuffer);
+
+                        const page = pdfDoc.addPage([embedImage.width, embedImage.height]);
+                        page.drawImage(embedImage, { x: 0, y: 0, width: embedImage.width, height: embedImage.height });
+                        
+                        const pdfBytes = await pdfDoc.save();
+                        const blob = new Blob([pdfBytes], { type: "application/pdf" });
+                        triggerDownload(URL.createObjectURL(blob), `${fileName}.pdf`);
+                    } else {
+                        // STANDARD IMAGE TO IMAGE VARIANT
+                        const canvas = document.createElement('canvas');
+                        canvas.width = imageElementForPdf.width;
+                        canvas.height = imageElementForPdf.height;
+                        canvas.getContext('2d').drawImage(imageElementForPdf, 0, 0);
+
+                        let finalDataUrl = canvas.toDataURL(targetFormat, 0.95);
+                        let ext = targetFormat.split('/')[1];
+                        if(ext === "jpeg") ext = "jpg";
+
+                        if (maxAllowedKb && targetFormat !== "image/png") {
+                            finalDataUrl = optimizeCanvasToKb(canvas, targetFormat, maxAllowedKb);
+                        }
+
+                        triggerDownload(finalDataUrl, `${fileName}.${ext}`);
+                    }
+                    resetLoadingState();
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Processing failed. Please optimize criteria variables.");
+                resetLoadingState();
+            }
+        });
+
+        // Binary search compression engine to meet target KB exactly
+        function optimizeCanvasToKb(canvas, format, targetKb) {
+            let min = 0.01, max = 0.99, bestQuality = 0.92;
+            let dataUrl = canvas.toDataURL(format, bestQuality);
+            
+            for (let i = 0; i < 8; i++) {
+                let currentQuality = (min + max) / 2;
+                let testDataUrl = canvas.toDataURL(format, currentQuality);
+                let currentSizeKb = (testDataUrl.length * 0.75) / 1024;
+                
+                if (currentSizeKb > targetKb) {
+                    max = currentQuality;
+                } else {
+                    min = currentQuality;
+                    bestQuality = currentQuality;
+                    dataUrl = testDataUrl;
+                }
+            }
+            return dataUrl;
+        }
+
+        function triggerDownload(url, finalName) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = finalName;
+            link.click();
+        }
+
+        function resetLoadingState() {
+            convertBtn.style.display = 'block';
+            statusLoading.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

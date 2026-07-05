@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Sakil Web Tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2 family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .about-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: var(--card-shadow);
+            max-width: 800px;
+            margin: 2rem auto;
+        }
+        .about-card h3 {
+            margin-top: 1.5rem;
+            color: var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="../index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span></a>
+            <nav class="nav-menu" id="navMenu">
+                <a href="../index.html" class="nav-link">Home</a>
+                <a href="../index.html#image-tools" class="nav-link">Image Tools</a>
+                <a href="../index.html#pdf-tools" class="nav-link">PDF Tools</a>
+                <a href="../index.html#utility-tools" class="nav-link">Utilities</a>
+                <a href="about.html" class="nav-link active">About</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+            </nav>
+            <div class="nav-actions"><button id="theme-toggle" class="theme-btn"><i class="fa-solid fa-moon"></i></button></div>
+        </div>
+    </header>
+
+    <main class="main-container" style="padding-top: 8rem;">
+        <div class="about-card">
+            <h2>About Sakil Web Tools</h2>
+            <p>Welcome to <strong>Sakil Web Tools</strong>, a premium multi-tool station engineered to make digital tasks incredibly seamless, lightweight, and efficient.</p>
+            
+            <h3>Our Mission</h3>
+            <p>Our goal is to provide fast, high-performance web applications securely processed directly inside your browser. By utilizing pure client-side computing, your sensitive files and records never hit external databases or software architectures, guaranteeing 100% privacy.</p>
+
+            <h3>Key Pillars</h3>
+            <ul>
+                <li><strong>Absolute Security:</strong> Localized internal processing.</li>
+                <li><strong>Speed Engine:</strong> Built with raw, clean asset compiling without heavy server overloads.</li>
+                <li><strong>Ultra Modern UI:</strong> Beautifully tailored responsive layout supporting dark mode syncing.</li>
+            </ul>
+        </div>
+    </main>
+
+    <script>
+        const htmlElement = document.documentElement;
+        const themeBtn = document.getElementById('theme-toggle');
+        const themeIcon = themeBtn.querySelector('i');
+        const applyTheme = (theme) => {
+            htmlElement.setAttribute('data-theme', theme);
+            themeIcon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            if(theme === 'dark') themeIcon.style.color = '#fbbf24'; else themeIcon.style.color = '';
+        };
+        applyTheme(localStorage.getItem('sakil-tools-theme') || 'light');
+        themeBtn.addEventListener('click', () => {
+            const nextTheme = htmlElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('sakil-tools-theme', nextTheme);
+            applyTheme(nextTheme);
+        });
+    </script>
+</body>
+</html>

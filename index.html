@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sakil Web Tools - Premium Online Multi-Tools Platform</title>
+    <meta name="description" content="All-in-one professional web tools platform for image processing, PDF management, and digital utilities. Fast, secure, and fully responsive.">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="loader-wrapper" id="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span>
+            </a>
+            <nav class="nav-menu" id="navMenu">
+                <a href="index.html" class="nav-link active">Home</a>
+                <a href="#image-tools" class="nav-link">Image Tools</a>
+                <a href="Pages/bg-remover.html" class="nav-link">BG Remover</a>
+                <a href="#pdf-tools" class="nav-link">PDF Tools</a>
+                <a href="#utility-tools" class="nav-link">Utilities</a>
+                <a href="Pages/about.html" class="nav-link">About</a>
+                <a href="Pages/contact.html" class="nav-link">Contact</a>
+            </nav>
+            <div class="nav-actions">
+                <button id="theme-toggle" aria-label="Toggle Theme" class="theme-btn">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+                <button class="hamburger" id="hamburger" aria-label="Menu">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1>Maximize Productivity with <br><span class="gradient-text">Premium Web Tools</span></h1>
+            <p>Free, fast, and secure web utilities designed to simplify your daily workflow. No installation required.</p>
+            
+            <div class="search-container">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="tool-search" placeholder="Search for tools... (e.g., Resize, PDF, QR, BG)">
+            </div>
+        </div>
+    </section>
+
+    <main class="main-container">
+
+        <section class="tool-section" id="image-tools">
+            <div class="section-header">
+                <h2><i class="fa-regular fa-image"></i> Image Processing Tools</h2>
+                <p>Resize, compress, and convert images without losing quality</p>
+            </div>
+            <div class="tools-grid">
+                <a href="Pages/image-resize.html" class="tool-card" data-keywords="image resize crop dimensions photo">
+                    <div class="tool-icon img-icon"><i class="fa-solid fa-compress"></i></div>
+                    <h3>Image Resize</h3>
+                    <p>Modify image dimensions by pixels or percentage instantly.</p>
+                </a>
+                <a href="Pages/image-compressor.html" class="tool-card" data-keywords="image compress size storage optimize">
+                    <div class="tool-icon img-icon"><i class="fa-solid fa-file-image"></i></div>
+                    <h3>Image Compressor</h3>
+                    <p>Reduce file size in KB/MB while keeping perfect premium quality.</p>
+                </a>
+                <a href="Pages/image-converter.html" class="tool-card" data-keywords="image convert jpg png webp format">
+                    <div class="tool-icon img-icon"><i class="fa-solid fa-repeat"></i></div>
+                    <h3>Image Converter</h3>
+                    <p>Convert images seamlessly between JPG, PNG, and WebP formats.</p>
+                </a>
+                <!-- NEW TOOL ADDED: AI Background Remover -->
+                <a href="Pages/bg-remover.html" class="tool-card" data-keywords="image remove background bg transparent erase">
+                    <div class="tool-icon img-icon"><i class="fa-solid fa-scissors"></i></div>
+                    <h3>AI BG Remover</h3>
+                    <p>Erase backgrounds from your photos instantly and extract transparent PNGs.</p>
+                </a>
+            </div>
+        </section>
+
+        <section class="tool-section" id="pdf-tools">
+            <div class="section-header">
+                <h2><i class="fa-regular fa-file-pdf"></i> PDF Management Suite</h2>
+                <p>Advanced tools to modify, secure, and convert PDF documents</p>
+            </div>
+            <div class="tools-grid">
+                <a href="Pages/pdf-tools.html" class="tool-card" data-keywords="pdf merge split convert unlock protect compress">
+                    <div class="tool-icon pdf-icon"><i class="fa-solid fa-file-pdf"></i></div>
+                    <h3>Premium PDF Tools</h3>
+                    <p>Merge, Split, Protect, and Convert PDFs using our all-in-one powerful handler.</p>
+                </a>
+            </div>
+        </section>
+
+        <section class="tool-section" id="utility-tools">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-gears"></i> Developer & Digital Utilities</h2>
+                <p>Essential generators and tools for developers and creators</p>
+            </div>
+            <div class="tools-grid">
+                <a href="Pages/qr-generator.html" class="tool-card" data-keywords="qr code barcode generator scanning maker">
+                    <div class="tool-icon util-icon"><i class="fa-solid fa-qrcode"></i></div>
+                    <h3>QR & Barcode Gen</h3>
+                    <p>Generate highly customizable QR codes and barcodes for text or URLs.</p>
+                </a>
+            </div>
+        </section>
+
+        <div id="no-results" class="no-results hidden">
+            <i class="fa-solid fa-face-frown"></i>
+            <p>Oops! No tools found matching your search.</p>
+        </div>
+
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <a href="index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Tools</span></a>
+                <p>The ultimate lightweight workspace for your day-to-day web tool operations.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Quick Links</h4>
+                <a href="Pages/about.html">About Us</a>
+                <a href="Pages/contact.html">Contact</a>
+                <a href="#">Privacy Policy</a>
+                <a href="Pages/bg-remover.html">BG Remover</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Sakil Web Tools. All rights reserved. Engineered by Sakil.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

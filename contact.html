@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Sakil Web Tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../style.css">
+    
+    <style>
+        .about-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 3rem 2rem;
+            box-shadow: var(--card-shadow);
+        }
+        .profile-section {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        .profile-icon {
+            font-size: 4.5rem;
+            color: var(--accent-color);
+            background: var(--bg-primary);
+            width: 110px;
+            height: 110px;
+            line-height: 110px;
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            border: 2px dashed var(--accent-color);
+        }
+        .about-content h3 {
+            font-size: 1.4rem;
+            margin-top: 2rem;
+            margin-bottom: 0.8rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .about-content p {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        .features-list {
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            display: grid;
+            margin-top: 1rem;
+        }
+        @media (max-width: 600px) {
+            .features-list { grid-template-columns: 1fr; }
+        }
+        .feature-item {
+            background: var(--bg-primary);
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent-color);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* Developer Contact Info Cards */
+        .dev-contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .contact-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            padding: 1.2rem;
+            border-radius: 12px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: all var(--transition-speed);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .contact-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-3px);
+            box-shadow: var(--card-shadow);
+        }
+        .contact-card i {
+            font-size: 1.8rem;
+        }
+        .contact-card span {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .contact-card strong {
+            font-size: 0.95rem;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="../index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span></a>
+            <nav class="nav-menu">
+                <a href="../index.html" class="nav-link">Home</a>
+                <a href="../index.html#image-tools" class="nav-link">Image Tools</a>
+                <a href="about.html" class="nav-link active">About</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+            </nav>
+            <div class="nav-actions"><button id="theme-toggle" class="theme-btn"><i class="fa-solid fa-moon"></i></button></div>
+        </div>
+    </header>
+
+    <main class="main-container" style="padding-top: 8rem; padding-bottom: 4rem;">
+        <div class="about-wrapper">
+            <div class="profile-section">
+                <div class="profile-icon"><i class="fa-solid fa-laptop-code"></i></div>
+                <h2>About Sakil Web Tools</h2>
+                <p style="font-weight: 500; color: var(--accent-color); margin-top: 0.3rem;">Fast, Secure & Client-Side Utility Platform</p>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 2rem 0;">
+
+            <div class="about-content">
+                <h3><i class="fa-solid fa-bullseye"></i> Our Mission</h3>
+                <p>The primary core mission of <strong>Sakil Web Tools</strong> is to seamlessly streamline day-to-day web utility tasks—including high-performance image format conversions, custom PDF merging, and precision file size compression. Everything happens directly inside your web application container without requiring heavy third-party software overhead or premium subscriptions.</p>
+
+                <h3><i class="fa-solid fa-shield-halved"></i> 100% Privacy & Security</h3>
+                <p>Unlike traditional conversion platforms, your uploaded file streams are never stored on any external cloud database. Powered by modern JavaScript compilation routines, all modifications happen directly within your machine local space (Client-Side processing). Your sensitive data remains completely enclosed within your local sandbox environment.</p>
+
+                <h3><i class="fa-solid fa-star"></i> Key Highlights</h3>
+                <div class="features-list">
+                    <div class="feature-item"><i class="fa-solid fa-bolt" style="color: #eab308;"></i> Zero Server Delay, Lightning Fast Rendering</div>
+                    <div class="feature-item"><i class="fa-solid fa-cloud-slash" style="color: #ef4444;"></i> Fully Functional Offline Without Network Fees</div>
+                    <div class="feature-item"><i class="fa-solid fa-compress" style="color: #10b981;"></i> Integrated Smart Size Controller (KB/MB Limit)</div>
+                    <div class="feature-item"><i class="fa-solid fa-eye-slash" style="color: #6366f1;"></i> No Data Tracking, Analytics, or Session Logging</div>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 2.5rem 0;">
+
+                <!-- DEVELOPER CONTACT SECTION -->
+                <h3><i class="fa-solid fa-user-tie"></i> Connect With Developer</h3>
+                <p>This web infrastructure platform was architected and deployed by <strong>Md Sakil</strong>. For project collaborations, direct bug documentation, or specialized feature requests, reach out directly through the open communication channels below:</p>
+                
+                <div class="dev-contact-grid">
+                    <!-- Phone Card -->
+                    <a href="tel:+919064583326" class="contact-card">
+                        <i class="fa-solid fa-phone" style="color: #10b981;"></i>
+                        <span>Call / WhatsApp</span>
+                        <strong>+91 9064583326</strong>
+                    </a>
+
+                    <!-- Email Card -->
+                    <a href="mailto:sakilq625@gmail.com" class="contact-card">
+                        <i class="fa-solid fa-envelope" style="color: #ea4335;"></i>
+                        <span>Official Email</span>
+                        <strong>sakilq625@gmail.com</strong>
+                    </a>
+
+                    <!-- Location Card -->
+                    <div class="contact-card">
+                        <i class="fa-solid fa-location-dot" style="color: #3b82f6;"></i>
+                        <span>Location</span>
+                        <strong>West Bengal, India</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Theme Toggle Engine
+        const htmlElement = document.documentElement;
+        const themeBtn = document.getElementById('theme-toggle');
+        const applyTheme = (theme) => {
+            htmlElement.setAttribute('data-theme', theme);
+            themeBtn.querySelector('i').className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        };
+        applyTheme(localStorage.getItem('sakil-tools-theme') || 'light');
+        themeBtn.addEventListener('click', () => {
+            const next = htmlElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('sakil-tools-theme', next);
+            applyTheme(next);
+        });
+    </script>
+</body>
+</html>
