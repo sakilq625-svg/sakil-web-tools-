@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark"> <head>
+<html lang="en" data-theme="dark">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Premium PDF Utilities - Sakil Web Tools</title>
@@ -8,11 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../style.css">
-    
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     
     <style>
-        /* PDF Dashboard Dark Theme Optimizations */
         :root {
             --bg-primary: #0f172a;
             --bg-secondary: #1e293b;
@@ -22,14 +21,9 @@
             --accent-color: #ef4444;
         }
 
-        body { background-color: var(--bg-primary); color: var(--text-primary); }
-
-        .pdf-dashboard {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-            margin-top: 2rem;
-        }
+        body { background-color: var(--bg-primary); color: var(--text-primary); font-family: 'Inter', sans-serif; }
+        
+        .pdf-dashboard { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-top: 2rem; }
         @media(min-width: 768px) { .pdf-dashboard { grid-template-columns: 1fr 1fr; } }
 
         .tool-box {
@@ -40,7 +34,6 @@
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
         }
 
         .upload-zone {
@@ -48,69 +41,39 @@
             border-radius: 12px;
             padding: 2.5rem 1rem;
             text-align: center;
-            background: rgba(15, 23, 42, 0.5);
+            background: rgba(15, 23, 42, 0.4);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
         }
-        .upload-zone:hover { border-color: var(--accent-color); background: rgba(239, 68, 68, 0.05); }
+        .upload-zone:hover { border-color: var(--accent-color); }
+        .upload-zone i { font-size: 2.5rem; color: var(--accent-color); margin-bottom: 0.5rem; }
+
+        .file-list { background: var(--bg-primary); border-radius: 10px; padding: 0.5rem; max-height: 180px; overflow-y: auto; }
+        .file-item { display: flex; justify-content: space-between; padding: 0.5rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
         
-        .file-list {
-            background: var(--bg-primary);
-            border-radius: 10px;
-            padding: 0.5rem;
-            max-height: 180px;
-            overflow-y: auto;
-        }
-
-        .split-range-input {
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            padding: 0.8rem;
-            border-radius: 8px;
-            width: 100%;
-        }
-
+        .split-range-input { background: var(--bg-primary); border: 1px solid var(--border-color); color: white; padding: 0.8rem; border-radius: 8px; width: 100%; }
+        
         .btn-pdf {
-            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-            color: white;
-            border: none;
-            padding: 0.9rem;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
+            background: var(--accent-color);
+            color: white; border: none; padding: 0.9rem; border-radius: 10px; font-weight: 600; cursor: pointer;
+            transition: opacity 0.2s;
         }
+        .btn-pdf:disabled { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    <header class="navbar">
-        <div class="nav-container">
-            <a href="../index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span></a>
-            <nav class="nav-menu">
-                <a href="../index.html" class="nav-link">Home</a>
-                <a href="pdf-tools.html" class="nav-link active">PDF Tools</a>
-            </nav>
-            <div class="nav-actions"><button id="theme-toggle" class="theme-btn"><i class="fa-solid fa-sun"></i></button></div>
-        </div>
-    </header>
-
-    <main class="main-container" style="padding-top: 8rem;">
-        <div class="section-header">
-            <h2><i class="fa-solid fa-file-pdf"></i> Premium PDF Management Module</h2>
-            <p style="color: var(--text-secondary);">Secure, local browser-based PDF processing.</p>
+    <main class="main-container" style="padding-top: 5rem;">
+        <div class="section-header" style="text-align: center; margin-bottom: 3rem;">
+            <h2><i class="fa-solid fa-file-pdf"></i> Premium PDF Management</h2>
         </div>
 
         <div class="pdf-dashboard">
             <div class="tool-box">
-                <h3><i class="fa-solid fa-object-group" style="color: var(--accent-color);"></i> PDF Merger</h3>
+                <h3><i class="fa-solid fa-object-group"></i> PDF Merger</h3>
                 <div class="upload-zone" onclick="document.getElementById('mergeInput').click()">
-                    <i class="fa-solid fa-file-circle-plus" style="color: var(--accent-color);"></i>
-                    <h4>Click to Upload PDFs</h4>
+                    <i class="fa-solid fa-file-circle-plus"></i>
+                    <p>Select PDF Files</p>
                     <input type="file" id="mergeInput" accept="application/pdf" multiple style="display: none;">
                 </div>
                 <div class="file-list" id="mergeFilesContainer" style="display: none;"></div>
@@ -118,10 +81,10 @@
             </div>
 
             <div class="tool-box">
-                <h3><i class="fa-solid fa-scissors" style="color: var(--accent-color);"></i> PDF Splitter</h3>
+                <h3><i class="fa-solid fa-scissors"></i> PDF Splitter</h3>
                 <div class="upload-zone" id="splitDropZone" onclick="document.getElementById('splitInput').click()">
-                    <i class="fa-solid fa-file-circle-minus" style="color: var(--accent-color);"></i>
-                    <h4>Click to Upload PDF</h4>
+                    <i class="fa-solid fa-file-circle-minus"></i>
+                    <p>Select Single PDF</p>
                     <input type="file" id="splitInput" accept="application/pdf" style="display: none;">
                 </div>
                 <div id="splitConfigArea" style="display: none; flex-direction: column; gap: 1rem;">
@@ -134,8 +97,55 @@
     </main>
 
     <script>
-        // এখানে তোমার আগের জাভাস্ক্রিপ্ট লজিকটি বসিয়ে দাও, যা তুমি আগে লিখেছিলে।
-        // এটি একদম ঠিকঠাক কাজ করবে।
+        // PDF Logic
+        const mergeInput = document.getElementById('mergeInput');
+        const mergeFilesContainer = document.getElementById('mergeFilesContainer');
+        const mergeBtn = document.getElementById('mergeBtn');
+        let mergeFilesArray = [];
+
+        mergeInput.addEventListener('change', (e) => {
+            Array.from(e.target.files).forEach(file => mergeFilesArray.push(file));
+            renderMergeList();
+        });
+
+        function renderMergeList() {
+            mergeFilesContainer.innerHTML = '';
+            mergeFilesContainer.style.display = 'block';
+            mergeFilesArray.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `<span>${file.name}</span> <i class="fa fa-times" onclick="removeMergeFile(${index})" style="cursor:pointer; color:red;"></i>`;
+                mergeFilesContainer.appendChild(item);
+            });
+            mergeBtn.disabled = mergeFilesArray.length < 2;
+        }
+
+        window.removeMergeFile = (index) => { mergeFilesArray.splice(index, 1); renderMergeList(); };
+
+        mergeBtn.addEventListener('click', async () => {
+            const mergedPdf = await PDFLib.PDFDocument.create();
+            for (let file of mergeFilesArray) {
+                const pdfDoc = await PDFLib.PDFDocument.load(await file.arrayBuffer());
+                const pages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+                pages.forEach(p => mergedPdf.addPage(p));
+            }
+            const blob = new Blob([await mergedPdf.save()], {type: "application/pdf"});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "merged.pdf"; a.click();
+        });
+
+        // Splitter Logic simplified
+        const splitInput = document.getElementById('splitInput');
+        const splitConfigArea = document.getElementById('splitConfigArea');
+        let splitTargetFileBytes = null;
+
+        splitInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            splitTargetFileBytes = await file.arrayBuffer();
+            document.getElementById('splitDropZone').style.display = 'none';
+            splitConfigArea.style.display = 'flex';
+            document.getElementById('splitMetaName').innerText = file.name;
+        });
     </script>
 </body>
 </html>
