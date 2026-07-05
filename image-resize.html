@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="style.css">
     
     <style>
         .tool-layout {
@@ -121,10 +121,10 @@
 
     <header class="navbar">
         <div class="nav-container">
-            <a href="../index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span></a>
+            <a href="index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span></a>
             <nav class="nav-menu">
-                <a href="../index.html" class="nav-link">Home</a>
-                <a href="../index.html#image-tools" class="nav-link active">Image Tools</a>
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="index.html#image-tools" class="nav-link active">Image Tools</a>
                 <a href="about.html" class="nav-link">About</a>
                 <a href="contact.html" class="nav-link">Contact</a>
             </nav>
@@ -157,7 +157,6 @@
                 <h3>Image Settings</h3>
                 <div class="meta-info" id="originalMeta">Loading file data...</div>
                 
-                <!-- Dimension Settings -->
                 <div class="input-row">
                     <div class="input-group">
                         <label>Width (Pixels)</label>
@@ -169,7 +168,6 @@
                     </div>
                 </div>
 
-                <!-- Targeted KB Size Settings -->
                 <div class="size-reducer-box">
                     <div class="input-group">
                         <label style="color: var(--accent-color);"><i class="fa-solid fa-bolt"></i> Target File Size (Optional KB)</label>
@@ -267,10 +265,9 @@
             // Smart KB Reduction Loop logic
             if (targetKb) {
                 let min = 0.01, max = 0.99;
-                // Force to jpeg/webp for flexible compression support
                 let exportType = fileType === 'image/png' ? 'image/jpeg' : fileType; 
                 
-                for (let i = 0; i < 10; i++) { // Binary iteration to hit closest KB size
+                for (let i = 0; i < 10; i++) {
                     quality = (min + max) / 2;
                     dataUrl = canvas.toDataURL(exportType, quality);
                     const currentSizeKb = (dataUrl.length * 0.75) / 1024;
