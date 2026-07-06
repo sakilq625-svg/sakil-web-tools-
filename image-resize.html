@@ -3,83 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sakil Pro Image Optimizer</title>
+    <title>Sakil Pro Optimizer - Image Resizer & KB Reducer</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #6366f1; --text: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 2rem; display: flex; justify-content: center; }
-        .wrapper { background: var(--card); padding: 2.5rem; border-radius: 24px; width: 100%; max-width: 500px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
-        .upload-zone { border: 2px dashed #475569; padding: 2.5rem; text-align: center; border-radius: 16px; cursor: pointer; transition: 0.3s; margin-bottom: 1.5rem; }
-        .upload-zone:hover { border-color: var(--accent); background: #1e293b; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: white; }
-        .btn { width: 100%; padding: 15px; background: var(--accent); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; font-size: 16px; }
-        #preview { max-width: 100%; margin: 1rem 0; border-radius: 12px; display: none; }
-        .info { font-size: 12px; color: #94a3b8; text-align: center; margin-top: 10px; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
+        .wrapper { background: var(--card); padding: 2rem; border-radius: 20px; width: 100%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .upload-zone { border: 2px dashed #475569; padding: 20px; text-align: center; border-radius: 12px; cursor: pointer; margin-bottom: 15px; }
+        .input-row { display: flex; gap: 10px; }
+        input { width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; }
+        .btn { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        #preview { max-width: 100%; border-radius: 8px; display: none; margin: 10px 0; }
+        .info-box { font-size: 13px; color: #94a3b8; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: none; }
     </style>
 </head>
 <body>
 
 <div class="wrapper">
-    <h2 style="text-align:center; margin-top:0;">Sakil Pro Optimizer</h2>
+    <h2 style="text-align:center; margin:0;">Sakil Pro Optimizer</h2>
+    <p style="text-align:center; color: var(--accent); font-size: 0.9rem;">Image Resizer & KB Reducer</p>
+    
     <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
-        <p>Drop Image or Click to Upload</p>
+        <p>Click to Upload Image</p>
         <input type="file" id="fileInput" accept="image/*" style="display: none;">
     </div>
-    <img id="preview" src="">
+
+    <img id="preview">
+    <div id="fileInfo" class="info-box"></div>
+
+    <div class="input-row">
+        <div><label>Width (px)</label><input type="number" id="width"></div>
+        <div><label>Height (px)</label><input type="number" id="height"></div>
+    </div>
     
-    <label>Width (px)</label><input type="number" id="width">
-    <label>Target Size (KB)</label><input type="number" id="targetKb" placeholder="e.g. 200">
-    <label>Quality (%)</label><input type="range" id="quality" min="10" max="100" value="90">
+    <label>Target Size (KB)</label><input type="number" id="targetKb" placeholder="Leave empty for auto">
+    <label>Quality (<span id="qVal">90</span>%)</label>
+    <input type="range" id="quality" min="1" max="100" value="90" oninput="document.getElementById('qVal').innerText=this.value">
     
     <button class="btn" id="processBtn">Resize & Optimize</button>
-    <p class="info">* EXIF Data automatically removed for privacy.</p>
 </div>
 
 <script>
     const fileInput = document.getElementById('fileInput'), preview = document.getElementById('preview'), 
-          widthInput = document.getElementById('width'), targetKb = document.getElementById('targetKb'),
-          qualityInput = document.getElementById('quality');
+          w = document.getElementById('width'), h = document.getElementById('height'), 
+          targetKb = document.getElementById('targetKb'), q = document.getElementById('quality'),
+          info = document.getElementById('fileInfo');
     let img = new Image();
 
     fileInput.onchange = (e) => {
+        const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = (ev) => {
             img.src = ev.target.result;
             img.onload = () => {
                 preview.src = img.src; preview.style.display = 'block';
-                widthInput.value = img.width;
+                w.value = img.width; h.value = img.height;
+                info.style.display = 'block';
+                info.innerHTML = `File: ${file.name} | Size: ${(file.size/1024).toFixed(1)} KB | Resolution: ${img.width}x${img.height}`;
             };
         };
-        reader.readAsDataURL(e.target.files[0]);
+        reader.readAsDataURL(file);
     };
 
     document.getElementById('processBtn').onclick = () => {
         const canvas = document.createElement('canvas');
+        canvas.width = w.value; canvas.height = h.value;
         const ctx = canvas.getContext('2d');
-        const scale = widthInput.value / img.width;
-        canvas.width = widthInput.value;
-        canvas.height = img.height * scale;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, w.value, h.value);
         
-        // ছবি রেন্ডার করার সময় EXIF অটোমেটিক বাদ হয়ে যায় ক্যানভাসের কারণে
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-        let quality = qualityInput.value / 100;
-        let dataUrl = canvas.toDataURL('image/jpeg', quality);
-
-        if(targetKb.value) {
-            let targetBytes = targetKb.value * 1024;
-            let iterations = 0;
-            while(dataUrl.length > targetBytes * 1.1 && quality > 0.05 && iterations < 10) {
-                quality -= 0.1;
-                dataUrl = canvas.toDataURL('image/jpeg', quality);
-                iterations++;
-            }
-        }
-
-        const a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = 'sakil-optimized.jpg';
-        a.click();
+        let quality = q.value / 100;
+        
+        // Blob ব্যবহার করে ডাউনলোড করা অনেক বেশি নিরাপদ ও সঠিক সাইজ দেয়
+        canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'sakil-optimized.jpg';
+            a.click();
+        }, 'image/jpeg', quality);
     };
 </script>
 </body>
