@@ -1,100 +1,293 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sakil Pro Optimizer | Premium Resizer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Image Resizer & Size KB Reducer - Sakil Web Tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../style.css">
+    
     <style>
-        :root {
-            --primary: #6366f1;
-            --secondary: #a855f7;
-            --bg: #0f172a;
-            --glass: rgba(30, 41, 59, 0.7);
+        .tool-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
         }
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); 
-            color: white; 
-            margin: 0; 
-            padding: 2rem; 
+        @media (min-width: 992px) {
+            .tool-layout { grid-template-columns: 1.2fr 1fr; }
         }
-        .tool-layout { max-width: 900px; margin: 2rem auto; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-        .box { background: var(--glass); backdrop-filter: blur(15px); padding: 2rem; border-radius: 25px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
-        .upload-box { border: 2px dashed var(--primary); text-align: center; padding: 3rem; cursor: pointer; transition: 0.3s; border-radius: 20px; }
-        .upload-box:hover { background: rgba(99, 102, 241, 0.1); }
-        .input-box { width: 100%; padding: 12px; margin: 10px 0; border-radius: 12px; border: none; background: #334155; color: white; }
-        .btn { width: 100%; padding: 14px; background: linear-gradient(to right, var(--primary), var(--secondary)); border: none; border-radius: 12px; color: white; font-weight: 600; cursor: pointer; transition: 0.3s; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4); }
-        img { max-width: 100%; border-radius: 15px; display: none; margin-bottom: 1rem; }
+        .upload-box {
+            border: 2px dashed var(--border-color);
+            border-radius: 20px;
+            padding: 5rem 2rem;
+            text-align: center;
+            background: var(--bg-secondary);
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+        .upload-box:hover { border-color: var(--accent-color); }
+        .upload-box i { font-size: 3.5rem; color: var(--accent-color); margin-bottom: 1rem; }
+        
+        .preview-pane {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.5rem;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .preview-pane img {
+            max-width: 100%;
+            max-height: 350px;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .control-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            display: none;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .meta-info {
+            background: var(--bg-primary);
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border-left: 4px solid var(--accent-color);
+        }
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .input-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .input-box {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            outline: none;
+            font-weight: 500;
+        }
+        .input-box:focus { border-color: var(--accent-color); }
+        
+        .size-reducer-box {
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px dashed var(--accent-color);
+            padding: 1.2rem;
+            border-radius: 12px;
+            margin-top: 0.5rem;
+        }
+        
+        .btn-action {
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
     </style>
 </head>
 <body>
 
-<main class="tool-layout">
-    <div class="box">
-        <div class="upload-box" id="dropzone" onclick="document.getElementById('fileInput').click()">
-            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 3rem; color: var(--primary);"></i>
-            <h3>Upload Your Image</h3>
-            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="../index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span></a>
+            <nav class="nav-menu">
+                <a href="../index.html" class="nav-link">Home</a>
+                <a href="../index.html#image-tools" class="nav-link active">Image Tools</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+            </nav>
+            <div class="nav-actions"><button id="theme-toggle" class="theme-btn"><i class="fa-solid fa-moon"></i></button></div>
         </div>
-        <div id="previewPane" style="display:none;">
-            <img id="imagePreview">
-            <button class="btn" style="background: #ef4444;" onclick="location.reload()">Clear Image</button>
+    </header>
+
+    <main class="main-container" style="padding-top: 8rem;">
+        <div class="section-header">
+            <h2><i class="fa-solid fa-compress"></i> Image Resizer & KB Reducer</h2>
+            <p>Resize dimensions or compress image file size to exact KB natively.</p>
         </div>
-    </div>
 
-    <div class="box">
-        <h3><i class="fa-solid fa-sliders"></i> Adjust Settings</h3>
-        <input type="number" id="widthInput" class="input-box" placeholder="Width (px)">
-        <input type="number" id="heightInput" class="input-box" placeholder="Height (px)">
-        <input type="number" id="targetKbInput" class="input-box" placeholder="Target Size (KB)">
-        <button class="btn" id="processBtn">Process & Download</button>
-    </div>
-</main>
+        <div class="tool-layout">
+            <div class="workspace-area">
+                <div class="upload-box" id="dropzone" onclick="document.getElementById('fileInput').click()">
+                    <i class="fa-regular fa-images"></i>
+                    <h3>Choose or Drop Your Image</h3>
+                    <p>Supports JPG, JPEG, PNG, WEBP (Max: 50MB)</p>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                </div>
 
-<script>
-    const fileInput = document.getElementById('fileInput'), previewPane = document.getElementById('previewPane'), imagePreview = document.getElementById('imagePreview'), widthInput = document.getElementById('widthInput'), heightInput = document.getElementById('heightInput'), targetKbInput = document.getElementById('targetKbInput'), processBtn = document.getElementById('processBtn'), dropzone = document.getElementById('dropzone');
-    let originalImg = new Image();
+                <div class="preview-pane" id="previewPane">
+                    <img id="imagePreview" src="" alt="Preview">
+                    <button class="btn-action" style="background:#ef4444; padding:0.5rem 1rem; font-size:0.85rem;" onclick="location.reload()"><i class="fa-solid fa-trash"></i> Clear Image</button>
+                </div>
+            </div>
 
-    fileInput.onchange = (e) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            originalImg.src = ev.target.result;
-            originalImg.onload = () => {
-                imagePreview.src = originalImg.src;
-                imagePreview.style.display = 'block';
-                widthInput.value = originalImg.width;
-                heightInput.value = originalImg.height;
-                dropzone.style.display = 'none';
-                previewPane.style.display = 'block';
-            };
+            <div class="control-panel" id="controlPanel">
+                <h3>Image Settings</h3>
+                <div class="meta-info" id="originalMeta">Loading file data...</div>
+                
+                <!-- Dimension Settings -->
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Width (Pixels)</label>
+                        <input type="number" id="widthInput" class="input-box">
+                    </div>
+                    <div class="input-group">
+                        <label>Height (Pixels)</label>
+                        <input type="number" id="heightInput" class="input-box">
+                    </div>
+                </div>
+
+                <!-- Targeted KB Size Settings -->
+                <div class="size-reducer-box">
+                    <div class="input-group">
+                        <label style="color: var(--accent-color);"><i class="fa-solid fa-bolt"></i> Target File Size (Optional KB)</label>
+                        <input type="number" id="targetKbInput" class="input-box" placeholder="e.g. 300" min="5">
+                        <span style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem;">Leave empty if you only want dimension resizing.</span>
+                    </div>
+                </div>
+
+                <button class="btn-action" id="processBtn"><i class="fa-solid fa-download"></i> Process & Download</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Theme config
+        const htmlElement = document.documentElement;
+        const themeBtn = document.getElementById('theme-toggle');
+        const applyTheme = (theme) => {
+            htmlElement.setAttribute('data-theme', theme);
+            themeBtn.querySelector('i').className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
         };
-        reader.readAsDataURL(e.target.files[0]);
-    };
+        applyTheme(localStorage.getItem('sakil-tools-theme') || 'light');
+        themeBtn.addEventListener('click', () => {
+            const next = htmlElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('sakil-tools-theme', next);
+            applyTheme(next);
+        });
 
-    processBtn.onclick = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = widthInput.value;
-        canvas.height = heightInput.value;
-        ctx.drawImage(originalImg, 0, 0, canvas.width, canvas.height);
+        // Core App Logic
+        const fileInput = document.getElementById('fileInput');
+        const dropzone = document.getElementById('dropzone');
+        const previewPane = document.getElementById('previewPane');
+        const controlPanel = document.getElementById('controlPanel');
+        const imagePreview = document.getElementById('imagePreview');
+        const originalMeta = document.getElementById('originalMeta');
+        
+        const widthInput = document.getElementById('widthInput');
+        const heightInput = document.getElementById('heightInput');
+        const targetKbInput = document.getElementById('targetKbInput');
+        const processBtn = document.getElementById('processBtn');
 
-        let quality = 0.95;
-        let dataUrl = canvas.toDataURL('image/jpeg', quality);
+        let originalImg = new Image();
+        let fileType = "image/jpeg";
+        let fileName = "sakil-resized";
+        let originalAspectRatio = 1;
 
-        if(targetKbInput.value) {
-            while((dataUrl.length * 0.75) / 1024 > targetKbInput.value && quality > 0.1) {
-                quality -= 0.05;
-                dataUrl = canvas.toDataURL('image/jpeg', quality);
-            }
+        fileInput.addEventListener('change', (e) => {
+            if(e.target.files.length) processFile(e.target.files[0]);
+        });
+
+        function processFile(file) {
+            fileType = file.type || "image/jpeg";
+            fileName = file.name.split('.').slice(0, -1).join('.') + '-resized';
+            const originalSizeKb = (file.size / 1024).toFixed(1);
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                originalImg.src = event.target.result;
+                originalImg.onload = () => {
+                    imagePreview.src = event.target.result;
+                    widthInput.value = originalImg.width;
+                    heightInput.value = originalImg.height;
+                    originalAspectRatio = originalImg.width / originalImg.height;
+                    
+                    originalMeta.innerHTML = `<strong>Original Size:</strong> ${originalSizeKb} KB <br> <strong>Dimensions:</strong> ${originalImg.width} x ${originalImg.height} px`;
+                    
+                    dropzone.style.display = 'none';
+                    previewPane.style.display = 'flex';
+                    controlPanel.style.display = 'flex';
+                };
+            };
+            reader.readAsDataURL(file);
         }
-        const a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = 'sakil-optimized.jpg';
-        a.click();
-    };
-</script>
+
+        // Maintain Aspect Ratio on Width input
+        widthInput.addEventListener('input', () => {
+            if(widthInput.value) heightInput.value = Math.round(widthInput.value / originalAspectRatio);
+        });
+
+        processBtn.addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const targetWidth = parseInt(widthInput.value) || originalImg.width;
+            const targetHeight = parseInt(heightInput.value) || originalImg.height;
+            const targetKb = parseInt(targetKbInput.value);
+
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            ctx.drawImage(originalImg, 0, 0, targetWidth, targetHeight);
+
+            let quality = 0.92;
+            let dataUrl = canvas.toDataURL(fileType, quality);
+            
+            // Smart KB Reduction Loop logic
+            if (targetKb) {
+                let min = 0.01, max = 0.99;
+                // Force to jpeg/webp for flexible compression support
+                let exportType = fileType === 'image/png' ? 'image/jpeg' : fileType; 
+                
+                for (let i = 0; i < 10; i++) { // Binary iteration to hit closest KB size
+                    quality = (min + max) / 2;
+                    dataUrl = canvas.toDataURL(exportType, quality);
+                    const currentSizeKb = (dataUrl.length * 0.75) / 1024;
+                    
+                    if (currentSizeKb > targetKb) {
+                        max = quality;
+                    } else {
+                        min = quality;
+                    }
+                }
+            }
+
+            const link = document.createElement('a');
+            link.download = fileName + (fileType === 'image/png' && targetKb ? '.jpg' : '.' + fileType.split('/')[1]);
+            link.href = dataUrl;
+            link.click();
+        });
+    </script>
 </body>
 </html>
