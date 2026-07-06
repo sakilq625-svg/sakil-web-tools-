@@ -4,28 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Premium PDF Utilities - Sakil Web Tools</title>
-    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #6366f1; --red: #ef4444; --text: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
+        [data-theme="light"] { --bg: #f8fafc; --card: #ffffff; --accent: #4f46e5; --red: #dc2626; --text: #0f172a; }
         
-        /* Navbar */
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; }
         nav { display: flex; align-items: center; padding: 1rem 2rem; background: var(--card); border-bottom: 1px solid #334155; }
-        .logo { font-weight: bold; margin-right: 2rem; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+        .logo { font-weight: bold; margin-right: auto; color: var(--accent); display: flex; align-items: center; gap: 10px; }
         nav a { color: #94a3b8; text-decoration: none; margin: 0 1rem; font-size: 0.9rem; }
-        nav a.active { color: white; border-bottom: 2px solid var(--accent); }
+        .theme-toggle { cursor: pointer; font-size: 1.2rem; }
 
         .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
-        .header { margin-bottom: 2rem; }
-        
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
         .card { background: var(--card); padding: 2rem; border-radius: 12px; border: 1px solid #334155; }
         .card h2 { color: var(--red); font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
         
         .dropzone { border: 2px dashed #475569; padding: 2rem; text-align: center; border-radius: 8px; margin: 1.5rem 0; cursor: pointer; color: #94a3b8; }
-        .dropzone i { font-size: 2rem; color: var(--red); margin-bottom: 10px; display: block; }
-        
         .btn-combine { background: var(--red); color: white; border: none; padding: 0.8rem; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
@@ -34,43 +29,75 @@
 <nav>
     <div class="logo"><i class="fa-solid fa-layer-group"></i> Sakil Web Tools</div>
     <a href="#">Home</a>
-    <a href="#">Image Tools</a>
-    <a href="#">BG Remover</a>
-    <a href="#" class="active">PDF Tools</a>
-    <a href="#">About</a>
+    <a href="#">PDF Tools</a>
+    <i class="fa-solid fa-circle-half-stroke theme-toggle" onclick="toggleTheme()"></i>
 </nav>
 
 <div class="container">
-    <div class="header">
-        <h1><i class="fa-solid fa-file-pdf"></i> Premium PDF Management Module</h1>
-        <p>Merge multiple files into one document, or split specific pages locally inside your browser secure chamber.</p>
-    </div>
-
+    <h1><i class="fa-solid fa-file-pdf"></i> Premium PDF Management Module</h1>
     <div class="grid">
-        <!-- PDF Merger -->
         <div class="card">
             <h2><i class="fa-solid fa-object-group"></i> 1. PDF Merger</h2>
-            <p>Select and consolidate multiple PDF files orderly into a single compiled document.</p>
             <div class="dropzone" onclick="document.getElementById('mergeInput').click()">
-                <i class="fa-solid fa-file-circle-plus"></i>
-                <p>Choose PDF Files to Merge<br>Select 2 or more PDF files</p>
+                <i class="fa-solid fa-file-circle-plus" style="font-size: 2rem; color: var(--red);"></i>
+                <p>Choose 2+ PDF Files to Merge</p>
                 <input type="file" id="mergeInput" multiple accept="application/pdf" style="display:none">
             </div>
-            <button class="btn-combine"><i class="fa-solid fa-compress"></i> Combine PDFs</button>
+            <button class="btn-combine" id="mergeBtn">Combine PDFs</button>
         </div>
 
-        <!-- PDF Splitter -->
         <div class="card">
             <h2><i class="fa-solid fa-scissors"></i> 2. PDF Splitter</h2>
-            <p>Extract custom pages or page ranges from a single PDF document instantly.</p>
             <div class="dropzone" onclick="document.getElementById('splitInput').click()">
-                <i class="fa-solid fa-file-circle-minus"></i>
-                <p>Select Single PDF to Split<br>Supports any standard PDF structure</p>
+                <i class="fa-solid fa-file-circle-minus" style="font-size: 2rem; color: var(--red);"></i>
+                <p>Select PDF to Split (First Page)</p>
                 <input type="file" id="splitInput" accept="application/pdf" style="display:none">
             </div>
+            <button class="btn-combine" id="splitBtn" style="background:#6366f1;">Split PDF</button>
         </div>
     </div>
 </div>
 
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script>
+    const { PDFDocument } = PDFLib;
+
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme');
+        document.documentElement.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+    }
+
+    // PDF Merger
+    document.getElementById('mergeBtn').addEventListener('click', async () => {
+        const files = document.getElementById('mergeInput').files;
+        if (files.length < 2) return alert("Please select at least 2 files!");
+        const mergedPdf = await PDFDocument.create();
+        for (const file of files) {
+            const pdf = await PDFDocument.load(await file.arrayBuffer());
+            const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+            pages.forEach(p => mergedPdf.addPage(p));
+        }
+        downloadBlob(await mergedPdf.save(), 'merged-by-sakil.pdf');
+    });
+
+    // PDF Splitter
+    document.getElementById('splitBtn').addEventListener('click', async () => {
+        const file = document.getElementById('splitInput').files[0];
+        if (!file) return alert("Please select a file!");
+        const pdf = await PDFDocument.load(await file.arrayBuffer());
+        const newPdf = await PDFDocument.create();
+        const [page] = await newPdf.copyPages(pdf, [0]); // প্রথম পেজ স্প্লিট করবে
+        newPdf.addPage(page);
+        downloadBlob(await newPdf.save(), 'split-page-1.pdf');
+    });
+
+    function downloadBlob(bytes, name) {
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        a.click();
+    }
+</script>
 </body>
 </html>
