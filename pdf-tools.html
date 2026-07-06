@@ -3,72 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sakil PDF Tools - Premium Suite</title>
-    
-    <!-- Google Fonts & FontAwesome -->
+    <title>Sakil PDF Tools - Fully Functional</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PDF-Lib লাইব্রেরি -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     
     <style>
-        /* CSS Styling */
-        body { 
-            background-color: #0f172a; 
-            color: #f8fafc; 
-            font-family: 'Inter', sans-serif; 
-            margin: 0; 
-            padding: 20px; 
-            display: flex; 
-            justify-content: center; 
-        }
-        .container { 
-            width: 100%; 
-            max-width: 900px; 
-            text-align: center; 
-        }
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 20px; 
-            margin-top: 30px; 
-        }
-        .card { 
-            background: #1e293b; 
-            padding: 30px; 
-            border-radius: 20px; 
-            border: 1px solid #334155; 
-            cursor: pointer; 
-            transition: 0.3s; 
-        }
-        .card:hover { 
-            background: #2d3748; 
-            border-color: #6366f1; 
-            transform: translateY(-5px); 
-        }
-        .card i { 
-            font-size: 40px; 
-            color: #6366f1; 
-            margin-bottom: 15px; 
-        }
-        h1 { margin-bottom: 10px; }
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; padding: 20px; }
+        .wrapper { max-width: 900px; margin: 0 auto; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .card { background: #1e293b; padding: 25px; border-radius: 16px; text-align: center; border: 1px solid #334155; cursor: pointer; transition: 0.3s; }
+        .card:hover { border-color: #6366f1; background: #2d3748; }
+        #uploadSection { display: none; background: #1e293b; padding: 40px; border-radius: 20px; text-align: center; border: 2px dashed #6366f1; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Sakil PDF Tools</h1>
-        <p style="color: #94a3b8;">Select your preferred tool to get started</p>
-
-        <div class="grid">
-            <div class="card" onclick="alert('Merge PDF selected!')"><i class="fa-solid fa-object-group"></i><p>Merge PDF</p></div>
-            <div class="card" onclick="alert('Split PDF selected!')"><i class="fa-solid fa-scissors"></i><p>Split PDF</p></div>
-            <div class="card" onclick="alert('Compress selected!')"><i class="fa-solid fa-compress"></i><p>Compress PDF</p></div>
-            <div class="card" onclick="alert('Word to PDF selected!')"><i class="fa-solid fa-file-word"></i><p>Word to PDF</p></div>
-            <div class="card" onclick="alert('PPT to PDF selected!')"><i class="fa-solid fa-file-powerpoint"></i><p>PPT to PDF</p></div>
-            <div class="card" onclick="alert('Excel to PDF selected!')"><i class="fa-solid fa-file-excel"></i><p>Excel to PDF</p></div>
-            <div class="card" onclick="alert('PDF to Word selected!')"><i class="fa-solid fa-file-export"></i><p>PDF to Word</p></div>
-            <div class="card" onclick="alert('Rotate PDF selected!')"><i class="fa-solid fa-rotate"></i><p>Rotate PDF</p></div>
-        </div>
+<div class="wrapper">
+    <h1 style="text-align: center;">Sakil PDF Tools</h1>
+    
+    <div class="grid">
+        <div class="card" onclick="selectTool('Merge')"><i class="fa-solid fa-object-group"></i><p>Merge PDF</p></div>
+        <div class="card" onclick="selectTool('Compress')"><i class="fa-solid fa-compress"></i><p>Compress PDF</p></div>
     </div>
 
+    <div id="uploadSection">
+        <h2 id="toolTitle">Select a tool</h2>
+        <input type="file" id="fileInput" multiple accept=".pdf" style="margin-top: 20px;">
+        <br><br>
+        <button id="processBtn" style="padding: 12px 25px; background: #6366f1; border:none; color:white; border-radius:8px; cursor:pointer; font-weight:600;">Process & Download</button>
+    </div>
+</div>
+
+<script>
+    let currentMode = "";
+
+    function selectTool(mode) {
+        currentMode = mode;
+        document.getElementById('toolTitle').innerText = mode + " PDF Files";
+        document.getElementById('uploadSection').style.display = 'block';
+    }
+
+    document.getElementById('processBtn').onclick = async () => {
+        const files = document.getElementById('fileInput').files;
+        if (files.length === 0) return alert("Select at least one file!");
+
+        if (currentMode === 'Merge') {
+            const mergedPdf = await PDFLib.PDFDocument.create();
+            for (let file of files) {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
+                const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                copiedPages.forEach(page => mergedPdf.addPage(page));
+            }
+            const pdfBytes = await mergedPdf.save();
+            downloadFile(pdfBytes, "merged_sakil.pdf");
+        } 
+        else if (currentMode === 'Compress') {
+            // সাধারণ কমপ্রেশন লজিক
+            const file = files[0];
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
+            const pdfBytes = await pdf.save({ useObjectStreams: true });
+            downloadFile(pdfBytes, "compressed_sakil.pdf");
+            alert("Simplified compression done!");
+        }
+    };
+
+    function downloadFile(bytes, name) {
+        const blob = new Blob([bytes], { type: "application/pdf" });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = name;
+        link.click();
+    }
+</script>
 </body>
 </html>
