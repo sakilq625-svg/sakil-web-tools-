@@ -9,14 +9,19 @@
         :root { --bg: #0f172a; --card: #1e293b; --accent: #6366f1; --red: #ef4444; --text: #f8fafc; }
         [data-theme="light"] { --bg: #f8fafc; --card: #ffffff; --accent: #4f46e5; --red: #dc2626; --text: #0f172a; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; }
+        
         nav { display: flex; align-items: center; padding: 1rem 2rem; background: var(--card); border-bottom: 1px solid #334155; }
         .logo { font-weight: bold; margin-right: auto; color: var(--accent); display: flex; align-items: center; gap: 10px; }
         .theme-toggle { cursor: pointer; font-size: 1.2rem; }
+
         .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
         .card { background: var(--card); padding: 2rem; border-radius: 12px; border: 1px solid #334155; }
-        .dropzone { border: 2px dashed #475569; padding: 2rem; text-align: center; border-radius: 8px; margin: 1.5rem 0; cursor: pointer; }
-        .btn-combine { background: var(--red); color: white; border: none; padding: 0.8rem; width: 100%; border-radius: 6px; cursor: pointer; }
+        .card h2 { color: var(--red); font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        
+        .dropzone { border: 2px dashed #475569; padding: 2rem; text-align: center; border-radius: 8px; margin: 1.5rem 0; cursor: pointer; color: #94a3b8; }
+        .btn-combine { background: var(--red); color: white; border: none; padding: 0.8rem; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-split { background: #6366f1; color: white; border: none; padding: 0.8rem; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -27,9 +32,10 @@
 </nav>
 
 <div class="container">
+    <h1><i class="fa-solid fa-file-pdf"></i> Premium PDF Management Module</h1>
     <div class="grid">
         <div class="card">
-            <h2>PDF Merger</h2>
+            <h2><i class="fa-solid fa-object-group"></i> 1. PDF Merger</h2>
             <div class="dropzone" onclick="document.getElementById('mergeInput').click()">
                 <p>Click to Upload Multiple Files</p>
                 <input type="file" id="mergeInput" multiple accept="application/pdf" style="display:none">
@@ -38,12 +44,12 @@
         </div>
 
         <div class="card">
-            <h2>PDF Splitter</h2>
+            <h2><i class="fa-solid fa-scissors"></i> 2. PDF Splitter</h2>
             <div class="dropzone" onclick="document.getElementById('splitInput').click()">
-                <p>Upload PDF to Split All Pages</p>
+                <p>Click to Upload PDF to Split</p>
                 <input type="file" id="splitInput" accept="application/pdf" style="display:none">
             </div>
-            <button class="btn-combine" id="splitBtn" style="background:#6366f1;">Split All Pages</button>
+            <button class="btn-split" id="splitBtn">Split First Page</button>
         </div>
     </div>
 </div>
@@ -57,7 +63,7 @@
         document.documentElement.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
     }
 
-    // Fixed Merger: একাধিক ফাইল একসাথে মার্জ করবে
+    // PDF Merger
     document.getElementById('mergeBtn').addEventListener('click', async () => {
         const input = document.getElementById('mergeInput');
         if (input.files.length < 2) return alert("Please select at least 2 files!");
@@ -69,22 +75,21 @@
             pages.forEach(p => mergedPdf.addPage(p));
         }
         const bytes = await mergedPdf.save();
-        downloadBlob(bytes, 'merged-all-files.pdf');
+        downloadBlob(bytes, 'merged-by-sakil.pdf');
     });
 
-    // Fixed Splitter: প্রতিটি পেজকে আলাদা পিডিএফ করবে
+    // PDF Splitter
     document.getElementById('splitBtn').addEventListener('click', async () => {
         const file = document.getElementById('splitInput').files[0];
         if (!file) return alert("Please select a file!");
         
         const pdf = await PDFDocument.load(await file.arrayBuffer());
-        for (let i = 0; i < pdf.getPageCount(); i++) {
-            const newPdf = await PDFDocument.create();
-            const [page] = await newPdf.copyPages(pdf, [i]);
-            newPdf.addPage(page);
-            const bytes = await newPdf.save();
-            downloadBlob(bytes, `page_${i + 1}.pdf`);
-        }
+        const newPdf = await PDFDocument.create();
+        const [page] = await newPdf.copyPages(pdf, [0]); // প্রথম পেজ স্প্লিট করবে
+        newPdf.addPage(page);
+        
+        const bytes = await newPdf.save();
+        downloadBlob(bytes, 'split-page-1.pdf');
     });
 
     function downloadBlob(bytes, name) {
