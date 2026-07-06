@@ -3,97 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sakil Pro Optimizer - Image Resizer & KB Reducer</title>
+    <title>Sakil PDF Tools - Premium Suite</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #6366f1; --text: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
-        .wrapper { background: var(--card); padding: 2rem; border-radius: 20px; width: 100%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .upload-zone { border: 2px dashed #475569; padding: 25px; text-align: center; border-radius: 12px; cursor: pointer; margin-bottom: 15px; }
-        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
-        .btn { width: 100%; padding: 14px; background: var(--accent); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; margin-top: 10px; }
-        #preview { max-width: 100%; border-radius: 8px; display: none; margin: 10px 0; }
-        .info-box { font-size: 14px; color: #94a3b8; background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 10px; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
+        .wrapper { background: var(--card); padding: 2.5rem; border-radius: 24px; width: 100%; max-width: 900px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .header { text-align: center; margin-bottom: 2rem; }
+        .grid-tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        
+        .tool-card { 
+            background: #0f172a; padding: 25px; border-radius: 16px; 
+            text-align: center; border: 1px solid #334155; 
+            cursor: pointer; transition: all 0.3s ease; 
+        }
+        .tool-card:hover { border-color: var(--accent); transform: translateY(-8px); background: #1e293b; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2); }
+        .tool-card i { font-size: 35px; color: var(--accent); margin-bottom: 15px; display: block; }
+        .tool-card p { font-weight: 500; margin: 0; }
     </style>
 </head>
 <body>
 
 <div class="wrapper">
-    <h2 style="text-align:center; margin-top:0;">Sakil Pro Optimizer</h2>
-    
-    <div class="upload-zone" id="dropzone" onclick="document.getElementById('fileInput').click()">
-        <p>Click to Upload Image</p>
-        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+    <div class="header">
+        <h1>Sakil PDF Tools</h1>
+        <p style="color: #94a3b8;">Manage your documents with professional precision</p>
     </div>
 
-    <img id="preview">
-    <div id="fileInfo" class="info-box" style="display:none;"></div>
-    <div id="estSize" class="info-box" style="display:none; color: var(--accent);"></div>
-
-    <div class="input-row">
-        <div><label>Width (px)</label><input type="number" id="w"></div>
-        <div><label>Height (px)</label><input type="number" id="h"></div>
+    <div class="grid-tools">
+        <div class="tool-card"><i class="fa-solid fa-object-group"></i><p>Merge PDF</p></div>
+        <div class="tool-card"><i class="fa-solid fa-scissors"></i><p>Split PDF</p></div>
+        <div class="tool-card"><i class="fa-solid fa-compress"></i><p>Compress PDF</p></div>
+        <div class="tool-card"><i class="fa-solid fa-file-word"></i><p>Word to PDF</p></div>
+        <div class="tool-card"><i class="fa-solid fa-file-powerpoint"></i><p>PPT to PDF</p></div>
+        <div class="tool-card"><i class="fa-solid fa-file-excel"></i><p>Excel to PDF</p></div>
+        <div class="tool-card"><i class="fa-solid fa-file-export"></i><p>PDF to Word</p></div>
+        <div class="tool-card"><i class="fa-solid fa-rotate"></i><p>Rotate PDF</p></div>
     </div>
-    
-    <label>Quality (<span id="qVal">90</span>%)</label>
-    <input type="range" id="q" min="10" max="100" value="90" oninput="document.getElementById('qVal').innerText=this.value">
-    
-    <label>Format</label>
-    <select id="fmt">
-        <option value="image/jpeg">JPG</option>
-        <option value="image/png">PNG</option>
-        <option value="image/webp">WEBP</option>
-    </select>
-    
-    <button class="btn" id="processBtn">Resize & Download</button>
 </div>
 
-<script>
-    const fileInput = document.getElementById('fileInput'), preview = document.getElementById('preview'), 
-          w = document.getElementById('w'), h = document.getElementById('h'), 
-          q = document.getElementById('q'), fmt = document.getElementById('fmt'),
-          fileInfo = document.getElementById('fileInfo'), estSize = document.getElementById('estSize');
-    let img = new Image();
-
-    fileInput.onchange = (e) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            img.src = ev.target.result;
-            img.onload = () => {
-                preview.src = img.src; preview.style.display = 'block';
-                w.value = img.width; h.value = img.height;
-                fileInfo.style.display = 'block';
-                fileInfo.innerHTML = `Original: ${img.width}x${img.height}`;
-                updateEst();
-            };
-        };
-        reader.readAsDataURL(e.target.files[0]);
-    };
-
-    function updateEst() {
-        const canvas = document.createElement('canvas');
-        canvas.width = w.value; canvas.height = h.value;
-        canvas.getContext('2d').drawImage(img, 0, 0, w.value, h.value);
-        canvas.toBlob(b => {
-            estSize.style.display = 'block';
-            estSize.innerHTML = `Estimated Size: <strong>${(b.size/1024).toFixed(1)} KB</strong>`;
-        }, fmt.value, q.value/100);
-    }
-
-    [w, h, q, fmt].forEach(el => el.addEventListener('input', updateEst));
-
-    document.getElementById('processBtn').onclick = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = w.value; canvas.height = h.value;
-        canvas.getContext('2d').drawImage(img, 0, 0, w.value, h.value);
-        canvas.toBlob(b => {
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(b);
-            a.download = 'sakil-optimized.' + fmt.value.split('/')[1];
-            a.click();
-        }, fmt.value, q.value/100);
-    };
-</script>
 </body>
 </html>
