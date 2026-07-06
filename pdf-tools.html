@@ -3,79 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sakil PDF Tools - Fully Functional</title>
+    <title>Sakil All-in-One PDF Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- PDF-Lib লাইব্রেরি -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     
     <style>
-        body { background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; padding: 20px; }
-        .wrapper { max-width: 900px; margin: 0 auto; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
-        .card { background: #1e293b; padding: 25px; border-radius: 16px; text-align: center; border: 1px solid #334155; cursor: pointer; transition: 0.3s; }
-        .card:hover { border-color: #6366f1; background: #2d3748; }
-        #uploadSection { display: none; background: #1e293b; padding: 40px; border-radius: 20px; text-align: center; border: 2px dashed #6366f1; }
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #6366f1; --text: #f8fafc; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; padding: 20px; display: flex; justify-content: center; }
+        .wrapper { max-width: 900px; width: 100%; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card { background: var(--card); padding: 30px; border-radius: 20px; text-align: center; border: 1px solid #334155; cursor: pointer; transition: 0.3s; }
+        .card:hover { border-color: var(--accent); transform: translateY(-5px); }
+        .card i { font-size: 35px; color: var(--accent); margin-bottom: 15px; }
+        #appArea { background: #1e293b; padding: 40px; border-radius: 20px; text-align: center; border: 2px dashed #475569; }
+        .btn-main { padding: 15px 30px; background: var(--accent); border: none; color: white; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 16px; margin-top: 20px; }
     </style>
 </head>
 <body>
 
 <div class="wrapper">
-    <h1 style="text-align: center;">Sakil PDF Tools</h1>
+    <h1 style="text-align: center;">Sakil PDF Pro Tools</h1>
     
     <div class="grid">
-        <div class="card" onclick="selectTool('Merge')"><i class="fa-solid fa-object-group"></i><p>Merge PDF</p></div>
-        <div class="card" onclick="selectTool('Compress')"><i class="fa-solid fa-compress"></i><p>Compress PDF</p></div>
+        <div class="card" onclick="setMode('merge')"><i class="fa-solid fa-object-group"></i><p>Merge PDFs</p></div>
+        <div class="card" onclick="setMode('compress')"><i class="fa-solid fa-compress"></i><p>Compress PDF</p></div>
+        <div class="card" onclick="setMode('split')"><i class="fa-solid fa-scissors"></i><p>Split PDF</p></div>
     </div>
 
-    <div id="uploadSection">
-        <h2 id="toolTitle">Select a tool</h2>
-        <input type="file" id="fileInput" multiple accept=".pdf" style="margin-top: 20px;">
-        <br><br>
-        <button id="processBtn" style="padding: 12px 25px; background: #6366f1; border:none; color:white; border-radius:8px; cursor:pointer; font-weight:600;">Process & Download</button>
+    <div id="appArea">
+        <h2 id="modeTitle">Select a tool above</h2>
+        <input type="file" id="fileInput" multiple accept=".pdf" style="margin: 20px 0;">
+        <br>
+        <button class="btn-main" onclick="runProcess()">Process & Download</button>
     </div>
 </div>
 
 <script>
-    let currentMode = "";
+    let mode = "";
+    function setMode(m) { mode = m; document.getElementById('modeTitle').innerText = "Mode: " + m.toUpperCase(); }
 
-    function selectTool(mode) {
-        currentMode = mode;
-        document.getElementById('toolTitle').innerText = mode + " PDF Files";
-        document.getElementById('uploadSection').style.display = 'block';
-    }
+    async function runProcess() {
+        const input = document.getElementById('fileInput');
+        const files = input.files;
+        if (files.length === 0) return alert("Upload a file!");
 
-    document.getElementById('processBtn').onclick = async () => {
-        const files = document.getElementById('fileInput').files;
-        if (files.length === 0) return alert("Select at least one file!");
+        const { PDFDocument } = PDFLib;
+        const resultPdf = await PDFDocument.create();
 
-        if (currentMode === 'Merge') {
-            const mergedPdf = await PDFLib.PDFDocument.create();
-            for (let file of files) {
-                const arrayBuffer = await file.arrayBuffer();
-                const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
-                const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-                copiedPages.forEach(page => mergedPdf.addPage(page));
+        if (mode === 'merge') {
+            for (let f of files) {
+                const pdf = await PDFDocument.load(await f.arrayBuffer());
+                const pages = await resultPdf.copyPages(pdf, pdf.getPageIndices());
+                pages.forEach(p => resultPdf.addPage(p));
             }
-            const pdfBytes = await mergedPdf.save();
-            downloadFile(pdfBytes, "merged_sakil.pdf");
         } 
-        else if (currentMode === 'Compress') {
-            // সাধারণ কমপ্রেশন লজিক
-            const file = files[0];
-            const arrayBuffer = await file.arrayBuffer();
-            const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
-            const pdfBytes = await pdf.save({ useObjectStreams: true });
-            downloadFile(pdfBytes, "compressed_sakil.pdf");
-            alert("Simplified compression done!");
+        else if (mode === 'compress') {
+            const pdf = await PDFDocument.load(await files[0].arrayBuffer());
+            const pages = pdf.getPageIndices();
+            for(let i of pages) resultPdf.addPage(await resultPdf.copyPages(pdf, [i])[0]);
         }
-    };
+        else if (mode === 'split') {
+            const pdf = await PDFDocument.load(await files[0].arrayBuffer());
+            resultPdf.addPage(await resultPdf.copyPages(pdf, [0])[0]); // প্রথম পেজ স্প্লিট করার উদাহরণ
+        }
 
-    function downloadFile(bytes, name) {
-        const blob = new Blob([bytes], { type: "application/pdf" });
+        const pdfBytes = await resultPdf.save();
+        const blob = new Blob([pdfBytes], {type: "application/pdf"});
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = name;
+        link.download = "sakil-pdf-output.pdf";
         link.click();
     }
 </script>
