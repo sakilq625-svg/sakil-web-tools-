@@ -8,52 +8,42 @@
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #6366f1; --red: #ef4444; --text: #f8fafc; }
         [data-theme="light"] { --bg: #f8fafc; --card: #ffffff; --accent: #4f46e5; --red: #dc2626; --text: #0f172a; }
-        
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; }
         nav { display: flex; align-items: center; padding: 1rem 2rem; background: var(--card); border-bottom: 1px solid #334155; }
         .logo { font-weight: bold; margin-right: auto; color: var(--accent); display: flex; align-items: center; gap: 10px; }
-        nav a { color: #94a3b8; text-decoration: none; margin: 0 1rem; font-size: 0.9rem; }
         .theme-toggle { cursor: pointer; font-size: 1.2rem; }
-
         .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
         .card { background: var(--card); padding: 2rem; border-radius: 12px; border: 1px solid #334155; }
-        .card h2 { color: var(--red); font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
-        
-        .dropzone { border: 2px dashed #475569; padding: 2rem; text-align: center; border-radius: 8px; margin: 1.5rem 0; cursor: pointer; color: #94a3b8; }
-        .btn-combine { background: var(--red); color: white; border: none; padding: 0.8rem; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .dropzone { border: 2px dashed #475569; padding: 2rem; text-align: center; border-radius: 8px; margin: 1.5rem 0; cursor: pointer; }
+        .btn-combine { background: var(--red); color: white; border: none; padding: 0.8rem; width: 100%; border-radius: 6px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <nav>
     <div class="logo"><i class="fa-solid fa-layer-group"></i> Sakil Web Tools</div>
-    <a href="#">Home</a>
-    <a href="#">PDF Tools</a>
     <i class="fa-solid fa-circle-half-stroke theme-toggle" onclick="toggleTheme()"></i>
 </nav>
 
 <div class="container">
-    <h1><i class="fa-solid fa-file-pdf"></i> Premium PDF Management Module</h1>
     <div class="grid">
         <div class="card">
-            <h2><i class="fa-solid fa-object-group"></i> 1. PDF Merger</h2>
+            <h2>PDF Merger</h2>
             <div class="dropzone" onclick="document.getElementById('mergeInput').click()">
-                <i class="fa-solid fa-file-circle-plus" style="font-size: 2rem; color: var(--red);"></i>
-                <p>Choose 2+ PDF Files to Merge</p>
+                <p>Click to Upload Multiple Files</p>
                 <input type="file" id="mergeInput" multiple accept="application/pdf" style="display:none">
             </div>
-            <button class="btn-combine" id="mergeBtn">Combine PDFs</button>
+            <button class="btn-combine" id="mergeBtn">Combine All PDFs</button>
         </div>
 
         <div class="card">
-            <h2><i class="fa-solid fa-scissors"></i> 2. PDF Splitter</h2>
+            <h2>PDF Splitter</h2>
             <div class="dropzone" onclick="document.getElementById('splitInput').click()">
-                <i class="fa-solid fa-file-circle-minus" style="font-size: 2rem; color: var(--red);"></i>
-                <p>Select PDF to Split (First Page)</p>
+                <p>Upload PDF to Split All Pages</p>
                 <input type="file" id="splitInput" accept="application/pdf" style="display:none">
             </div>
-            <button class="btn-combine" id="splitBtn" style="background:#6366f1;">Split PDF</button>
+            <button class="btn-combine" id="splitBtn" style="background:#6366f1;">Split All Pages</button>
         </div>
     </div>
 </div>
@@ -67,28 +57,34 @@
         document.documentElement.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
     }
 
-    // PDF Merger
+    // Fixed Merger: একাধিক ফাইল একসাথে মার্জ করবে
     document.getElementById('mergeBtn').addEventListener('click', async () => {
-        const files = document.getElementById('mergeInput').files;
-        if (files.length < 2) return alert("Please select at least 2 files!");
+        const input = document.getElementById('mergeInput');
+        if (input.files.length < 2) return alert("Please select at least 2 files!");
+        
         const mergedPdf = await PDFDocument.create();
-        for (const file of files) {
-            const pdf = await PDFDocument.load(await file.arrayBuffer());
+        for (let i = 0; i < input.files.length; i++) {
+            const pdf = await PDFDocument.load(await input.files[i].arrayBuffer());
             const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
             pages.forEach(p => mergedPdf.addPage(p));
         }
-        downloadBlob(await mergedPdf.save(), 'merged-by-sakil.pdf');
+        const bytes = await mergedPdf.save();
+        downloadBlob(bytes, 'merged-all-files.pdf');
     });
 
-    // PDF Splitter
+    // Fixed Splitter: প্রতিটি পেজকে আলাদা পিডিএফ করবে
     document.getElementById('splitBtn').addEventListener('click', async () => {
         const file = document.getElementById('splitInput').files[0];
         if (!file) return alert("Please select a file!");
+        
         const pdf = await PDFDocument.load(await file.arrayBuffer());
-        const newPdf = await PDFDocument.create();
-        const [page] = await newPdf.copyPages(pdf, [0]); // প্রথম পেজ স্প্লিট করবে
-        newPdf.addPage(page);
-        downloadBlob(await newPdf.save(), 'split-page-1.pdf');
+        for (let i = 0; i < pdf.getPageCount(); i++) {
+            const newPdf = await PDFDocument.create();
+            const [page] = await newPdf.copyPages(pdf, [i]);
+            newPdf.addPage(page);
+            const bytes = await newPdf.save();
+            downloadBlob(bytes, `page_${i + 1}.pdf`);
+        }
     });
 
     function downloadBlob(bytes, name) {
