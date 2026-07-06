@@ -3,102 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>High Quality Image Resizer - Sakil Web Tools</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <title>Sakil Pro Image Optimizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --accent-color: #6366f1;
-            --text-primary: #f8fafc;
-        }
-        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); margin: 0; padding-top: 5rem; }
-        .tool-layout { display: grid; grid-template-columns: 1fr; gap: 2rem; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
-        @media (min-width: 768px) { .tool-layout { grid-template-columns: 1fr 1fr; } }
-        
-        .upload-box { border: 2px dashed #475569; border-radius: 20px; padding: 3rem; text-align: center; background: var(--bg-secondary); cursor: pointer; transition: 0.3s; }
-        .upload-box:hover { border-color: var(--accent-color); }
-        .preview-pane, .control-panel { background: var(--bg-secondary); border-radius: 20px; padding: 1.5rem; display: none; }
-        
-        img { max-width: 100%; border-radius: 12px; margin-bottom: 1rem; }
-        .input-box { width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; margin-bottom: 1rem; }
-        .btn-action { background: var(--accent-color); color: white; border: none; padding: 1rem; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; }
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #6366f1; --text: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 2rem; display: flex; justify-content: center; }
+        .wrapper { background: var(--card); padding: 2.5rem; border-radius: 24px; width: 100%; max-width: 500px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        .upload-zone { border: 2px dashed #475569; padding: 2.5rem; text-align: center; border-radius: 16px; cursor: pointer; transition: 0.3s; margin-bottom: 1.5rem; }
+        .upload-zone:hover { border-color: var(--accent); background: #1e293b; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: white; }
+        .btn { width: 100%; padding: 15px; background: var(--accent); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; font-size: 16px; }
+        #preview { max-width: 100%; margin: 1rem 0; border-radius: 12px; display: none; }
+        .info { font-size: 12px; color: #94a3b8; text-align: center; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<main class="tool-layout">
-    <div class="workspace-area">
-        <div class="upload-box" id="dropzone" onclick="document.getElementById('fileInput').click()">
-            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 3rem; color: var(--accent-color);"></i>
-            <h3>Upload Image</h3>
-            <input type="file" id="fileInput" accept="image/*" style="display: none;">
-        </div>
-        <div class="preview-pane" id="previewPane">
-            <img id="imagePreview" src="">
-            <button class="btn-action" style="background:#ef4444;" onclick="location.reload()">Clear</button>
-        </div>
+<div class="wrapper">
+    <h2 style="text-align:center; margin-top:0;">Sakil Pro Optimizer</h2>
+    <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+        <p>Drop Image or Click to Upload</p>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;">
     </div>
-
-    <div class="control-panel" id="controlPanel">
-        <h3>Adjust Settings</h3>
-        <input type="number" id="widthInput" class="input-box" placeholder="Width (px)">
-        <input type="number" id="heightInput" class="input-box" placeholder="Height (px)">
-        <input type="number" id="targetKbInput" class="input-box" placeholder="Target Size (KB) - Optional">
-        <button class="btn-action" id="processBtn">Process & Download</button>
-    </div>
-</main>
+    <img id="preview" src="">
+    
+    <label>Width (px)</label><input type="number" id="width">
+    <label>Target Size (KB)</label><input type="number" id="targetKb" placeholder="e.g. 200">
+    <label>Quality (%)</label><input type="range" id="quality" min="10" max="100" value="90">
+    
+    <button class="btn" id="processBtn">Resize & Optimize</button>
+    <p class="info">* EXIF Data automatically removed for privacy.</p>
+</div>
 
 <script>
-    const fileInput = document.getElementById('fileInput'), previewPane = document.getElementById('previewPane'), controlPanel = document.getElementById('controlPanel'), dropzone = document.getElementById('dropzone'), imagePreview = document.getElementById('imagePreview'), widthInput = document.getElementById('widthInput'), heightInput = document.getElementById('heightInput'), targetKbInput = document.getElementById('targetKbInput'), processBtn = document.getElementById('processBtn');
-    let originalImg = new Image();
+    const fileInput = document.getElementById('fileInput'), preview = document.getElementById('preview'), 
+          widthInput = document.getElementById('width'), targetKb = document.getElementById('targetKb'),
+          qualityInput = document.getElementById('quality');
+    let img = new Image();
 
     fileInput.onchange = (e) => {
         const reader = new FileReader();
-        reader.onload = (event) => {
-            originalImg.src = event.target.result;
-            originalImg.onload = () => {
-                imagePreview.src = originalImg.src;
-                widthInput.value = originalImg.width;
-                heightInput.value = originalImg.height;
-                dropzone.style.display = 'none';
-                previewPane.style.display = 'block';
-                controlPanel.style.display = 'block';
+        reader.onload = (ev) => {
+            img.src = ev.target.result;
+            img.onload = () => {
+                preview.src = img.src; preview.style.display = 'block';
+                widthInput.value = img.width;
             };
         };
         reader.readAsDataURL(e.target.files[0]);
     };
 
-    processBtn.onclick = () => {
+    document.getElementById('processBtn').onclick = () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        // কোয়ালিটি ঠিক রাখার জন্য হাই রেজোলিউশন ক্যানভাস
+        const scale = widthInput.value / img.width;
         canvas.width = widthInput.value;
-        canvas.height = heightInput.value;
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(originalImg, 0, 0, canvas.width, canvas.height);
+        canvas.height = img.height * scale;
+        
+        // ছবি রেন্ডার করার সময় EXIF অটোমেটিক বাদ হয়ে যায় ক্যানভাসের কারণে
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        let quality = 0.95; 
-        const mimeType = 'image/jpeg';
-        let dataUrl = canvas.toDataURL(mimeType, quality);
+        let quality = qualityInput.value / 100;
+        let dataUrl = canvas.toDataURL('image/jpeg', quality);
 
-        // সাইজ কমানোর জন্য স্মার্ট কমপ্রেশন
-        if(targetKbInput.value) {
-            let step = 0.05;
-            for(let i = 0; i < 10; i++) {
-                if((dataUrl.length * 0.75) / 1024 > targetKbInput.value) {
-                    quality -= step;
-                    dataUrl = canvas.toDataURL(mimeType, quality);
-                }
+        if(targetKb.value) {
+            let targetBytes = targetKb.value * 1024;
+            let iterations = 0;
+            while(dataUrl.length > targetBytes * 1.1 && quality > 0.05 && iterations < 10) {
+                quality -= 0.1;
+                dataUrl = canvas.toDataURL('image/jpeg', quality);
+                iterations++;
             }
         }
 
         const a = document.createElement('a');
         a.href = dataUrl;
-        a.download = 'resized-image.jpg';
+        a.download = 'sakil-optimized.jpg';
         a.click();
     };
 </script>
