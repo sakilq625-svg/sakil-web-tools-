@@ -2,32 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Premium PDF Utilities - Sakil Web Tools</title>
+    <!-- pdf-lib লাইব্রেরিটি যোগ করলাম -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #6366f1; --red: #ef4444; --text: #f8fafc; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
-        
-        /* Navbar */
         nav { display: flex; align-items: center; padding: 1rem 2rem; background: var(--card); border-bottom: 1px solid #334155; }
         .logo { font-weight: bold; font-size: 1.2rem; margin-right: 2rem; color: var(--accent); }
         nav a { color: #94a3b8; text-decoration: none; margin: 0 1rem; font-size: 0.9rem; }
         nav a.active { color: white; border-bottom: 2px solid var(--accent); }
-
-        /* Container */
         .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
-        .header { margin-bottom: 2rem; }
-        
-        /* Grid Layout */
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
         .card { background: var(--card); padding: 2rem; border-radius: 12px; border: 1px solid #334155; }
         .card h2 { color: var(--red); margin-top: 0; }
-        
-        /* Dropzone Style */
         .dropzone { border: 2px dashed #475569; padding: 2rem; text-align: center; border-radius: 8px; margin: 1rem 0; cursor: pointer; }
-        .dropzone:hover { border-color: var(--red); }
-        
-        /* Button */
         .btn-combine { background: var(--red); color: white; border: none; padding: 1rem; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
@@ -35,40 +24,49 @@
 
 <nav>
     <div class="logo">Sakil Web Tools</div>
-    <a href="#">Home</a>
-    <a href="#">Image Tools</a>
-    <a href="#">BG Remover</a>
-    <a href="#" class="active">PDF Tools</a>
-    <a href="#">About</a>
+    <a href="#">Home</a><a href="#">Image Tools</a><a href="#">BG Remover</a>
+    <a href="#" class="active">PDF Tools</a><a href="#">About</a>
 </nav>
 
 <div class="container">
-    <div class="header">
-        <h1>Premium PDF Management Module</h1>
-        <p>Merge multiple files into one document, or split specific pages locally inside your browser secure chamber.</p>
-    </div>
-
+    <h1>Premium PDF Management Module</h1>
     <div class="grid">
-        <!-- PDF Merger -->
         <div class="card">
             <h2>1. PDF Merger</h2>
-            <p>Select and consolidate multiple PDF files orderly into a single compiled document.</p>
-            <div class="dropzone">
+            <input type="file" id="mergeInput" multiple accept="application/pdf" style="display:none">
+            <div class="dropzone" onclick="document.getElementById('mergeInput').click()">
                 <p>Choose PDF Files to Merge<br>Select 2 or more PDF files</p>
             </div>
-            <button class="btn-combine">Combine PDFs</button>
+            <button class="btn-combine" onclick="mergePDFs()">Combine PDFs</button>
         </div>
-
-        <!-- PDF Splitter -->
         <div class="card">
             <h2>2. PDF Splitter</h2>
-            <p>Extract custom pages or page ranges from a single PDF document instantly.</p>
-            <div class="dropzone">
-                <p>Select Single PDF to Split<br>Supports any standard PDF structure</p>
-            </div>
+            <p>Feature coming soon...</p>
         </div>
     </div>
 </div>
+
+<script>
+    async function mergePDFs() {
+        const files = document.getElementById('mergeInput').files;
+        if (files.length < 2) { alert('Please select at least 2 files'); return; }
+
+        const mergedPdf = await PDFLib.PDFDocument.create();
+        for (let file of files) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
+            const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+            copiedPages.forEach(page => mergedPdf.addPage(page));
+        }
+
+        const mergedPdfBytes = await mergedPdf.save();
+        const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'merged-sakil-tools.pdf';
+        link.click();
+    }
+</script>
 
 </body>
 </html>
