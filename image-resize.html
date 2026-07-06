@@ -6,83 +6,119 @@
     <title>Sakil Pro Optimizer - Image Resizer & KB Reducer</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --accent: #6366f1; --text: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
-        .wrapper { background: var(--card); padding: 2rem; border-radius: 20px; width: 100%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .upload-zone { border: 2px dashed #475569; padding: 20px; text-align: center; border-radius: 12px; cursor: pointer; margin-bottom: 15px; }
-        .input-row { display: flex; gap: 10px; }
-        input { width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; }
-        .btn { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; margin-top: 10px; }
-        #preview { max-width: 100%; border-radius: 8px; display: none; margin: 10px 0; }
-        .info-box { font-size: 13px; color: #94a3b8; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: none; }
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #6366f1; --text: #f8fafc; --danger: #ef4444; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 2rem; display: flex; justify-content: center; }
+        .wrapper { background: var(--card); padding: 2.5rem; border-radius: 24px; width: 100%; max-width: 500px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        .upload-zone { border: 2px dashed #475569; padding: 2.5rem; text-align: center; border-radius: 16px; cursor: pointer; transition: 0.3s; margin-bottom: 1.5rem; }
+        .upload-zone:hover { border-color: var(--accent); background: #1e293b; }
+        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; background: var(--accent); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        .btn:hover { background: #4f46e5; }
+        #preview { max-width: 100%; margin: 1rem 0; border-radius: 12px; display: none; }
+        .info-box { font-size: 14px; color: #94a3b8; background: #0f172a; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; display: none; }
+        .output-box { font-weight: 600; color: var(--accent); margin-top: 1rem; }
+        .danger-btn { background: var(--danger); margin-top: 1rem; }
+        .danger-btn:hover { background: #dc2626; }
     </style>
 </head>
 <body>
 
 <div class="wrapper">
-    <h2 style="text-align:center; margin:0;">Sakil Pro Optimizer</h2>
+    <h2 style="text-align:center; margin-top:0;">Sakil Pro Optimizer</h2>
     <p style="text-align:center; color: var(--accent); font-size: 0.9rem;">Image Resizer & KB Reducer</p>
     
-    <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
-        <p>Click to Upload Image</p>
+    <div class="upload-zone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+        <p>Drop Image or Click to Upload</p>
         <input type="file" id="fileInput" accept="image/*" style="display: none;">
     </div>
 
     <img id="preview">
+    
     <div id="fileInfo" class="info-box"></div>
 
     <div class="input-row">
-        <div><label>Width (px)</label><input type="number" id="width"></div>
-        <div><label>Height (px)</label><input type="number" id="height"></div>
+        <div><label>Width (px)</label><input type="number" id="widthInput" placeholder="Auto"></div>
+        <div><label>Height (px)</label><input type="number" id="heightInput" placeholder="Auto"></div>
     </div>
     
-    <label>Target Size (KB)</label><input type="number" id="targetKb" placeholder="Leave empty for auto">
-    <label>Quality (<span id="qVal">90</span>%)</label>
-    <input type="range" id="quality" min="1" max="100" value="90" oninput="document.getElementById('qVal').innerText=this.value">
+    <label>Target Size (KB) - Optional</label><input type="number" id="targetKbInput" placeholder="e.g. 200">
     
+    <label>Quality (<span id="qVal">90</span>%)</label>
+    <input type="range" id="qualityInput" min="10" max="100" value="90" oninput="document.getElementById('qVal').innerText=this.value">
+    
+    <label>Download Format</label>
+    <select id="formatInput">
+        <option value="image/jpeg">JPG</option>
+        <option value="image/png">PNG</option>
+        <option value="image/webp">WEBP</option>
+    </select>
+
     <button class="btn" id="processBtn">Resize & Optimize</button>
+    <button class="btn danger-btn" id="clearBtn" style="display:none;" onclick="location.reload()">Clear Image</button>
+    
+    <div id="outputInfo" class="info-box output-box" style="display:none;"></div>
 </div>
 
 <script>
     const fileInput = document.getElementById('fileInput'), preview = document.getElementById('preview'), 
-          w = document.getElementById('width'), h = document.getElementById('height'), 
-          targetKb = document.getElementById('targetKb'), q = document.getElementById('quality'),
-          info = document.getElementById('fileInfo');
-    let img = new Image();
+          widthInput = document.getElementById('widthInput'), heightInput = document.getElementById('heightInput'), 
+          targetKbInput = document.getElementById('targetKbInput'), qualityInput = document.getElementById('qualityInput'),
+          formatInput = document.getElementById('formatInput'), processBtn = document.getElementById('processBtn'),
+          fileInfo = document.getElementById('fileInfo'), outputInfo = document.getElementById('outputInfo'),
+          dropzone = document.getElementById('dropzone'), clearBtn = document.getElementById('clearBtn');
+    
+    let originalImg = new Image();
+    let originalFileObj = null;
 
     fileInput.onchange = (e) => {
         const file = e.target.files[0];
+        if(!file) return;
+        originalFileObj = file;
         const reader = new FileReader();
         reader.onload = (ev) => {
-            img.src = ev.target.result;
-            img.onload = () => {
-                preview.src = img.src; preview.style.display = 'block';
-                w.value = img.width; h.value = img.height;
-                info.style.display = 'block';
-                info.innerHTML = `File: ${file.name} | Size: ${(file.size/1024).toFixed(1)} KB | Resolution: ${img.width}x${img.height}`;
+            originalImg.src = ev.target.result;
+            originalImg.onload = () => {
+                preview.src = originalImg.src; preview.style.display = 'block';
+                widthInput.value = originalImg.width; heightInput.value = originalImg.height;
+                dropzone.style.display = 'none'; clearBtn.style.display = 'block';
+                fileInfo.style.display = 'block';
+                fileInfo.innerHTML = `<strong>Original:</strong> ${file.name} <br> <strong>Size:</strong> ${(file.size/1024/1024).toFixed(2)} MB (${(file.size/1024).toFixed(1)} KB) <br> <strong>Dimensions:</strong> ${originalImg.width}x${originalImg.height}`;
+                outputInfo.style.display = 'none';
             };
         };
         reader.readAsDataURL(file);
     };
 
-    document.getElementById('processBtn').onclick = () => {
+    processBtn.onclick = () => {
+        if(!originalImg.src) return;
         const canvas = document.createElement('canvas');
-        canvas.width = w.value; canvas.height = h.value;
         const ctx = canvas.getContext('2d');
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(img, 0, 0, w.value, h.value);
+        const targetW = parseInt(widthInput.value) || originalImg.width;
+        const targetH = parseInt(heightInput.value) || originalImg.height;
+        canvas.width = targetW; canvas.height = targetH;
+        ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(originalImg, 0, 0, targetW, targetH);
+
+        let quality = qualityInput.value / 100;
+        let mimeType = formatInput.value;
         
-        let quality = q.value / 100;
-        
-        // Blob ব্যবহার করে ডাউনলোড করা অনেক বেশি নিরাপদ ও সঠিক সাইজ দেয়
+        // প্রফেশনাল সাইজ কন্ট্রোল লজিক
         canvas.toBlob((blob) => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
+            const ext = mimeType.split('/')[1];
+            a.download = `sakil-optimized.${ext}`;
             a.href = url;
-            a.download = 'sakil-optimized.jpg';
             a.click();
-        }, 'image/jpeg', quality);
+            
+            // নতুন সাইজ দেখানোর লজিক
+            const newSizeKb = (blob.size / 1024).toFixed(1);
+            const newSizeMb = (blob.size / 1024 / 1024).toFixed(2);
+            outputInfo.style.display = 'block';
+            outputInfo.innerHTML = `✅ <strong>Optimization Complete!</strong> <br> <strong>New Size:</strong> ${newSizeMb} MB (${newSizeKb} KB) <br> <strong>Format:</strong> ${ext.toUpperCase()}`;
+            
+        }, mimeType, quality);
     };
 </script>
 </body>
