@@ -574,9 +574,14 @@
             return [...new Set(indices)].sort((a, b) => a - b);
         }
 
-        // ==========================================
+// ==========================================
         // 3. PDF COMPRESSOR ENGINE LOGIC
+        // (rasterize-and-rebuild approach — works regardless of the
+        // original image/text encoding, at the cost of making the
+        // output PDF image-based: text becomes non-selectable/searchable)
         // ==========================================
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
         const compressInput = document.getElementById('compressInput');
         const compressDropZone = document.getElementById('compressDropZone');
         const compressConfigArea = document.getElementById('compressConfigArea');
@@ -606,15 +611,46 @@
             compressQualityVal.textContent = compressQuality.value + '%';
         });
 
-        function loadImageFromBytes(bytes) {
-            return new Promise((resolve, reject) => {
-                const blob = new Blob([bytes], { type: 'image/jpeg' });
-                const url = URL.createObjectURL(blob);
-                const img = new Image();
-                img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
-                img.onerror = (err) => { URL.revokeObjectURL(url); reject(err); };
-                img.src = url;
-            });
+        // Renders every page of the PDF to a canvas at the given DPI scale,
+        // re-encodes each page as a JPEG at the given quality, and rebuilds
+        // a brand-new one-image-per-page PDF using pdf-lib.
+        // dpiScale: 1.0 ≈ 96 DPI equivalent baseline, lower = smaller/blurrier.
+        async function rasterizeAndRebuild(originalFileBytes, quality, dpiScale) {
+            const loadingTask = pdfjsLib.getDocument({ data: originalFileBytes });
+            const pdf = await loadingTask.promise;
+
+            const { PDFDocument } = PDFLib;
+            const outputPdf = await PDFDocument.create();
+
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                const page = await pdf.getPage(pageNum);
+                const viewport = page.getViewport({ scale: dpiScale });
+
+                const canvas = document.createElement('canvas');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                const ctx = canvas.getContext('2d');
+
+                // White background first (scanned PDFs can have transparent gaps)
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                await page.render({ canvasContext: ctx, viewport }).promise;
+
+                const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
+                const jpegBytes = dataUrlToBytes(jpegDataUrl);
+                const embeddedImage = await outputPdf.embedJpg(jpegBytes);
+
+                const outPage = outputPdf.addPage([viewport.width, viewport.height]);
+                outPage.drawImage(embeddedImage, {
+                    x: 0, y: 0,
+                    width: viewport.width,
+                    height: viewport.height
+                });
+            }
+
+            const outBytes = await outputPdf.save();
+            return outBytes;
         }
 
         function dataUrlToBytes(dataUrl) {
@@ -625,96 +661,28 @@
             return bytes;
         }
 
-        // Rebuilds the PDF from its ORIGINAL bytes each time, re-encoding every
-        // embedded JPEG at the given quality and (optionally) a reduced pixel
-        // scale. Returns the new PDF bytes plus whether any image was touched.
-        // scale = 1 means original resolution; 0.5 means half width/height (1/4 the pixels).
-        async function compressPdfImages(originalFileBytes, quality, scale) {
-            const { PDFDocument, PDFName, PDFRawStream } = PDFLib;
-            const pdfDoc = await PDFDocument.load(originalFileBytes);
-            const pages = pdfDoc.getPages();
-            let touchedAnyImage = false;
-
-            for (const page of pages) {
-                const resources = page.node.Resources();
-                if (!resources) continue;
-
-                const xObjectsDict = resources.lookup(PDFName.of('XObject'));
-                if (!xObjectsDict) continue;
-
-                const keys = xObjectsDict.keys();
-                for (const key of keys) {
-                    const xObjectRef = xObjectsDict.get(key);
-                    const xObject = pdfDoc.context.lookup(xObjectRef);
-                    if (!(xObject instanceof PDFRawStream)) continue;
-
-                    const dict = xObject.dict;
-                    const subtype = dict.get(PDFName.of('Subtype'));
-                    if (!subtype || subtype.name !== 'Image') continue;
-
-                    const filter = dict.get(PDFName.of('Filter'));
-                    const filterName = filter ? filter.name : null;
-
-                    // Only JPEG (DCTDecode) images can be safely decoded and
-                    // re-compressed in-browser without a full PDF image decoder.
-                    if (filterName !== 'DCTDecode') continue;
-
-                    try {
-                        const rawBytes = xObject.contents;
-                        const img = await loadImageFromBytes(rawBytes);
-
-                        const targetW = Math.max(1, Math.round(img.width * scale));
-                        const targetH = Math.max(1, Math.round(img.height * scale));
-
-                        const canvas = document.createElement('canvas');
-                        canvas.width = targetW;
-                        canvas.height = targetH;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, targetW, targetH);
-
-                        const newDataUrl = canvas.toDataURL('image/jpeg', quality);
-                        const newJpegBytes = dataUrlToBytes(newDataUrl);
-
-                        // Only replace if it's actually smaller than the original image
-                        if (newJpegBytes.length < rawBytes.length) {
-                            const newImage = await pdfDoc.embedJpg(newJpegBytes);
-                            xObjectsDict.set(key, newImage.ref);
-                            touchedAnyImage = true;
-                        }
-                    } catch (imgErr) {
-                        console.warn('Skipped one image during compression:', imgErr);
-                    }
-                }
-            }
-
-            const compressedBytes = await pdfDoc.save();
-            return { bytes: compressedBytes, touchedAnyImage };
-        }
-
-        // Binary search over a single "strength" value t in [0,1].
-        // t=0  -> quality 0.9, scale 1.0   (mild compression)
-        // t=1  -> quality 0.1, scale 0.35  (aggressive compression)
-        // Rebuilds the PDF from the ORIGINAL bytes at each step (not from the
-        // previous step's output) to avoid compounding quality loss across iterations.
+        // Binary search over a single "strength" t in [0,1].
+        // t=0 -> quality 0.85, dpiScale 1.5 (sharper, bigger)
+        // t=1 -> quality 0.25, dpiScale 0.7  (softer, smaller)
         async function compressPdfToTarget(originalFileBytes, targetBytes, maxIterations = 6) {
             let low = 0, high = 1;
             let best = null;
 
             for (let i = 0; i < maxIterations; i++) {
                 const t = (low + high) / 2;
-                const quality = 0.9 - t * 0.8;   // 0.9 -> 0.1
-                const scale = 1.0 - t * 0.65;    // 1.0 -> 0.35
+                const quality = 0.85 - t * 0.6;     // 0.85 -> 0.25
+                const dpiScale = 1.5 - t * 0.8;      // 1.5  -> 0.7
 
-                const { bytes, touchedAnyImage } = await compressPdfImages(originalFileBytes, quality, scale);
+                const bytes = await rasterizeAndRebuild(originalFileBytes, quality, dpiScale);
 
                 if (!best || Math.abs(bytes.length - targetBytes) < Math.abs(best.bytes.length - targetBytes)) {
-                    best = { bytes, touchedAnyImage, t };
+                    best = { bytes, t };
                 }
 
                 if (bytes.length > targetBytes) {
-                    low = t; // need stronger compression
+                    low = t;  // need stronger compression
                 } else {
-                    high = t; // can ease off a bit
+                    high = t; // can ease off
                 }
             }
 
@@ -733,30 +701,22 @@
                 const originalSize = compressTargetFile.size;
                 const targetKb = parseInt(compressTargetKb.value, 10);
 
-                let compressedBytes, touchedAnyImage;
+                let compressedBytes;
 
                 if (targetKb && targetKb > 0) {
                     const targetBytes = targetKb * 1024;
                     const result = await compressPdfToTarget(originalBytes, targetBytes);
                     compressedBytes = result.bytes;
-                    touchedAnyImage = result.touchedAnyImage;
                 } else {
                     const quality = parseInt(compressQuality.value, 10) / 100;
-                    const result = await compressPdfImages(originalBytes, quality, 1.0);
-                    compressedBytes = result.bytes;
-                    touchedAnyImage = result.touchedAnyImage;
+                    compressedBytes = await rasterizeAndRebuild(originalBytes, quality, 1.5);
                 }
 
                 const newSize = compressedBytes.length;
+                const savedPercent = Math.max(0, Math.round((1 - newSize / originalSize) * 100));
 
-                if (!touchedAnyImage) {
-                    compressResult.style.color = 'var(--text-secondary)';
-                    compressResult.textContent = 'No compressible JPEG images found — file saved as-is.';
-                } else {
-                    const savedPercent = Math.max(0, Math.round((1 - newSize / originalSize) * 100));
-                    compressResult.style.color = 'var(--accent)';
-                    compressResult.textContent = `Done — ${formatSize(originalSize)} → ${formatSize(newSize)} (${savedPercent}% smaller)`;
-                }
+                compressResult.style.color = 'var(--accent)';
+                compressResult.textContent = `Done — ${formatSize(originalSize)} → ${formatSize(newSize)} (${savedPercent}% smaller). Note: text is no longer selectable, as pages are now stored as images.`;
                 compressResult.style.display = 'block';
 
                 const baseName = compressTargetFile.name.replace(/\.pdf$/i, '');
@@ -764,12 +724,9 @@
 
             } catch (err) {
                 console.error(err);
-                alert("Failed to compress this PDF. It may be encrypted or use an unsupported structure.");
+                alert("Failed to compress this PDF. It may be encrypted, password-protected, or corrupted.");
             } finally {
                 compressBtn.innerHTML = `<i class="fa-solid fa-compress"></i> Compress & Download PDF`;
                 compressBtn.disabled = false;
             }
         });
-    </script>
-</body>
-</html>
