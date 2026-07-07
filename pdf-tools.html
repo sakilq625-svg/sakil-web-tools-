@@ -12,26 +12,27 @@
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 
     <style>
+        /* ===== THEME TOKENS ===== */
         :root[data-theme="light"] {
-            --bg-primary: #FBF7F0;
+            --bg-primary: #FBF7F0;      /* warm paper */
             --bg-secondary: #FFFFFF;
-            --bg-tint: #FDECEA;
+            --bg-tint: #FDECEA;         /* soft ink-red wash */
             --text-primary: #241B1B;
             --text-secondary: #6B5C58;
             --border-color: #E7DCD3;
-            --accent: #C0392B;
+            --accent: #C0392B;          /* sealing-wax red */
             --accent-dark: #8E2A1F;
             --accent-soft: #E67E5A;
             --shadow: 0 10px 30px -12px rgba(36, 27, 27, 0.18);
         }
         :root[data-theme="dark"] {
-            --bg-primary: #1B1412;
+            --bg-primary: #1B1412;      /* dark ink */
             --bg-secondary: #241C19;
             --bg-tint: #3A211C;
             --text-primary: #F3E9E1;
             --text-secondary: #C4AFA5;
             --border-color: #3D2E29;
-            --accent: #E86A4E;
+            --accent: #E86A4E;          /* warm ember */
             --accent-dark: #FF8A63;
             --accent-soft: #C0392B;
             --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.55);
@@ -48,6 +49,7 @@
         }
         h1, h2, h3, h4 { font-family: 'Fraunces', serif; margin: 0; }
 
+        /* ===== NAVBAR ===== */
         .navbar {
             position: fixed;
             top: 0; left: 0; right: 0;
@@ -85,6 +87,7 @@
         }
         .nav-link:hover, .nav-link.active { color: var(--accent); }
 
+        /* Theme toggle — fixed top-right corner */
         #theme-toggle {
             position: fixed;
             top: 1.1rem;
@@ -105,6 +108,7 @@
         }
         #theme-toggle:hover { transform: scale(1.08); }
 
+        /* ===== MAIN ===== */
         .main-container {
             max-width: 1100px;
             margin: 0 auto;
@@ -128,10 +132,7 @@
             margin-top: 2.5rem;
         }
         @media(min-width: 768px) {
-            .pdf-dashboard { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media(min-width: 1100px) {
-            .pdf-dashboard { grid-template-columns: repeat(3, 1fr); }
+            .pdf-dashboard { grid-template-columns: 1fr 1fr; }
         }
         .tool-box {
             background: var(--bg-secondary);
@@ -197,61 +198,6 @@
         .split-range-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
         label { color: var(--text-primary); }
 
-        .custom-slider {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 6px;
-            border-radius: 5px;
-            background: var(--border-color);
-            outline: none;
-        }
-        .custom-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: var(--accent);
-            cursor: pointer;
-        }
-        .slider-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-        }
-        .target-box {
-            background: var(--bg-tint);
-            border: 1px dashed var(--accent);
-            padding: 1rem;
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .target-box label {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--accent);
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-        .compress-note {
-            font-size: 0.78rem;
-            color: var(--text-secondary);
-            background: var(--bg-tint);
-            border: 1px dashed var(--accent);
-            padding: 0.6rem 0.8rem;
-            border-radius: 8px;
-        }
-        .result-badge {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--accent);
-            display: none;
-        }
-
         .btn-pdf {
             background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
             color: white;
@@ -274,10 +220,10 @@
 
     <header class="navbar">
         <div class="nav-container">
-            <a href="index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span></a>
+            <a href="../index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span></a>
             <nav class="nav-menu">
-                <a href="index.html" class="nav-link">Home</a>
-                <a href="index.html#image-tools" class="nav-link">Image Tools</a>
+                <a href="../index.html" class="nav-link">Home</a>
+                <a href="../index.html#image-tools" class="nav-link">Image Tools</a>
                 <a href="bg-remover.html" class="nav-link">BG Remover</a>
                 <a href="pdf-tools.html" class="nav-link active">PDF Tools</a>
                 <a href="about.html" class="nav-link">About</a>
@@ -290,7 +236,7 @@
     <main class="main-container">
         <div class="section-header">
             <h2><i class="fa-solid fa-file-pdf"></i> Premium PDF Management Module</h2>
-            <p>Merge, split, or compress PDF files locally inside your browser secure chamber.</p>
+            <p>Merge multiple files into one document, or split specific pages locally inside your browser secure chamber.</p>
         </div>
 
         <div class="pdf-dashboard">
@@ -336,47 +282,6 @@
                 </div>
             </div>
 
-            <div class="tool-box">
-                <h3><i class="fa-solid fa-file-zipper"></i> 3. PDF Compressor</h3>
-                <p>Shrink file size by re-compressing JPEG images embedded inside the PDF.</p>
-
-                <div class="upload-zone" id="compressDropZone" onclick="document.getElementById('compressInput').click()">
-                    <i class="fa-solid fa-file-arrow-down"></i>
-                    <h4>Select PDF to Compress</h4>
-                    <p>Works best on scanned / image-heavy PDFs</p>
-                    <input type="file" id="compressInput" accept="application/pdf" style="display: none;">
-                </div>
-
-                <div id="compressConfigArea" style="display: none; flex-direction: column; gap: 1rem;">
-                    <div class="file-list">
-                        <div class="file-item">
-                            <span id="compressMetaName">document.pdf</span>
-                            <span id="compressMetaSize" style="font-weight: 600; color: var(--accent);">0 KB</span>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="slider-header">
-                            <label for="compressQuality">Compression Quality</label>
-                            <span id="compressQualityVal">70%</span>
-                        </div>
-                        <input type="range" id="compressQuality" class="custom-slider" min="10" max="95" value="70">
-                    </div>
-
-                    <div class="target-box">
-                        <label><i class="fa-solid fa-bullseye"></i> Target File Size (Optional KB)</label>
-                        <input type="number" id="compressTargetKb" class="split-range-input" placeholder="e.g. 200" min="10">
-                        <span style="font-size: 0.75rem; color: var(--text-secondary);">If set, quality above is ignored — we'll automatically try several quality + resolution combinations to get as close as possible to this size.</span>
-                    </div>
-
-                    <p class="compress-note"><i class="fa-solid fa-circle-info"></i> Only JPEG images inside the PDF can be re-compressed. Text-only or PNG-image PDFs may not shrink much — this is expected, not a bug. Reaching an exact target isn't guaranteed; the result depends on the images inside your file.</p>
-
-                    <span class="result-badge" id="compressResult"></span>
-
-                    <button class="btn-pdf" id="compressBtn"><i class="fa-solid fa-compress"></i> Compress & Download PDF</button>
-                </div>
-            </div>
-
         </div>
     </main>
 
@@ -395,22 +300,6 @@
             applyTheme(next);
         });
 
-        function formatSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        function triggerDownload(bytes, filename) {
-            const blob = new Blob([bytes], { type: "application/pdf" });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            link.click();
-        }
-
         // ==========================================
         // 1. PDF MERGER ENGINE LOGIC
         // ==========================================
@@ -425,7 +314,7 @@
                     mergeFilesArray.push(file);
                 }
                 renderMergeList();
-                mergeInput.value = '';
+                mergeInput.value = ''; // allow re-selecting the same file later
             }
         });
 
@@ -528,6 +417,7 @@
                 const sourcePdfDoc = await PDFLib.PDFDocument.load(splitTargetFileBytes);
                 const targetPdfDoc = await PDFLib.PDFDocument.create();
 
+                // Parse ranges like "1-3, 5" into page indices array
                 const pagesToExtract = parsePageRanges(rangeStr, totalTargetPages);
 
                 if (pagesToExtract.length === 0) {
@@ -548,6 +438,7 @@
             }
         });
 
+        // Parse human numbers (e.g. "1-3, 5") to 0-indexed JS sequence array safely
         function parsePageRanges(text, maxPages) {
             const indices = [];
             const parts = text.split(',');
@@ -559,7 +450,7 @@
                     let start = parseInt(limits[0], 10);
                     let end = parseInt(limits[1], 10);
                     if (!isNaN(start) && !isNaN(end)) {
-                        if (start > end) [start, end] = [end, start];
+                        if (start > end) [start, end] = [end, start]; // handle reversed ranges
                         for (let i = start; i <= end; i++) {
                             if (i >= 1 && i <= maxPages) indices.push(i - 1);
                         }
@@ -571,162 +462,17 @@
                     }
                 }
             }
+            // Filter duplicates and sort orderly
             return [...new Set(indices)].sort((a, b) => a - b);
         }
 
-// ==========================================
-        // 3. PDF COMPRESSOR ENGINE LOGIC
-        // (rasterize-and-rebuild approach — works regardless of the
-        // original image/text encoding, at the cost of making the
-        // output PDF image-based: text becomes non-selectable/searchable)
-        // ==========================================
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-
-        const compressInput = document.getElementById('compressInput');
-        const compressDropZone = document.getElementById('compressDropZone');
-        const compressConfigArea = document.getElementById('compressConfigArea');
-        const compressMetaName = document.getElementById('compressMetaName');
-        const compressMetaSize = document.getElementById('compressMetaSize');
-        const compressQuality = document.getElementById('compressQuality');
-        const compressQualityVal = document.getElementById('compressQualityVal');
-        const compressTargetKb = document.getElementById('compressTargetKb');
-        const compressResult = document.getElementById('compressResult');
-        const compressBtn = document.getElementById('compressBtn');
-
-        let compressTargetFile = null;
-
-        compressInput.addEventListener('change', (e) => {
-            if (e.target.files.length) {
-                compressTargetFile = e.target.files[0];
-                compressMetaName.innerText = compressTargetFile.name;
-                compressMetaSize.innerText = formatSize(compressTargetFile.size);
-                compressDropZone.style.display = 'none';
-                compressConfigArea.style.display = 'flex';
-                compressResult.style.display = 'none';
-            }
-            compressInput.value = '';
-        });
-
-        compressQuality.addEventListener('input', () => {
-            compressQualityVal.textContent = compressQuality.value + '%';
-        });
-
-        // Renders every page of the PDF to a canvas at the given DPI scale,
-        // re-encodes each page as a JPEG at the given quality, and rebuilds
-        // a brand-new one-image-per-page PDF using pdf-lib.
-        // dpiScale: 1.0 ≈ 96 DPI equivalent baseline, lower = smaller/blurrier.
-        async function rasterizeAndRebuild(originalFileBytes, quality, dpiScale) {
-            const loadingTask = pdfjsLib.getDocument({ data: originalFileBytes });
-            const pdf = await loadingTask.promise;
-
-            const { PDFDocument } = PDFLib;
-            const outputPdf = await PDFDocument.create();
-
-            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                const page = await pdf.getPage(pageNum);
-                const viewport = page.getViewport({ scale: dpiScale });
-
-                const canvas = document.createElement('canvas');
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
-                const ctx = canvas.getContext('2d');
-
-                // White background first (scanned PDFs can have transparent gaps)
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                await page.render({ canvasContext: ctx, viewport }).promise;
-
-                const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
-                const jpegBytes = dataUrlToBytes(jpegDataUrl);
-                const embeddedImage = await outputPdf.embedJpg(jpegBytes);
-
-                const outPage = outputPdf.addPage([viewport.width, viewport.height]);
-                outPage.drawImage(embeddedImage, {
-                    x: 0, y: 0,
-                    width: viewport.width,
-                    height: viewport.height
-                });
-            }
-
-            const outBytes = await outputPdf.save();
-            return outBytes;
+        function triggerDownload(bytes, filename) {
+            const blob = new Blob([bytes], { type: "application/pdf" });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
         }
-
-        function dataUrlToBytes(dataUrl) {
-            const base64 = dataUrl.split(',')[1];
-            const binary = atob(base64);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-            return bytes;
-        }
-
-        // Binary search over a single "strength" t in [0,1].
-        // t=0 -> quality 0.85, dpiScale 1.5 (sharper, bigger)
-        // t=1 -> quality 0.25, dpiScale 0.7  (softer, smaller)
-        async function compressPdfToTarget(originalFileBytes, targetBytes, maxIterations = 6) {
-            let low = 0, high = 1;
-            let best = null;
-
-            for (let i = 0; i < maxIterations; i++) {
-                const t = (low + high) / 2;
-                const quality = 0.85 - t * 0.6;     // 0.85 -> 0.25
-                const dpiScale = 1.5 - t * 0.8;      // 1.5  -> 0.7
-
-                const bytes = await rasterizeAndRebuild(originalFileBytes, quality, dpiScale);
-
-                if (!best || Math.abs(bytes.length - targetBytes) < Math.abs(best.bytes.length - targetBytes)) {
-                    best = { bytes, t };
-                }
-
-                if (bytes.length > targetBytes) {
-                    low = t;  // need stronger compression
-                } else {
-                    high = t; // can ease off
-                }
-            }
-
-            return best;
-        }
-
-        compressBtn.addEventListener('click', async () => {
-            if (!compressTargetFile) return;
-
-            compressBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Compressing...`;
-            compressBtn.disabled = true;
-            compressResult.style.display = 'none';
-
-            try {
-                const originalBytes = await compressTargetFile.arrayBuffer();
-                const originalSize = compressTargetFile.size;
-                const targetKb = parseInt(compressTargetKb.value, 10);
-
-                let compressedBytes;
-
-                if (targetKb && targetKb > 0) {
-                    const targetBytes = targetKb * 1024;
-                    const result = await compressPdfToTarget(originalBytes, targetBytes);
-                    compressedBytes = result.bytes;
-                } else {
-                    const quality = parseInt(compressQuality.value, 10) / 100;
-                    compressedBytes = await rasterizeAndRebuild(originalBytes, quality, 1.5);
-                }
-
-                const newSize = compressedBytes.length;
-                const savedPercent = Math.max(0, Math.round((1 - newSize / originalSize) * 100));
-
-                compressResult.style.color = 'var(--accent)';
-                compressResult.textContent = `Done — ${formatSize(originalSize)} → ${formatSize(newSize)} (${savedPercent}% smaller). Note: text is no longer selectable, as pages are now stored as images.`;
-                compressResult.style.display = 'block';
-
-                const baseName = compressTargetFile.name.replace(/\.pdf$/i, '');
-                triggerDownload(compressedBytes, `${baseName}-compressed.pdf`);
-
-            } catch (err) {
-                console.error(err);
-                alert("Failed to compress this PDF. It may be encrypted, password-protected, or corrupted.");
-            } finally {
-                compressBtn.innerHTML = `<i class="fa-solid fa-compress"></i> Compress & Download PDF`;
-                compressBtn.disabled = false;
-            }
-        });
+    </script>
+</body>
+</html>
