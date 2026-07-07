@@ -22,7 +22,112 @@
         .about-card h3 {
             margin-top: 1.5rem;
             color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
+        .about-card p, .about-card li {
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .dev-strip {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+            margin-top: 2rem;
+        }
+        .dev-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--bg-primary);
+            border: 2px dashed var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--accent-color);
+            flex-shrink: 0;
+        }
+        .dev-strip strong {
+            color: var(--text-primary);
+            display: block;
+            font-size: 1rem;
+        }
+        .dev-strip span {
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+        }
+
+        .dev-contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-top: 1.2rem;
+        }
+        .contact-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: all var(--transition-speed);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .contact-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-3px);
+            box-shadow: var(--card-shadow);
+        }
+        .contact-card i { font-size: 1.5rem; }
+        .contact-card span { font-size: 0.8rem; color: var(--text-secondary); }
+        .contact-card strong { font-size: 0.9rem; word-break: break-all; }
+
+        .feedback-box {
+            margin-top: 2rem;
+            background: var(--accent-gradient);
+            border-radius: 16px;
+            padding: 1.6rem;
+            text-align: center;
+            color: #ffffff;
+        }
+        .feedback-box p {
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 480px;
+            margin: 0 auto 1rem;
+        }
+        .feedback-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #ffffff;
+            color: var(--accent-color);
+            font-weight: 600;
+            padding: 0.7rem 1.4rem;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: transform var(--transition-speed);
+        }
+        .feedback-btn:hover { transform: translateY(-2px); }
+
+        .closing-note {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1.2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            font-style: italic;
+        }
+        .closing-note i { color: #eab308; margin-right: 0.4rem; }
     </style>
 </head>
 <body>
@@ -40,19 +145,58 @@
             <div class="nav-actions"><button id="theme-toggle" class="theme-btn"><i class="fa-solid fa-moon"></i></button></div>
         </div>
     </header>
-    <main class="main-container" style="padding-top: 8rem;">
+    <main class="main-container" style="padding-top: 8rem; padding-bottom: 4rem;">
         <div class="about-card">
-            <h2>About Sakil Web Tools</h2>
-            <p>Welcome to <strong>Sakil Web Tools</strong>, a premium multi-tool station engineered to make digital tasks incredibly seamless, lightweight, and efficient.</p>
-            
-            <h3>Our Mission</h3>
-            <p>Our goal is to provide fast, high-performance web applications securely processed directly inside your browser. By utilizing pure client-side computing, your sensitive files and records never hit external databases or software architectures, guaranteeing 100% privacy.</p>
-            <h3>Key Pillars</h3>
+            <h2>Why I built Sakil Web Tools</h2>
+            <p>I kept running into the same annoyance — needing to resize an image, merge a couple of PDFs, or knock a file down to under a certain size — and every free tool online wanted me to upload my file to some server, sit through ads, or sign up for an account first. So I built this instead: a small set of everyday utilities that run entirely inside your browser.</p>
+
+            <h3><i class="fa-solid fa-shield-halved"></i> Nothing leaves your device</h3>
+            <p>Every tool here — image resizing, PDF merging and splitting, background removal, QR codes — processes your files locally, on your own machine. Nothing gets uploaded anywhere, so there's nothing to store, track, or leak.</p>
+
+            <h3><i class="fa-solid fa-toolbox"></i> What's inside</h3>
             <ul>
-                <li><strong>Absolute Security:</strong> Localized internal processing.</li>
-                <li><strong>Speed Engine:</strong> Built with raw, clean asset compiling without heavy server overloads.</li>
-                <li><strong>Ultra Modern UI:</strong> Beautifully tailored responsive layout supporting dark mode syncing.</li>
+                <li><strong>Speed:</strong> No server round-trip, so results are near-instant.</li>
+                <li><strong>Privacy by design:</strong> Your files never touch a database.</li>
+                <li><strong>No paywalls:</strong> Every tool is free, with no forced sign-up.</li>
             </ul>
+
+            <div class="dev-strip">
+                <div class="dev-avatar">MS</div>
+                <div>
+                    <strong>Md Sakil</strong>
+                    <span>A one-person project, built and maintained in my own time</span>
+                </div>
+            </div>
+
+            <div class="dev-contact-grid">
+                <a href="tel:+919064583326" class="contact-card">
+                    <i class="fa-solid fa-phone" style="color: #10b981;"></i>
+                    <span>Call / WhatsApp</span>
+                    <strong>+91 9064583326</strong>
+                </a>
+                <a href="mailto:sakilq625@gmail.com" class="contact-card">
+                    <i class="fa-solid fa-envelope" style="color: #ea4335;"></i>
+                    <span>Email</span>
+                    <strong>sakilq625@gmail.com</strong>
+                </a>
+                <div class="contact-card">
+                    <i class="fa-solid fa-location-dot" style="color: #3b82f6;"></i>
+                    <span>Location</span>
+                    <strong>West Bengal, India</strong>
+                </div>
+            </div>
+
+            <div class="feedback-box">
+                <h3 style="justify-content: center; color: #ffffff; margin-top: 0;"><i class="fa-solid fa-comment-dots"></i> Share your feedback</h3>
+                <p>Found a bug, or got an idea for a new tool? I'd genuinely like to hear it.</p>
+                <a href="https://forms.gle/FcDKXLiMQ5oRFUwj9" target="_blank" rel="noopener" class="feedback-btn">
+                    <i class="fa-solid fa-paper-plane"></i> Give feedback
+                </a>
+            </div>
+
+            <div class="closing-note">
+                <i class="fa-solid fa-heart"></i> Thanks for stopping by — have a nice day!
+            </div>
         </div>
     </main>
     <script>
