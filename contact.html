@@ -106,6 +106,41 @@
             font-size: 0.95rem;
             word-break: break-all;
         }
+
+        /* Feedback CTA Box */
+        .feedback-box {
+            margin-top: 2.5rem;
+            background: var(--accent-gradient);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            color: #ffffff;
+        }
+        .feedback-box h3 {
+            justify-content: center;
+            color: #ffffff;
+            margin-top: 0;
+        }
+        .feedback-box p {
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 500px;
+            margin: 0 auto 1.2rem;
+        }
+        .feedback-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #ffffff;
+            color: var(--accent-color);
+            font-weight: 600;
+            padding: 0.8rem 1.6rem;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: transform var(--transition-speed);
+        }
+        .feedback-btn:hover {
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
@@ -118,6 +153,7 @@
                 <a href="index.html#image-tools" class="nav-link">Image Tools</a>
                 <a href="about.html" class="nav-link active">About</a>
                 <a href="contact.html" class="nav-link">Contact</a>
+                <a href="https://forms.gle/FcDKXLiMQ5oRFUwj9" target="_blank" rel="noopener" class="nav-link">Feedback</a>
             </nav>
             <div class="nav-actions"><button id="theme-toggle" class="theme-btn"><i class="fa-solid fa-moon"></i></button></div>
         </div>
@@ -171,6 +207,14 @@
                         <span>Location</span>
                         <strong>West Bengal, India</strong>
                     </div>
+                </div>
+
+                <div class="feedback-box">
+                    <h3><i class="fa-solid fa-comment-dots"></i> আপনার মতামত জানান</h3>
+                    <p>আমাদের tools ব্যবহার করে আপনার অভিজ্ঞতা কেমন হলো? সমস্যা বা নতুন feature-এর সাজেশন থাকলে জানান — আমরা শুনতে চাই।</p>
+                    <a href="https://forms.gle/FcDKXLiMQ5oRFUwj9" target="_blank" rel="noopener" class="feedback-btn">
+                        <i class="fa-solid fa-paper-plane"></i> Feedback দিন
+                    </a>
                 </div>
             </div>
         </div>
