@@ -64,6 +64,15 @@
             font-size: 0.9rem;
             font-weight: 500;
         }
+        .format-note {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            background: rgba(99, 102, 241, 0.06);
+            border: 1px dashed var(--accent-color);
+            padding: 0.6rem 0.9rem;
+            border-radius: 8px;
+            display: none;
+        }
         .control-panel {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -162,9 +171,10 @@
                 <div class="preview-pane" id="previewPane">
                     <img id="imagePreview" src="" alt="Compressed Preview">
                     <div class="stats-badge">
-                        <span>Original Size: <canvas id="old-size" style="display:inline;"></canvas><span id="origSizeText">0 KB</span></span>
+                        <span>Original Size: <span id="origSizeText">0 KB</span></span>
                         <span style="color: var(--util-icon-color);">Compressed Size: <span id="compSizeText">0 KB</span></span>
                     </div>
+                    <p class="format-note" id="formatNote"><i class="fa-solid fa-circle-info"></i> PNG doesn't support quality-based compression, so this image is being compressed as JPG. The downloaded file will be a .jpg.</p>
                 </div>
             </div>
 
@@ -212,6 +222,7 @@
         const previewPane = document.getElementById('previewPane');
         const controlPanel = document.getElementById('controlPanel');
         const imagePreview = document.getElementById('imagePreview');
+        const formatNote = document.getElementById('formatNote');
         
         const origSizeText = document.getElementById('origSizeText');
         const compSizeText = document.getElementById('compSizeText');
@@ -220,7 +231,8 @@
         const downloadBtn = document.getElementById('downloadBtn');
 
         let activeImage = new Image();
-        let fileType = "image/jpeg";
+        let uploadedFileType = "image/jpeg"; // original file's real type
+        let outputFileType = "image/jpeg";   // type actually used for compression/export
         let originalFileName = "sakil-compressed";
 
         dropzone.addEventListener('click', () => fileInput.click());
@@ -249,7 +261,15 @@
                 alert('Please upload a valid JPG or PNG image.');
                 return;
             }
-            fileType = file.type;
+            uploadedFileType = file.type;
+
+            // PNG doesn't support a "quality" setting in canvas export — it's
+            // lossless, so the quality slider would have zero effect on file
+            // size. To make compression actually work, we re-encode PNGs as
+            // JPEG instead (this is what the slider actually controls).
+            outputFileType = (uploadedFileType === 'image/png') ? 'image/jpeg' : uploadedFileType;
+            formatNote.style.display = (uploadedFileType === 'image/png') ? 'block' : 'none';
+
             originalFileName = file.name.split('.').slice(0, -1).join('.') + '-compressed';
             origSizeText.textContent = formatSize(file.size);
 
@@ -272,11 +292,18 @@
             
             canvas.width = activeImage.width;
             canvas.height = activeImage.height;
+
+            // If we're converting PNG -> JPEG, fill a white background first,
+            // since JPEG has no transparency and transparent areas would
+            // otherwise turn black.
+            if (outputFileType === 'image/jpeg') {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
             ctx.drawImage(activeImage, 0, 0, canvas.width, canvas.height);
             
             const quality = parseFloat(qualitySlider.value) / 100;
-            // Native conversion to web friendly compressed standard
-            const compressedDataUrl = canvas.toDataURL(fileType, quality);
+            const compressedDataUrl = canvas.toDataURL(outputFileType, quality);
             
             imagePreview.src = compressedDataUrl;
             
@@ -293,8 +320,9 @@
         });
 
         downloadBtn.addEventListener('click', () => {
+            const ext = outputFileType === 'image/png' ? 'png' : 'jpg';
             const link = document.createElement('a');
-            link.download = `${originalFileName}.${fileType === 'image/png' ? 'png' : 'jpg'}`;
+            link.download = `${originalFileName}.${ext}`;
             link.href = imagePreview.src;
             link.click();
         });
