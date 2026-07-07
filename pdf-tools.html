@@ -12,7 +12,6 @@
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 
     <style>
-        /* ===== THEME TOKENS ===== */
         :root[data-theme="light"] {
             --bg-primary: #FBF7F0;
             --bg-secondary: #FFFFFF;
@@ -221,6 +220,23 @@
             font-weight: 600;
             color: var(--text-secondary);
         }
+        .target-box {
+            background: var(--bg-tint);
+            border: 1px dashed var(--accent);
+            padding: 1rem;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .target-box label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
         .compress-note {
             font-size: 0.78rem;
             color: var(--text-secondary);
@@ -347,7 +363,13 @@
                         <input type="range" id="compressQuality" class="custom-slider" min="10" max="95" value="70">
                     </div>
 
-                    <p class="compress-note"><i class="fa-solid fa-circle-info"></i> Only JPEG images inside the PDF can be re-compressed. Text-only or PNG-image PDFs may not shrink much — this is expected, not a bug.</p>
+                    <div class="target-box">
+                        <label><i class="fa-solid fa-bullseye"></i> Target File Size (Optional KB)</label>
+                        <input type="number" id="compressTargetKb" class="split-range-input" placeholder="e.g. 200" min="10">
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">If set, quality above is ignored — we'll automatically try several quality + resolution combinations to get as close as possible to this size.</span>
+                    </div>
+
+                    <p class="compress-note"><i class="fa-solid fa-circle-info"></i> Only JPEG images inside the PDF can be re-compressed. Text-only or PNG-image PDFs may not shrink much — this is expected, not a bug. Reaching an exact target isn't guaranteed; the result depends on the images inside your file.</p>
 
                     <span class="result-badge" id="compressResult"></span>
 
@@ -562,6 +584,7 @@
         const compressMetaSize = document.getElementById('compressMetaSize');
         const compressQuality = document.getElementById('compressQuality');
         const compressQualityVal = document.getElementById('compressQualityVal');
+        const compressTargetKb = document.getElementById('compressTargetKb');
         const compressResult = document.getElementById('compressResult');
         const compressBtn = document.getElementById('compressBtn');
 
@@ -602,9 +625,13 @@
             return bytes;
         }
 
-        async function compressPdfImages(fileBytes, quality) {
+        // Rebuilds the PDF from its ORIGINAL bytes each time, re-encoding every
+        // embedded JPEG at the given quality and (optionally) a reduced pixel
+        // scale. Returns the new PDF bytes plus whether any image was touched.
+        // scale = 1 means original resolution; 0.5 means half width/height (1/4 the pixels).
+        async function compressPdfImages(originalFileBytes, quality, scale) {
             const { PDFDocument, PDFName, PDFRawStream } = PDFLib;
-            const pdfDoc = await PDFDocument.load(fileBytes);
+            const pdfDoc = await PDFDocument.load(originalFileBytes);
             const pages = pdfDoc.getPages();
             let touchedAnyImage = false;
 
@@ -629,25 +656,26 @@
                     const filterName = filter ? filter.name : null;
 
                     // Only JPEG (DCTDecode) images can be safely decoded and
-                    // re-compressed in-browser without a full PDF image
-                    // decoder. Other formats (PNG-style FlateDecode raw
-                    // pixels) are left untouched.
+                    // re-compressed in-browser without a full PDF image decoder.
                     if (filterName !== 'DCTDecode') continue;
 
                     try {
                         const rawBytes = xObject.contents;
                         const img = await loadImageFromBytes(rawBytes);
 
+                        const targetW = Math.max(1, Math.round(img.width * scale));
+                        const targetH = Math.max(1, Math.round(img.height * scale));
+
                         const canvas = document.createElement('canvas');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
+                        canvas.width = targetW;
+                        canvas.height = targetH;
                         const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
+                        ctx.drawImage(img, 0, 0, targetW, targetH);
 
                         const newDataUrl = canvas.toDataURL('image/jpeg', quality);
                         const newJpegBytes = dataUrlToBytes(newDataUrl);
 
-                        // Only replace if it's actually smaller
+                        // Only replace if it's actually smaller than the original image
                         if (newJpegBytes.length < rawBytes.length) {
                             const newImage = await pdfDoc.embedJpg(newJpegBytes);
                             xObjectsDict.set(key, newImage.ref);
@@ -663,6 +691,36 @@
             return { bytes: compressedBytes, touchedAnyImage };
         }
 
+        // Binary search over a single "strength" value t in [0,1].
+        // t=0  -> quality 0.9, scale 1.0   (mild compression)
+        // t=1  -> quality 0.1, scale 0.35  (aggressive compression)
+        // Rebuilds the PDF from the ORIGINAL bytes at each step (not from the
+        // previous step's output) to avoid compounding quality loss across iterations.
+        async function compressPdfToTarget(originalFileBytes, targetBytes, maxIterations = 6) {
+            let low = 0, high = 1;
+            let best = null;
+
+            for (let i = 0; i < maxIterations; i++) {
+                const t = (low + high) / 2;
+                const quality = 0.9 - t * 0.8;   // 0.9 -> 0.1
+                const scale = 1.0 - t * 0.65;    // 1.0 -> 0.35
+
+                const { bytes, touchedAnyImage } = await compressPdfImages(originalFileBytes, quality, scale);
+
+                if (!best || Math.abs(bytes.length - targetBytes) < Math.abs(best.bytes.length - targetBytes)) {
+                    best = { bytes, touchedAnyImage, t };
+                }
+
+                if (bytes.length > targetBytes) {
+                    low = t; // need stronger compression
+                } else {
+                    high = t; // can ease off a bit
+                }
+            }
+
+            return best;
+        }
+
         compressBtn.addEventListener('click', async () => {
             if (!compressTargetFile) return;
 
@@ -671,11 +729,24 @@
             compressResult.style.display = 'none';
 
             try {
-                const quality = parseInt(compressQuality.value, 10) / 100;
                 const originalBytes = await compressTargetFile.arrayBuffer();
                 const originalSize = compressTargetFile.size;
+                const targetKb = parseInt(compressTargetKb.value, 10);
 
-                const { bytes: compressedBytes, touchedAnyImage } = await compressPdfImages(originalBytes, quality);
+                let compressedBytes, touchedAnyImage;
+
+                if (targetKb && targetKb > 0) {
+                    const targetBytes = targetKb * 1024;
+                    const result = await compressPdfToTarget(originalBytes, targetBytes);
+                    compressedBytes = result.bytes;
+                    touchedAnyImage = result.touchedAnyImage;
+                } else {
+                    const quality = parseInt(compressQuality.value, 10) / 100;
+                    const result = await compressPdfImages(originalBytes, quality, 1.0);
+                    compressedBytes = result.bytes;
+                    touchedAnyImage = result.touchedAnyImage;
+                }
+
                 const newSize = compressedBytes.length;
 
                 if (!touchedAnyImage) {
