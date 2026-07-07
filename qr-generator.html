@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="style.css">
     
     <!-- Heavy-Duty Engine Core Drivers -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -66,10 +66,16 @@
             min-height: 180px;
             border: 1px solid var(--border-color);
             margin: 0.5rem 0;
+            position: relative;
         }
         .canvas-area img, .canvas-area svg {
             max-width: 100%;
             height: auto;
+        }
+        .canvas-placeholder {
+            color: #9ca3af;
+            font-size: 0.85rem;
+            text-align: center;
         }
         .btn-util {
             background: linear-gradient(135deg, #10b981 0%, #047857 100%);
@@ -87,6 +93,7 @@
             transition: opacity var(--transition-speed);
         }
         .btn-util:hover { opacity: 0.9; }
+        .btn-util:disabled { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -94,14 +101,14 @@
     <!-- Professional Navbar Header -->
     <header class="navbar">
         <div class="nav-container">
-            <a href="../index.html" class="logo">
+            <a href="index.html" class="logo">
                 <i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span>
             </a>
             <nav class="nav-menu" id="navMenu">
-                <a href="../index.html" class="nav-link">Home</a>
-                <a href="../index.html#image-tools" class="nav-link">Image Tools</a>
-                <a href="../index.html#pdf-tools" class="nav-link">PDF Tools</a>
-                <a href="../index.html#utility-tools" class="nav-link">Utilities</a>
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="index.html#image-tools" class="nav-link">Image Tools</a>
+                <a href="index.html#pdf-tools" class="nav-link">PDF Tools</a>
+                <a href="index.html#utility-tools" class="nav-link">Utilities</a>
                 <a href="about.html" class="nav-link">About</a>
                 <a href="contact.html" class="nav-link">Contact</a>
             </nav>
@@ -123,25 +130,27 @@
             <!-- Module 1: Live QR Code Engine -->
             <div class="generator-card">
                 <div class="card-title"><i class="fa-solid fa-qrcode"></i> QR Code Generator</div>
-                <input type="text" id="qrInput" class="input-box" value="https://github.com" placeholder="Type text or paste URL link...">
+                <input type="text" id="qrInput" class="input-box" value="" placeholder="Type text or paste URL link...">
                 
                 <div class="canvas-area">
                     <div id="qrcode"></div>
+                    <span class="canvas-placeholder" id="qrPlaceholder">Your QR code will appear here</span>
                 </div>
                 
-                <button class="btn-util" id="downloadQrBtn"><i class="fa-solid fa-download"></i> Download QR Image</button>
+                <button class="btn-util" id="downloadQrBtn" disabled><i class="fa-solid fa-download"></i> Download QR Image</button>
             </div>
 
             <!-- Module 2: Live Barcode Engine -->
             <div class="generator-card">
                 <div class="card-title"><i class="fa-solid fa-barcode"></i> Barcode Generator</div>
-                <input type="text" id="barcodeInput" class="input-box" value="SakilTools123" placeholder="Enter alphanumeric text (e.g., Code128)...">
+                <input type="text" id="barcodeInput" class="input-box" value="" placeholder="Enter alphanumeric text (e.g., Code128)...">
                 
                 <div class="canvas-area">
                     <svg id="barcode"></svg>
+                    <span class="canvas-placeholder" id="barcodePlaceholder">Your barcode will appear here</span>
                 </div>
                 
-                <button class="btn-util" id="downloadBarcodeBtn"><i class="fa-solid fa-download"></i> Download Barcode SVG</button>
+                <button class="btn-util" id="downloadBarcodeBtn" disabled><i class="fa-solid fa-download"></i> Download Barcode SVG</button>
             </div>
 
         </div>
@@ -171,17 +180,20 @@
         // ==========================================
         const qrInput = document.getElementById('qrInput');
         const qrContainer = document.getElementById('qrcode');
+        const qrPlaceholder = document.getElementById('qrPlaceholder');
         const downloadQrBtn = document.getElementById('downloadQrBtn');
 
-        // Initialize instance
+        // Initialize instance with a harmless single-space value so the
+        // library doesn't error out on an empty string, but nothing renders yet
         const qrEngine = new QRCode(qrContainer, {
-            text: qrInput.value,
+            text: " ",
             width: 160,
             height: 160,
             colorDark: "#000000",
             colorLight: "#ffffff",
             correctLevel: QRCode.CorrectLevel.H
         });
+        qrContainer.style.display = 'none'; // hide until user types something
 
         // Realtime typing binding
         qrInput.addEventListener('input', (e) => {
@@ -189,6 +201,14 @@
             if (text) {
                 qrEngine.clear();
                 qrEngine.makeCode(text);
+                qrContainer.style.display = 'block';
+                qrPlaceholder.style.display = 'none';
+                downloadQrBtn.disabled = false;
+            } else {
+                qrEngine.clear();
+                qrContainer.style.display = 'none';
+                qrPlaceholder.style.display = 'block';
+                downloadQrBtn.disabled = true;
             }
         });
 
@@ -206,11 +226,13 @@
         // 2. ENGINE RUNNER: BARCODE GENERATOR
         // ==========================================
         const barcodeInput = document.getElementById('barcodeInput');
+        const barcodeSvg = document.getElementById('barcode');
+        const barcodePlaceholder = document.getElementById('barcodePlaceholder');
         const downloadBarcodeBtn = document.getElementById('downloadBarcodeBtn');
 
         function generateBarcode() {
             const val = barcodeInput.value.trim();
-            if(val) {
+            if (val) {
                 try {
                     JsBarcode("#barcode", val, {
                         format: "CODE128",
@@ -219,14 +241,24 @@
                         height: 80,
                         displayValue: true
                     });
-                } catch(e) {
+                    barcodeSvg.style.display = 'block';
+                    barcodePlaceholder.style.display = 'none';
+                    downloadBarcodeBtn.disabled = false;
+                } catch (e) {
                     console.log("Encoding state pending valid inputs...");
+                    downloadBarcodeBtn.disabled = true;
                 }
+            } else {
+                barcodeSvg.innerHTML = '';
+                barcodeSvg.style.display = 'none';
+                barcodePlaceholder.style.display = 'block';
+                downloadBarcodeBtn.disabled = true;
             }
         }
         
-        // Initial execution & tracking bind
-        generateBarcode();
+        // Initial state: nothing typed yet
+        barcodeSvg.style.display = 'none';
+        downloadBarcodeBtn.disabled = true;
         barcodeInput.addEventListener('input', generateBarcode);
 
         downloadBarcodeBtn.addEventListener('click', () => {
