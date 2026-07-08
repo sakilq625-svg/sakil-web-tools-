@@ -1,4 +1,7 @@
-/* ==========================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    document.documentElement.setAttribute('data-theme', 'dark');
+});
+   /* ==========================================================================
    1. VARIABLES & THEMING (Light Mode Default)
    ========================================================================== */
 :root {
