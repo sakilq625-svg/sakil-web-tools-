@@ -55,6 +55,7 @@
             justify-content: center;
             align-items: center;
             width: 100%;
+            transition: background-color 0.2s ease;
         }
         .preview-pane img {
             max-width: 100%;
@@ -78,6 +79,95 @@
             font-size: 0.9rem;
             color: var(--text-secondary);
             border-left: 4px solid #6366f1;
+        }
+
+        .bg-color-panel {
+            display: none;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        .bg-color-panel h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        .color-swatches {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            align-items: center;
+        }
+        .color-swatch {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.15s ease, border-color 0.15s ease;
+        }
+        .color-swatch:hover { transform: scale(1.1); }
+        .color-swatch.active { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,0.3); }
+        .color-swatch.transparent-swatch {
+            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), 
+                              linear-gradient(-45deg, #ccc 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #ccc 75%), 
+                              linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 10px 10px;
+            background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+        }
+        .color-swatch-picker {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            padding: 0;
+            overflow: hidden;
+        }
+        .color-swatch-picker::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-swatch-picker::-webkit-color-swatch { border: none; border-radius: 50%; }
+
+        .size-panel {
+            display: none;
+            flex-direction: column;
+            gap: 0.7rem;
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px dashed #6366f1;
+            padding: 1.1rem;
+            border-radius: 12px;
+        }
+        .size-panel h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #6366f1;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .size-panel .input-box {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            outline: none;
+            font-weight: 500;
+        }
+        .size-panel .input-box:focus { border-color: #6366f1; }
+        .size-note {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        .size-result {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #6366f1;
+            display: none;
         }
         
         .btn-action {
@@ -145,7 +235,7 @@
                 </div>
 
                 <div class="preview-pane" id="previewPane">
-                    <div class="transparent-bg-grid">
+                    <div class="transparent-bg-grid" id="previewBgGrid">
                         <img id="mainPreviewImg" src="" alt="Preview">
                     </div>
                     <button class="btn-action" style="background:#ef4444; padding:0.5rem 1rem; font-size:0.85rem;" onclick="location.reload()"><i class="fa-solid fa-trash"></i> Reset File</button>
@@ -157,10 +247,30 @@
                 <div class="meta-info" id="fileMeta">Processing metadata...</div>
                 
                 <button class="btn-action" id="processBtn"><i class="fa-solid fa-scissors"></i> Erase Background</button>
-                <button class="btn-action" id="downloadBtn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: none;"><i class="fa-solid fa-download"></i> Download Transparent PNG</button>
+                <button class="btn-action" id="downloadBtn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: none;"><i class="fa-solid fa-download"></i> Download Image</button>
                 
                 <div class="status-loading" id="statusLoading"><i class="fa-solid fa-spinner fa-spin"></i> <span id="statusText">Loading AI engine into your browser...</span></div>
-                <p class="status-note" id="statusNote" style="display:none;">First-time use downloads the AI model (~40MB). It will be cached for instant use next time.</p>
+                <p class="status-note" id="statusNote" style="display:none;">First-time use downloads the AI model (~20MB). It will be cached for instant use next time.</p>
+
+                <div class="bg-color-panel" id="bgColorPanel">
+                    <h4>Background Color</h4>
+                    <div class="color-swatches">
+                        <div class="color-swatch transparent-swatch active" data-color="transparent" title="Transparent"></div>
+                        <div class="color-swatch" style="background:#ffffff;" data-color="#ffffff" title="White"></div>
+                        <div class="color-swatch" style="background:#000000;" data-color="#000000" title="Black"></div>
+                        <div class="color-swatch" style="background:#3b82f6;" data-color="#3b82f6" title="Blue"></div>
+                        <div class="color-swatch" style="background:#ef4444;" data-color="#ef4444" title="Red"></div>
+                        <div class="color-swatch" style="background:#10b981;" data-color="#10b981" title="Green"></div>
+                        <input type="color" id="customColorPicker" class="color-swatch-picker" value="#f5f5f5" title="Custom color">
+                    </div>
+                </div>
+
+                <div class="size-panel" id="sizePanel">
+                    <h4><i class="fa-solid fa-weight-hanging"></i> Download File Size</h4>
+                    <input type="number" id="targetKbInput" class="input-box" placeholder="e.g. 200 (leave empty for original quality)" min="5">
+                    <p class="size-note" id="sizeNoteText">Original quality will be used if left empty.</p>
+                    <span class="size-result" id="sizeResult"></span>
+                </div>
             </div>
         </div>
     </main>
@@ -184,6 +294,7 @@
         const fileInput = document.getElementById('fileInput');
         const dropzone = document.getElementById('dropzone');
         const previewPane = document.getElementById('previewPane');
+        const previewBgGrid = document.getElementById('previewBgGrid');
         const controlPanel = document.getElementById('controlPanel');
         const mainPreviewImg = document.getElementById('mainPreviewImg');
         const fileMeta = document.getElementById('fileMeta');
@@ -192,10 +303,19 @@
         const statusLoading = document.getElementById('statusLoading');
         const statusText = document.getElementById('statusText');
         const statusNote = document.getElementById('statusNote');
+        const bgColorPanel = document.getElementById('bgColorPanel');
+        const customColorPicker = document.getElementById('customColorPicker');
+        const sizePanel = document.getElementById('sizePanel');
+        const targetKbInput = document.getElementById('targetKbInput');
+        const sizeNoteText = document.getElementById('sizeNoteText');
+        const sizeResult = document.getElementById('sizeResult');
 
         let rawFile = null;
-        let processedBlobUrl = null;
+        let cutoutImage = null;       // the transparent-background result, as an Image element
+        let selectedBgColor = 'transparent';
         let originalFileName = "sakil-nobg";
+        let currentDownloadDataUrl = null;
+        let currentDownloadExt = 'png';
 
         fileInput.addEventListener('change', (e) => {
             if(e.target.files.length) handleFile(e.target.files[0]);
@@ -221,6 +341,10 @@
         // Uses @imgly/background-removal — runs entirely in-browser
         // via WebAssembly + an ONNX segmentation model. No API key,
         // no server upload, no external account needed.
+        //
+        // We use the smaller "isnet_quint8" model instead of the default
+        // "isnet_fp16" one — it's a lighter, quantized model, so it downloads
+        // faster and runs faster, at a small cost to edge-detail accuracy.
         // ========================================================
         let removeBackgroundFn = null;
 
@@ -244,6 +368,8 @@
 
                 statusText.textContent = 'Erasing background locally...';
                 const blobOutput = await removeBackground(rawFile, {
+                    model: 'isnet_quint8', // smaller/faster model
+                    output: { format: 'image/png', quality: 0.9 },
                     progress: (key, current, total) => {
                         if (total) {
                             statusText.textContent = `Preparing AI model... ${Math.round((current / total) * 100)}%`;
@@ -251,12 +377,24 @@
                     }
                 });
 
-                processedBlobUrl = URL.createObjectURL(blobOutput);
-                mainPreviewImg.src = processedBlobUrl;
+                const cutoutUrl = URL.createObjectURL(blobOutput);
 
-                statusLoading.style.display = 'none';
-                statusNote.style.display = 'none';
-                downloadBtn.style.display = 'flex';
+                cutoutImage = new Image();
+                cutoutImage.onload = () => {
+                    selectedBgColor = 'transparent';
+                    document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('active'));
+                    document.querySelector('.color-swatch[data-color="transparent"]').classList.add('active');
+                    targetKbInput.value = '';
+                    sizeResult.style.display = 'none';
+                    renderOutput();
+
+                    statusLoading.style.display = 'none';
+                    statusNote.style.display = 'none';
+                    downloadBtn.style.display = 'flex';
+                    bgColorPanel.style.display = 'flex';
+                    sizePanel.style.display = 'flex';
+                };
+                cutoutImage.src = cutoutUrl;
 
             } catch (err) {
                 console.error(err);
@@ -267,11 +405,170 @@
             }
         });
 
+        // Draws the cutout onto a canvas at a given pixel scale, filling the
+        // background with `color` (or leaving it transparent). Returns the
+        // canvas so callers can export it at whatever quality/format they need.
+        function drawCutout(color, scale) {
+            const targetW = Math.max(1, Math.round(cutoutImage.naturalWidth * scale));
+            const targetH = Math.max(1, Math.round(cutoutImage.naturalHeight * scale));
+
+            const canvas = document.createElement('canvas');
+            canvas.width = targetW;
+            canvas.height = targetH;
+            const ctx = canvas.getContext('2d');
+
+            if (color !== 'transparent') {
+                ctx.fillStyle = color;
+                ctx.fillRect(0, 0, targetW, targetH);
+            }
+            ctx.drawImage(cutoutImage, 0, 0, targetW, targetH);
+            return canvas;
+        }
+
+        function dataUrlSizeBytes(dataUrl) {
+            const head = dataUrl.split(',')[0];
+            const base64Length = dataUrl.length - head.length - 1;
+            return Math.round(base64Length * 0.75);
+        }
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Main render function: builds the final preview + download data,
+        // respecting the chosen background color and (optionally) a target
+        // file size the user typed in.
+        function renderOutput() {
+            if (!cutoutImage) return;
+
+            const targetKb = parseInt(targetKbInput.value, 10);
+            const hasTarget = targetKb && targetKb > 0;
+            const isTransparent = (selectedBgColor === 'transparent');
+
+            // Update the checker/solid preview backdrop behind the <img>
+            if (!isTransparent) {
+                previewBgGrid.style.backgroundImage = 'none';
+                previewBgGrid.style.backgroundColor = selectedBgColor;
+            } else {
+                previewBgGrid.style.backgroundColor = '';
+                previewBgGrid.style.backgroundImage = '';
+            }
+
+            if (!hasTarget) {
+                // No target size — export at full resolution, best quality.
+                const canvas = drawCutout(selectedBgColor, 1);
+                if (isTransparent) {
+                    currentDownloadDataUrl = canvas.toDataURL('image/png');
+                    currentDownloadExt = 'png';
+                } else {
+                    currentDownloadDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+                    currentDownloadExt = 'jpg';
+                }
+                mainPreviewImg.src = currentDownloadDataUrl;
+                sizeResult.style.display = 'none';
+                sizeNoteText.textContent = isTransparent
+                    ? 'Original quality will be used if left empty.'
+                    : 'Original quality will be used if left empty.';
+                return;
+            }
+
+            const targetBytes = targetKb * 1024;
+
+            if (isTransparent) {
+                // PNG is lossless — quality can't be tuned, only resolution can.
+                // Binary-search over a resolution scale to approach the target size.
+                let low = 0.05, high = 1.0, best = null;
+                for (let i = 0; i < 7; i++) {
+                    const scale = (low + high) / 2;
+                    const canvas = drawCutout('transparent', scale);
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const size = dataUrlSizeBytes(dataUrl);
+
+                    if (!best || Math.abs(size - targetBytes) < Math.abs(best.size - targetBytes)) {
+                        best = { dataUrl, size, scale };
+                    }
+                    if (size > targetBytes) high = scale; else low = scale;
+                }
+                currentDownloadDataUrl = best.dataUrl;
+                currentDownloadExt = 'png';
+                mainPreviewImg.src = best.dataUrl;
+                sizeResult.style.display = 'block';
+                sizeResult.textContent = `~${formatSize(best.size)} (PNG can't be quality-compressed, so resolution was reduced to ${Math.round(best.scale * 100)}% to hit your target)`;
+            } else {
+                // Solid background -> export as JPEG, binary-search quality first,
+                // then fall back to also reducing resolution if still too big.
+                let low = 0.05, high = 0.95, best = null;
+                for (let i = 0; i < 7; i++) {
+                    const quality = (low + high) / 2;
+                    const canvas = drawCutout(selectedBgColor, 1);
+                    const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    const size = dataUrlSizeBytes(dataUrl);
+
+                    if (!best || Math.abs(size - targetBytes) < Math.abs(best.size - targetBytes)) {
+                        best = { dataUrl, size, quality, scale: 1 };
+                    }
+                    if (size > targetBytes) high = quality; else low = quality;
+                }
+
+                // If even the lowest quality at full resolution is still bigger
+                // than target, also scale down resolution.
+                if (best.size > targetBytes * 1.15) {
+                    let lowS = 0.2, highS = 1.0, bestScaled = best;
+                    for (let i = 0; i < 6; i++) {
+                        const scale = (lowS + highS) / 2;
+                        const canvas = drawCutout(selectedBgColor, scale);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                        const size = dataUrlSizeBytes(dataUrl);
+
+                        if (Math.abs(size - targetBytes) < Math.abs(bestScaled.size - targetBytes)) {
+                            bestScaled = { dataUrl, size, quality: 0.6, scale };
+                        }
+                        if (size > targetBytes) highS = scale; else lowS = scale;
+                    }
+                    best = bestScaled;
+                }
+
+                currentDownloadDataUrl = best.dataUrl;
+                currentDownloadExt = 'jpg';
+                mainPreviewImg.src = best.dataUrl;
+                sizeResult.style.display = 'block';
+                const scaleNote = best.scale < 1 ? `, resolution reduced to ${Math.round(best.scale * 100)}%` : '';
+                sizeResult.textContent = `~${formatSize(best.size)} (quality ${Math.round(best.quality * 100)}%${scaleNote})`;
+            }
+        }
+
+        // Color swatch clicks
+        document.querySelectorAll('.color-swatch').forEach(swatch => {
+            swatch.addEventListener('click', () => {
+                document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('active'));
+                swatch.classList.add('active');
+                selectedBgColor = swatch.dataset.color;
+                renderOutput();
+            });
+        });
+
+        customColorPicker.addEventListener('input', (e) => {
+            document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('active'));
+            selectedBgColor = e.target.value;
+            renderOutput();
+        });
+
+        // Re-render whenever the user changes the target size (debounced slightly)
+        let sizeDebounce = null;
+        targetKbInput.addEventListener('input', () => {
+            clearTimeout(sizeDebounce);
+            sizeDebounce = setTimeout(renderOutput, 400);
+        });
+
         downloadBtn.addEventListener('click', () => {
-            if (!processedBlobUrl) return;
+            if (!currentDownloadDataUrl) return;
             const link = document.createElement('a');
-            link.href = processedBlobUrl;
-            link.download = `${originalFileName}.png`;
+            link.href = currentDownloadDataUrl;
+            link.download = `${originalFileName}.${currentDownloadExt}`;
             link.click();
         });
     </script>
