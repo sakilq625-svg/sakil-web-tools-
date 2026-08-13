@@ -214,6 +214,21 @@
         }
         .btn-pdf:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-pdf:not(:disabled):hover { opacity: 0.9; }
+
+        /* Target output size row — reuses split-range-input styling for the
+           number field, adds a small unit dropdown beside it */
+        .merge-size-group { display: none; flex-direction: column; }
+        .merge-size-row { display: flex; gap: 0.6rem; }
+        .merge-size-row select {
+            max-width: 90px;
+            appearance: none;
+            cursor: pointer;
+        }
+        .merge-size-note {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.4rem;
+        }
     </style>
 </head>
 <body>
@@ -243,17 +258,32 @@
 
             <div class="tool-box">
                 <h3><i class="fa-solid fa-object-group"></i> 1. PDF Merger</h3>
-                <p>Select and consolidate multiple PDF files orderly into a single compiled document.</p>
+                <p>Select and consolidate multiple PDF or image files orderly into a single compiled document.</p>
 
                 <div class="upload-zone" onclick="document.getElementById('mergeInput').click()">
                     <i class="fa-solid fa-file-circle-plus"></i>
-                    <h4>Choose PDF Files to Merge</h4>
-                    <p>Select 2 or more PDF files</p>
-                    <input type="file" id="mergeInput" accept="application/pdf" multiple style="display: none;">
+                    <h4>Choose PDF or Image Files to Merge</h4>
+                    <p>Select 2 or more PDF, JPG, JPEG, or PNG files</p>
+                    <input type="file" id="mergeInput" accept="application/pdf, image/jpeg, image/jpg, image/png" multiple style="display: none;">
                 </div>
 
                 <div class="file-list" id="mergeFilesContainer" style="display: none;"></div>
-                <button class="btn-pdf" id="mergeBtn" disabled><i class="fa-solid fa-compress"></i> Combine PDFs</button>
+
+                <div class="merge-size-group" id="mergeSizeGroup">
+                    <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.3rem; display: block; color: var(--accent);">
+                        <i class="fa-solid fa-weight-hanging"></i> Target Output Size (Optional)
+                    </label>
+                    <div class="merge-size-row">
+                        <input type="number" id="mergeTargetSize" class="split-range-input" placeholder="e.g. 500" min="10">
+                        <select id="mergeSizeUnit" class="split-range-input">
+                            <option value="KB">KB</option>
+                            <option value="MB" selected>MB</option>
+                        </select>
+                    </div>
+                    <p class="merge-size-note">Leave empty for original quality. Works best when merging images — merged PDF pages have limited compression room.</p>
+                </div>
+
+                <button class="btn-pdf" id="mergeBtn" disabled><i class="fa-solid fa-compress"></i> Combine Files</button>
             </div>
 
             <div class="tool-box">
@@ -301,10 +331,13 @@
         });
 
         // ==========================================
-        // 1. PDF MERGER ENGINE LOGIC
+        // 1. PDF MERGER ENGINE LOGIC (PDF + Image inputs)
         // ==========================================
         const mergeInput = document.getElementById('mergeInput');
         const mergeFilesContainer = document.getElementById('mergeFilesContainer');
+        const mergeSizeGroup = document.getElementById('mergeSizeGroup');
+        const mergeTargetSize = document.getElementById('mergeTargetSize');
+        const mergeSizeUnit = document.getElementById('mergeSizeUnit');
         const mergeBtn = document.getElementById('mergeBtn');
         let mergeFilesArray = [];
 
@@ -321,17 +354,20 @@
         function renderMergeList() {
             if (mergeFilesArray.length === 0) {
                 mergeFilesContainer.style.display = 'none';
+                mergeSizeGroup.style.display = 'none';
                 mergeBtn.disabled = true;
                 return;
             }
             mergeFilesContainer.innerHTML = '';
             mergeFilesContainer.style.display = 'block';
+            mergeSizeGroup.style.display = 'flex';
 
             mergeFilesArray.forEach((file, index) => {
                 const item = document.createElement('div');
                 item.className = 'file-item';
+                const typeTag = file.type === 'application/pdf' ? 'PDF' : file.type.split('/')[1].toUpperCase();
                 item.innerHTML = `
-                    <span>${index + 1}. ${file.name}</span>
+                    <span>${index + 1}. ${file.name} <span style="font-size:0.75rem; color:var(--text-secondary);">(${typeTag})</span></span>
                     <i class="fa-solid fa-circle-xmark" style="color: var(--accent); cursor:pointer;" onclick="removeMergeFile(${index})"></i>
                 `;
                 mergeFilesContainer.appendChild(item);
@@ -344,26 +380,95 @@
             renderMergeList();
         };
 
+        // Re-encodes an image file onto a canvas at a given JPEG quality and
+        // returns its bytes + pixel size — lets image pages be shrunk to help
+        // hit a target output size, same approach as image-converter.html.
+        function imageFileToJpegBytes(file, quality) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff'; // JPEG has no transparency channel
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+                    canvas.toBlob(async (blob) => {
+                        const buf = await blob.arrayBuffer();
+                        resolve({ bytes: new Uint8Array(buf), width: canvas.width, height: canvas.height });
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = reject;
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        // Builds the merged PDF at a given image quality (0.92 = best). PDF-file
+        // pages are copied as-is every time — their content can't be quality
+        // compressed this way — only image-file pages get re-encoded, so this is
+        // what the target-size search below actually adjusts.
+        async function buildMergedPdf(quality) {
+            const mergedPdf = await PDFLib.PDFDocument.create();
+            for (let file of mergeFilesArray) {
+                if (file.type === 'application/pdf') {
+                    const fileBytes = await file.arrayBuffer();
+                    const pdfDoc = await PDFLib.PDFDocument.load(fileBytes);
+                    const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+                    copiedPages.forEach((page) => mergedPdf.addPage(page));
+                } else {
+                    const { bytes, width, height } = await imageFileToJpegBytes(file, quality);
+                    const embeddedImg = await mergedPdf.embedJpg(bytes);
+                    const page = mergedPdf.addPage([width, height]);
+                    page.drawImage(embeddedImg, { x: 0, y: 0, width, height });
+                }
+            }
+            return mergedPdf.save();
+        }
+
         mergeBtn.addEventListener('click', async () => {
             if (mergeFilesArray.length < 2) return;
             mergeBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Merging Files...`;
             mergeBtn.disabled = true;
 
             try {
-                const mergedPdf = await PDFLib.PDFDocument.create();
-                for (let file of mergeFilesArray) {
-                    const fileBytes = await file.arrayBuffer();
-                    const pdfDoc = await PDFLib.PDFDocument.load(fileBytes);
-                    const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
-                    copiedPages.forEach((page) => mergedPdf.addPage(page));
+                const targetValue = parseFloat(mergeTargetSize.value);
+                const hasTarget = targetValue && targetValue > 0;
+                const targetBytes = hasTarget
+                    ? targetValue * (mergeSizeUnit.value === 'MB' ? 1024 * 1024 : 1024)
+                    : null;
+                const hasImageInputs = mergeFilesArray.some(f => f.type !== 'application/pdf');
+
+                let mergedBytes = await buildMergedPdf(0.92);
+
+                // Only image pages can be shrunk — if there's at least one image
+                // input and the result is still over target, binary-search the
+                // JPEG quality used for those pages.
+                if (hasTarget && hasImageInputs && mergedBytes.byteLength > targetBytes) {
+                    let low = 0.05, high = 0.92, best = mergedBytes;
+                    for (let i = 0; i < 6; i++) {
+                        const quality = (low + high) / 2;
+                        const testBytes = await buildMergedPdf(quality);
+                        if (testBytes.byteLength > targetBytes) {
+                            high = quality;
+                        } else {
+                            low = quality;
+                            best = testBytes;
+                        }
+                    }
+                    mergedBytes = best;
                 }
-                const mergedPdfBytes = await mergedPdf.save();
-                triggerDownload(mergedPdfBytes, "merged-document.pdf");
+
+                if (hasTarget && !hasImageInputs && mergedBytes.byteLength > targetBytes) {
+                    alert("Note: merging existing PDF pages can't be quality-compressed in-browser, so the target size couldn't be fully reached. Downloading at the smallest size available.");
+                }
+
+                triggerDownload(mergedBytes, "merged-document.pdf");
             } catch (err) {
                 console.error(err);
                 alert("Error during merge. File structure might be protected.");
             } finally {
-                mergeBtn.innerHTML = `<i class="fa-solid fa-compress"></i> Combine PDFs`;
+                mergeBtn.innerHTML = `<i class="fa-solid fa-compress"></i> Combine Files`;
                 mergeBtn.disabled = mergeFilesArray.length < 2;
             }
         });
