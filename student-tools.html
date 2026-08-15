@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Tools - Sakil Web Tools</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 
@@ -17,9 +19,13 @@
             gap: 2rem;
             margin-top: 2rem;
         }
-        @media (min-width: 768px) {
-            .student-dashboard { grid-template-columns: 1fr 1fr; }
+
+        @media (min-width: 900px) {
+            .student-dashboard {
+                grid-template-columns: 1fr 1fr;
+            }
         }
+
         .tool-box {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -30,119 +36,1247 @@
             gap: 1.2rem;
             box-shadow: var(--card-shadow);
         }
+
         .tool-box h3 {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             font-size: 1.2rem;
             color: var(--text-primary);
+            margin: 0;
         }
-        .tool-box h3 i { color: var(--accent-color); }
-        .tool-box p.tool-desc {
+
+        .tool-box h3 i {
+            color: var(--accent-color);
+        }
+
+        .tool-desc {
             font-size: 0.88rem;
             color: var(--text-secondary);
             margin: 0;
         }
-        .tool-placeholder {
-            font-size: 0.85rem;
+
+        /* =========================
+           COMMON FORM STYLES
+        ========================= */
+
+        .input-row {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-size: 0.82rem;
             color: var(--text-secondary);
-            background: var(--bg-primary);
-            border: 1px dashed var(--border-color);
+            font-weight: 500;
+        }
+
+        .tool-input,
+        .tool-select {
+            width: 100%;
+            padding: 0.75rem 0.9rem;
             border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .tool-input:focus,
+        .tool-select:focus {
+            border-color: var(--accent-color);
+        }
+
+        .tool-btn {
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            background: var(--accent-color);
+            color: #fff;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .tool-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .tool-btn.secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .tool-btn.danger {
+            background: #dc3545;
+        }
+
+        .result-box {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
             padding: 1rem;
+        }
+
+        .result-main {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--accent-color);
             text-align: center;
+        }
+
+        .result-small {
+            margin-top: 0.35rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* =========================
+           GPA
+        ========================= */
+
+        .course-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.7rem;
+        }
+
+        .course-row {
+            display: grid;
+            grid-template-columns: 1fr 100px 100px 40px;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .remove-course {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 9px;
+            background: #dc3545;
+            color: white;
+            cursor: pointer;
+        }
+
+        .gpa-buttons {
+            display: flex;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 600px) {
+            .course-row {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .course-row .course-name {
+                grid-column: 1 / -1;
+            }
+        }
+
+        /* =========================
+           POMODORO
+        ========================= */
+
+        .timer-display {
+            text-align: center;
+            font-size: clamp(3rem, 12vw, 5rem);
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--text-primary);
+            margin: 0.5rem 0;
+        }
+
+        .timer-mode {
+            text-align: center;
+            color: var(--accent-color);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .timer-progress {
+            width: 100%;
+            height: 7px;
+            background: var(--border-color);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .timer-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--accent-color);
+            transition: width 0.3s linear;
+        }
+
+        /* =========================
+           AGE
+        ========================= */
+
+        .age-result-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.6rem;
+        }
+
+        .age-item {
+            text-align: center;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.8rem 0.4rem;
+        }
+
+        .age-number {
+            display: block;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .age-label {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 0.82rem;
+            display: none;
+        }
+
+        /* GPA table-like header */
+
+        .course-header {
+            display: grid;
+            grid-template-columns: 1fr 100px 100px 40px;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            margin-bottom: -0.4rem;
+        }
+
+        @media (max-width: 600px) {
+            .course-header {
+                display: none;
+            }
         }
     </style>
 </head>
+
 <body>
 
-    <header class="navbar">
-        <div class="nav-container">
-            <a href="index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span></a>
-            <nav class="nav-menu" id="navMenu">
-                <a href="index.html" class="nav-link">Home</a>
-                <a href="index.html#image-tools" class="nav-link">Image Tools</a>
-                <a href="index.html#pdf-tools" class="nav-link">PDF Tools</a>
-                <a href="student-tools.html" class="nav-link active">Student Tools</a>
-                <a href="about.html" class="nav-link">About</a>
-                <a href="contact.html" class="nav-link">Contact</a>
-            </nav>
-            <div class="nav-actions">
-                <button id="theme-toggle" class="theme-btn"><i class="fa-solid fa-moon"></i></button>
-                <button class="hamburger" id="hamburger" aria-label="Menu">
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                    <span class="bar"></span>
+<header class="navbar">
+    <div class="nav-container">
+
+        <a href="index.html" class="logo">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+            Sakil <span>Web Tools</span>
+        </a>
+
+        <nav class="nav-menu" id="navMenu">
+            <a href="index.html" class="nav-link">Home</a>
+            <a href="index.html#image-tools" class="nav-link">Image Tools</a>
+            <a href="index.html#pdf-tools" class="nav-link">PDF Tools</a>
+            <a href="student-tools.html" class="nav-link active">Student Tools</a>
+            <a href="about.html" class="nav-link">About</a>
+            <a href="contact.html" class="nav-link">Contact</a>
+        </nav>
+
+        <div class="nav-actions">
+            <button id="theme-toggle" class="theme-btn">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+
+            <button class="hamburger" id="hamburger" aria-label="Menu">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+        </div>
+
+    </div>
+</header>
+
+
+<main class="main-container" style="padding-top: 8rem;">
+
+    <div class="section-header">
+        <h2>
+            <i class="fa-solid fa-graduation-cap"></i>
+            Student Tools
+        </h2>
+
+        <p>
+            Quick calculators and helpers for everyday student work —
+            all running right in your browser.
+        </p>
+    </div>
+
+
+    <div class="student-dashboard">
+
+
+        <!-- =========================================
+             GPA / CGPA CALCULATOR
+        ========================================== -->
+
+        <div class="tool-box" id="gpaBox">
+
+            <h3>
+                <i class="fa-solid fa-calculator"></i>
+                GPA / CGPA Calculator
+            </h3>
+
+            <p class="tool-desc">
+                Add your courses with credit and grade to calculate your GPA.
+            </p>
+
+            <div class="course-header">
+                <span>Course</span>
+                <span>Credit</span>
+                <span>Grade</span>
+                <span></span>
+            </div>
+
+            <div id="courseList" class="course-list"></div>
+
+            <div class="gpa-buttons">
+
+                <button class="tool-btn" id="addCourseBtn">
+                    <i class="fa-solid fa-plus"></i>
+                    Add Course
                 </button>
-            </div>
-        </div>
-    </header>
 
-    <main class="main-container" style="padding-top: 8rem;">
-        <div class="section-header">
-            <h2><i class="fa-solid fa-graduation-cap"></i> Student Tools</h2>
-            <p>Quick calculators and helpers for everyday student work — all running right in your browser.</p>
-        </div>
+                <button class="tool-btn secondary" id="calculateGpaBtn">
+                    Calculate GPA
+                </button>
 
-        <div class="student-dashboard">
+                <button class="tool-btn danger" id="clearGpaBtn">
+                    Clear
+                </button>
 
-            <div class="tool-box" id="gpaBox">
-                <h3><i class="fa-solid fa-calculator"></i> GPA / CGPA Calculator</h3>
-                <p class="tool-desc">Add your courses with credit and grade to calculate your GPA.</p>
-                <div class="tool-placeholder">Coming in the next step</div>
             </div>
 
-            <div class="tool-box" id="percentBox">
-                <h3><i class="fa-solid fa-percent"></i> Percentage & Grade Calculator</h3>
-                <p class="tool-desc">Enter your obtained and total marks to get percentage and grade.</p>
-                <div class="tool-placeholder">Coming in the next step</div>
-            </div>
-
-            <div class="tool-box" id="timerBox">
-                <h3><i class="fa-solid fa-clock"></i> Study Timer (Pomodoro)</h3>
-                <p class="tool-desc">25-minute focus sessions with automatic 5-minute breaks.</p>
-                <div class="tool-placeholder">Coming in the next step</div>
-            </div>
-
-            <div class="tool-box" id="ageBox">
-                <h3><i class="fa-solid fa-cake-candles"></i> Age Calculator</h3>
-                <p class="tool-desc">Find your exact age in years, months, and days.</p>
-                <div class="tool-placeholder">Coming in the next step</div>
+            <div class="result-box" id="gpaResult">
+                <div class="result-main">0.00</div>
+                <div class="result-small">
+                    Add courses and calculate your GPA
+                </div>
             </div>
 
         </div>
-    </main>
 
-    <script>
-        // Theme Config
-        const htmlElement = document.documentElement;
-        const themeBtn = document.getElementById('theme-toggle');
-        const applyTheme = (theme) => {
-            htmlElement.setAttribute('data-theme', theme);
-            themeBtn.querySelector('i').className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-        };
-        applyTheme(localStorage.getItem('sakil-tools-theme') || 'light');
-        themeBtn.addEventListener('click', () => {
-            const next = htmlElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('sakil-tools-theme', next);
-            applyTheme(next);
+
+        <!-- =========================================
+             PERCENTAGE & GRADE
+        ========================================== -->
+
+        <div class="tool-box" id="percentBox">
+
+            <h3>
+                <i class="fa-solid fa-percent"></i>
+                Percentage & Grade Calculator
+            </h3>
+
+            <p class="tool-desc">
+                Enter your obtained and total marks to get percentage and grade.
+            </p>
+
+            <div class="input-row">
+
+                <div class="input-group">
+                    <label>Obtained Marks</label>
+                    <input
+                        type="number"
+                        id="obtainedMarks"
+                        class="tool-input"
+                        placeholder="e.g. 420"
+                        min="0"
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label>Total Marks</label>
+                    <input
+                        type="number"
+                        id="totalMarks"
+                        class="tool-input"
+                        placeholder="e.g. 500"
+                        min="1"
+                    >
+                </div>
+
+            </div>
+
+            <div id="percentageError" class="error-message">
+                Please enter valid marks.
+            </div>
+
+            <button class="tool-btn" id="calculatePercentageBtn">
+                <i class="fa-solid fa-calculator"></i>
+                Calculate
+            </button>
+
+            <div class="result-box">
+
+                <div class="result-main" id="percentageResult">
+                    0.00%
+                </div>
+
+                <div class="result-small" id="gradeResult">
+                    Grade: —
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================================
+             POMODORO TIMER
+        ========================================== -->
+
+        <div class="tool-box" id="timerBox">
+
+            <h3>
+                <i class="fa-solid fa-clock"></i>
+                Study Timer (Pomodoro)
+            </h3>
+
+            <p class="tool-desc">
+                25-minute focus sessions with automatic 5-minute breaks.
+            </p>
+
+            <div class="timer-mode" id="timerMode">
+                Focus Time
+            </div>
+
+            <div class="timer-display" id="timerDisplay">
+                25:00
+            </div>
+
+            <div class="timer-progress">
+                <div
+                    class="timer-progress-bar"
+                    id="timerProgressBar">
+                </div>
+            </div>
+
+            <div class="timer-controls">
+
+                <button class="tool-btn" id="startTimerBtn">
+                    <i class="fa-solid fa-play"></i>
+                    Start
+                </button>
+
+                <button class="tool-btn secondary" id="pauseTimerBtn">
+                    <i class="fa-solid fa-pause"></i>
+                    Pause
+                </button>
+
+                <button class="tool-btn secondary" id="resetTimerBtn">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    Reset
+                </button>
+
+            </div>
+
+            <div class="result-small" id="sessionInfo">
+                Focus: 25 min • Break: 5 min
+            </div>
+
+        </div>
+
+
+        <!-- =========================================
+             AGE CALCULATOR
+        ========================================== -->
+
+        <div class="tool-box" id="ageBox">
+
+            <h3>
+                <i class="fa-solid fa-cake-candles"></i>
+                Age Calculator
+            </h3>
+
+            <p class="tool-desc">
+                Find your exact age in years, months, and days.
+            </p>
+
+            <div class="input-group">
+
+                <label>Date of Birth</label>
+
+                <input
+                    type="date"
+                    id="birthDate"
+                    class="tool-input"
+                >
+
+            </div>
+
+            <div id="ageError" class="error-message">
+                Please select a valid date of birth.
+            </div>
+
+            <button class="tool-btn" id="calculateAgeBtn">
+                <i class="fa-solid fa-calculator"></i>
+                Calculate Age
+            </button>
+
+            <div class="result-box">
+
+                <div class="age-result-grid">
+
+                    <div class="age-item">
+                        <span class="age-number" id="ageYears">0</span>
+                        <span class="age-label">Years</span>
+                    </div>
+
+                    <div class="age-item">
+                        <span class="age-number" id="ageMonths">0</span>
+                        <span class="age-label">Months</span>
+                    </div>
+
+                    <div class="age-item">
+                        <span class="age-number" id="ageDays">0</span>
+                        <span class="age-label">Days</span>
+                    </div>
+
+                </div>
+
+                <div
+                    class="result-small"
+                    id="ageSummary"
+                    style="margin-top: 1rem;">
+                    Enter your date of birth
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</main>
+
+
+<script>
+
+/* =====================================================
+   THEME
+===================================================== */
+
+const htmlElement = document.documentElement;
+const themeBtn = document.getElementById('theme-toggle');
+
+function applyTheme(theme) {
+
+    htmlElement.setAttribute('data-theme', theme);
+
+    const icon = themeBtn.querySelector('i');
+
+    icon.className =
+        theme === 'dark'
+        ? 'fa-solid fa-sun'
+        : 'fa-solid fa-moon';
+}
+
+applyTheme(
+    localStorage.getItem('sakil-tools-theme') || 'light'
+);
+
+themeBtn.addEventListener('click', () => {
+
+    const current =
+        htmlElement.getAttribute('data-theme');
+
+    const next =
+        current === 'dark'
+        ? 'light'
+        : 'dark';
+
+    localStorage.setItem(
+        'sakil-tools-theme',
+        next
+    );
+
+    applyTheme(next);
+});
+
+
+/* =====================================================
+   MOBILE MENU
+===================================================== */
+
+const hamburger =
+    document.getElementById('hamburger');
+
+const navMenu =
+    document.getElementById('navMenu');
+
+if (hamburger && navMenu) {
+
+    hamburger.addEventListener('click', () => {
+
+        hamburger.classList.toggle('active');
+        navMenu.classList.toggle('active');
+
+    });
+
+    document.querySelectorAll('.nav-link')
+        .forEach(link => {
+
+            link.addEventListener('click', () => {
+
+                hamburger.classList.remove('active');
+                navMenu.classList.remove('active');
+
+            });
+
+        });
+}
+
+
+/* =====================================================
+   GPA / CGPA CALCULATOR
+===================================================== */
+
+const courseList =
+    document.getElementById('courseList');
+
+const addCourseBtn =
+    document.getElementById('addCourseBtn');
+
+const calculateGpaBtn =
+    document.getElementById('calculateGpaBtn');
+
+const clearGpaBtn =
+    document.getElementById('clearGpaBtn');
+
+
+/*
+    Standard 4.0 GPA scale
+*/
+
+const gradePoints = {
+
+    'A+': 4.0,
+    'A': 4.0,
+    'A-': 3.7,
+    'B+': 3.3,
+    'B': 3.0,
+    'B-': 2.7,
+    'C+': 2.3,
+    'C': 2.0,
+    'C-': 1.7,
+    'D': 1.0,
+    'F': 0.0
+
+};
+
+
+function createCourseRow() {
+
+    const row =
+        document.createElement('div');
+
+    row.className = 'course-row';
+
+    row.innerHTML = `
+
+        <input
+            type="text"
+            class="tool-input course-name"
+            placeholder="Course name"
+        >
+
+        <input
+            type="number"
+            class="tool-input course-credit"
+            placeholder="Credit"
+            min="0.1"
+            step="0.5"
+            value="3"
+        >
+
+        <select class="tool-select course-grade">
+
+            <option value="A+">A+</option>
+            <option value="A">A</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B">B</option>
+            <option value="B-">B-</option>
+            <option value="C+">C+</option>
+            <option value="C">C</option>
+            <option value="C-">C-</option>
+            <option value="D">D</option>
+            <option value="F">F</option>
+
+        </select>
+
+        <button
+            class="remove-course"
+            title="Remove course">
+
+            <i class="fa-solid fa-trash"></i>
+
+        </button>
+
+    `;
+
+    row.querySelector('.remove-course')
+        .addEventListener('click', () => {
+
+            row.remove();
+
+            if (courseList.children.length === 0) {
+                createCourseRow();
+            }
+
         });
 
-        // Mobile hamburger menu
-        const hamburger = document.getElementById('hamburger');
-        const navMenu = document.getElementById('navMenu');
-        if (hamburger && navMenu) {
-            hamburger.addEventListener('click', () => {
-                hamburger.classList.toggle('active');
-                navMenu.classList.toggle('active');
-            });
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.addEventListener('click', () => {
-                    hamburger.classList.remove('active');
-                    navMenu.classList.remove('active');
-                });
-            });
+    courseList.appendChild(row);
+}
+
+
+function calculateGPA() {
+
+    const rows =
+        document.querySelectorAll('.course-row');
+
+    let totalPoints = 0;
+    let totalCredits = 0;
+
+    rows.forEach(row => {
+
+        const credit =
+            parseFloat(
+                row.querySelector('.course-credit').value
+            );
+
+        const grade =
+            row.querySelector('.course-grade').value;
+
+        const points =
+            gradePoints[grade];
+
+        if (
+            !isNaN(credit) &&
+            credit > 0
+        ) {
+
+            totalCredits += credit;
+            totalPoints += credit * points;
+
         }
-    </script>
+
+    });
+
+    const result =
+        document.getElementById('gpaResult');
+
+    if (totalCredits === 0) {
+
+        result.innerHTML = `
+            <div class="result-main">0.00</div>
+            <div class="result-small">
+                Enter valid course credits
+            </div>
+        `;
+
+        return;
+    }
+
+    const gpa =
+        totalPoints / totalCredits;
+
+    result.innerHTML = `
+        <div class="result-main">
+            ${gpa.toFixed(2)}
+        </div>
+
+        <div class="result-small">
+            GPA • Total Credits: ${totalCredits}
+        </div>
+    `;
+}
+
+
+addCourseBtn.addEventListener(
+    'click',
+    createCourseRow
+);
+
+calculateGpaBtn.addEventListener(
+    'click',
+    calculateGPA
+);
+
+clearGpaBtn.addEventListener(
+    'click',
+    () => {
+
+        courseList.innerHTML = '';
+
+        createCourseRow();
+
+        document.getElementById('gpaResult')
+            .innerHTML = `
+                <div class="result-main">0.00</div>
+                <div class="result-small">
+                    Add courses and calculate your GPA
+                </div>
+            `;
+
+    }
+);
+
+
+/* Add first course automatically */
+
+createCourseRow();
+
+
+/* =====================================================
+   PERCENTAGE & GRADE CALCULATOR
+===================================================== */
+
+const obtainedMarks =
+    document.getElementById('obtainedMarks');
+
+const totalMarks =
+    document.getElementById('totalMarks');
+
+const calculatePercentageBtn =
+    document.getElementById(
+        'calculatePercentageBtn'
+    );
+
+const percentageResult =
+    document.getElementById('percentageResult');
+
+const gradeResult =
+    document.getElementById('gradeResult');
+
+const percentageError =
+    document.getElementById('percentageError');
+
+
+function getGrade(percentage) {
+
+    /*
+       Grade scale can be changed easily here.
+    */
+
+    if (percentage >= 90) return 'A+';
+    if (percentage >= 80) return 'A';
+    if (percentage >= 70) return 'B+';
+    if (percentage >= 60) return 'B';
+    if (percentage >= 50) return 'C+';
+    if (percentage >= 40) return 'C';
+    if (percentage >= 30) return 'D';
+
+    return 'F';
+}
+
+
+calculatePercentageBtn.addEventListener(
+    'click',
+    () => {
+
+        const obtained =
+            parseFloat(obtainedMarks.value);
+
+        const total =
+            parseFloat(totalMarks.value);
+
+        percentageError.style.display = 'none';
+
+        if (
+            isNaN(obtained) ||
+            isNaN(total) ||
+            total <= 0 ||
+            obtained < 0 ||
+            obtained > total
+        ) {
+
+            percentageError.style.display =
+                'block';
+
+            percentageResult.textContent =
+                '0.00%';
+
+            gradeResult.textContent =
+                'Grade: —';
+
+            return;
+        }
+
+        const percentage =
+            (obtained / total) * 100;
+
+        const grade =
+            getGrade(percentage);
+
+        percentageResult.textContent =
+            percentage.toFixed(2) + '%';
+
+        gradeResult.textContent =
+            'Grade: ' + grade;
+
+    }
+);
+
+
+/* =====================================================
+   POMODORO TIMER
+===================================================== */
+
+const timerDisplay =
+    document.getElementById('timerDisplay');
+
+const timerMode =
+    document.getElementById('timerMode');
+
+const timerProgressBar =
+    document.getElementById(
+        'timerProgressBar'
+    );
+
+const startTimerBtn =
+    document.getElementById(
+        'startTimerBtn'
+    );
+
+const pauseTimerBtn =
+    document.getElementById(
+        'pauseTimerBtn'
+    );
+
+const resetTimerBtn =
+    document.getElementById(
+        'resetTimerBtn'
+    );
+
+
+const FOCUS_TIME = 25 * 60;
+const BREAK_TIME = 5 * 60;
+
+let timerSeconds = FOCUS_TIME;
+let timerInterval = null;
+let isFocusMode = true;
+
+
+function updateTimerDisplay() {
+
+    const minutes =
+        Math.floor(timerSeconds / 60);
+
+    const seconds =
+        timerSeconds % 60;
+
+    timerDisplay.textContent =
+        String(minutes).padStart(2, '0')
+        + ':'
+        + String(seconds).padStart(2, '0');
+
+
+    const totalTime =
+        isFocusMode
+        ? FOCUS_TIME
+        : BREAK_TIME;
+
+    const elapsed =
+        totalTime - timerSeconds;
+
+    const progress =
+        (elapsed / totalTime) * 100;
+
+    timerProgressBar.style.width =
+        progress + '%';
+
+    timerMode.textContent =
+        isFocusMode
+        ? 'Focus Time'
+        : 'Break Time';
+
+    document.title =
+        `${minutes}:${String(seconds).padStart(2, '0')} - Sakil Web Tools`;
+}
+
+
+function switchTimerMode() {
+
+    isFocusMode =
+        !isFocusMode;
+
+    timerSeconds =
+        isFocusMode
+        ? FOCUS_TIME
+        : BREAK_TIME;
+
+    updateTimerDisplay();
+
+}
+
+
+function startTimer() {
+
+    if (timerInterval !== null) {
+        return;
+    }
+
+    timerInterval =
+        setInterval(() => {
+
+            if (timerSeconds > 0) {
+
+                timerSeconds--;
+
+                updateTimerDisplay();
+
+            } else {
+
+                clearInterval(timerInterval);
+
+                timerInterval = null;
+
+                /*
+                    Automatically switch
+                    between focus and break.
+                */
+
+                switchTimerMode();
+
+                startTimer();
+
+            }
+
+        }, 1000);
+}
+
+
+function pauseTimer() {
+
+    if (timerInterval !== null) {
+
+        clearInterval(timerInterval);
+        timerInterval = null;
+
+    }
+
+}
+
+
+function resetTimer() {
+
+    pauseTimer();
+
+    isFocusMode = true;
+
+    timerSeconds = FOCUS_TIME;
+
+    updateTimerDisplay();
+
+}
+
+
+startTimerBtn.addEventListener(
+    'click',
+    startTimer
+);
+
+pauseTimerBtn.addEventListener(
+    'click',
+    pauseTimer
+);
+
+resetTimerBtn.addEventListener(
+    'click',
+    resetTimer
+);
+
+updateTimerDisplay();
+
+
+/* =====================================================
+   AGE CALCULATOR
+===================================================== */
+
+const birthDate =
+    document.getElementById('birthDate');
+
+const calculateAgeBtn =
+    document.getElementById(
+        'calculateAgeBtn'
+    );
+
+const ageError =
+    document.getElementById('ageError');
+
+
+function calculateAge() {
+
+    const birth =
+        new Date(birthDate.value);
+
+    const today =
+        new Date();
+
+    ageError.style.display = 'none';
+
+
+    if (
+        !birthDate.value ||
+        isNaN(birth.getTime()) ||
+        birth > today
+    ) {
+
+        ageError.style.display =
+            'block';
+
+        return;
+    }
+
+
+    let years =
+        today.getFullYear()
+        - birth.getFullYear();
+
+    let months =
+        today.getMonth()
+        - birth.getMonth();
+
+    let days =
+        today.getDate()
+        - birth.getDate();
+
+
+    /*
+       Borrow days from previous month
+       when required.
+    */
+
+    if (days < 0) {
+
+        months--;
+
+        const previousMonth =
+            new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                0
+            );
+
+        days +=
+            previousMonth.getDate();
+
+    }
+
+
+    if (months < 0) {
+
+        years--;
+        months += 12;
+
+    }
+
+
+    document.getElementById('ageYears')
+        .textContent = years;
+
+    document.getElementById('ageMonths')
+        .textContent = months;
+
+    document.getElementById('ageDays')
+        .textContent = days;
+
+
+    document.getElementById('ageSummary')
+        .textContent =
+        `You are ${years} years, ${months} months and ${days} days old.`;
+
+}
+
+
+calculateAgeBtn.addEventListener(
+    'click',
+    calculateAge
+);
+
+
+/*
+   Set maximum date to today.
+   This prevents selecting a future
+   date from the date picker.
+*/
+
+const todayString =
+    new Date()
+        .toISOString()
+        .split('T')[0];
+
+birthDate.max = todayString;
+
+
+/* =====================================================
+   ENTER KEY SUPPORT
+===================================================== */
+
+[obtainedMarks, totalMarks]
+    .forEach(input => {
+
+        input.addEventListener(
+            'keydown',
+            event => {
+
+                if (event.key === 'Enter') {
+                    calculatePercentageBtn.click();
+                }
+
+            }
+        );
+
+    });
+
+
+birthDate.addEventListener(
+    'keydown',
+    event => {
+
+        if (event.key === 'Enter') {
+            calculateAgeBtn.click();
+        }
+
+    }
+);
+
+</script>
+
 </body>
 </html>
