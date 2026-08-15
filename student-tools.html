@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Tools - Sakil Web Tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .student-dashboard {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        @media (min-width: 768px) {
+            .student-dashboard { grid-template-columns: 1fr 1fr; }
+        }
+        .tool-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            box-shadow: var(--card-shadow);
+        }
+        .tool-box h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+        }
+        .tool-box h3 i { color: var(--accent-color); }
+        .tool-box p.tool-desc {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        .tool-placeholder {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            background: var(--bg-primary);
+            border: 1px dashed var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span></a>
+            <nav class="nav-menu" id="navMenu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="index.html#image-tools" class="nav-link">Image Tools</a>
+                <a href="index.html#pdf-tools" class="nav-link">PDF Tools</a>
+                <a href="student-tools.html" class="nav-link active">Student Tools</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+            </nav>
+            <div class="nav-actions">
+                <button id="theme-toggle" class="theme-btn"><i class="fa-solid fa-moon"></i></button>
+                <button class="hamburger" id="hamburger" aria-label="Menu">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container" style="padding-top: 8rem;">
+        <div class="section-header">
+            <h2><i class="fa-solid fa-graduation-cap"></i> Student Tools</h2>
+            <p>Quick calculators and helpers for everyday student work — all running right in your browser.</p>
+        </div>
+
+        <div class="student-dashboard">
+
+            <div class="tool-box" id="gpaBox">
+                <h3><i class="fa-solid fa-calculator"></i> GPA / CGPA Calculator</h3>
+                <p class="tool-desc">Add your courses with credit and grade to calculate your GPA.</p>
+                <div class="tool-placeholder">Coming in the next step</div>
+            </div>
+
+            <div class="tool-box" id="percentBox">
+                <h3><i class="fa-solid fa-percent"></i> Percentage & Grade Calculator</h3>
+                <p class="tool-desc">Enter your obtained and total marks to get percentage and grade.</p>
+                <div class="tool-placeholder">Coming in the next step</div>
+            </div>
+
+            <div class="tool-box" id="timerBox">
+                <h3><i class="fa-solid fa-clock"></i> Study Timer (Pomodoro)</h3>
+                <p class="tool-desc">25-minute focus sessions with automatic 5-minute breaks.</p>
+                <div class="tool-placeholder">Coming in the next step</div>
+            </div>
+
+            <div class="tool-box" id="ageBox">
+                <h3><i class="fa-solid fa-cake-candles"></i> Age Calculator</h3>
+                <p class="tool-desc">Find your exact age in years, months, and days.</p>
+                <div class="tool-placeholder">Coming in the next step</div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Theme Config
+        const htmlElement = document.documentElement;
+        const themeBtn = document.getElementById('theme-toggle');
+        const applyTheme = (theme) => {
+            htmlElement.setAttribute('data-theme', theme);
+            themeBtn.querySelector('i').className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        };
+        applyTheme(localStorage.getItem('sakil-tools-theme') || 'light');
+        themeBtn.addEventListener('click', () => {
+            const next = htmlElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('sakil-tools-theme', next);
+            applyTheme(next);
+        });
+
+        // Mobile hamburger menu
+        const hamburger = document.getElementById('hamburger');
+        const navMenu = document.getElementById('navMenu');
+        if (hamburger && navMenu) {
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('active');
+                navMenu.classList.toggle('active');
+            });
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    hamburger.classList.remove('active');
+                    navMenu.classList.remove('active');
+                });
+            });
+        }
+    </script>
+</body>
+</html>
