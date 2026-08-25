@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Background Remover - Sakil Web Tools</title>
+    <title>AI Background Remover - Sakil Web Tools</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -300,8 +300,8 @@
 
     <main class="main-container" style="padding-top: 8rem;">
         <div class="section-header">
-            <h2><i class="fa-solid fa-scissors"></i> Background Remover</h2>
-            <p>Erase image backgrounds instantly by sakil web tools</p>
+            <h2><i class="fa-solid fa-scissors"></i> AI Background Remover</h2>
+            <p>Erase image backgrounds instantly — processed 100% locally in your browser. No upload, no server, no API key.</p>
         </div>
 
         <div class="tool-layout">
@@ -485,7 +485,12 @@
         // onto whatever context+size is passed in. Shared by the small live
         // editor canvas and the full-resolution export canvas below, so the
         // download always matches exactly what the editor shows.
+        // `w`/`h` here are always the LOGICAL (CSS-pixel) size of the target
+        // frame — callers that need device-pixel-ratio crispness (the live
+        // editor) pre-scale the context with ctx.setTransform() before calling.
         function renderFrameOnto(ctx, w, h, color) {
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
             ctx.clearRect(0, 0, w, h);
             if (color !== 'transparent') {
                 ctx.fillStyle = color;
@@ -505,6 +510,9 @@
             ctx.restore();
         }
 
+        // Full-resolution export canvas — used for the actual download, always
+        // sized in real output pixels (e.g. 413×531 for a 35×45mm passport
+        // photo at 300dpi), independent of screen DPI.
         function buildFramedCanvas(color, frame, scale) {
             const w = Math.max(1, Math.round(frame.w * scale));
             const h = Math.max(1, Math.round(frame.h * scale));
@@ -515,18 +523,28 @@
             return canvas;
         }
 
-        // Cheap live-editor redraw — fixed small preview resolution, called
-        // continuously while dragging/zooming/rotating so it stays smooth.
+        // Live-editor redraw — called continuously while dragging/zooming/
+        // rotating. Renders at devicePixelRatio so it stays sharp on
+        // retina/high-DPI phone screens instead of looking soft/pixelated;
+        // the CSS display size stays fixed at `previewW` regardless.
         function updateCropPreview() {
             const frame = getFrameDims();
             if (!frame || !cutoutImage) return;
-            const previewW = 260;
+            const previewW = 300;
             const previewH = Math.round(previewW * frame.h / frame.w);
-            if (cropCanvas.width !== previewW || cropCanvas.height !== previewH) {
-                cropCanvas.width = previewW;
-                cropCanvas.height = previewH;
+            const dpr = window.devicePixelRatio || 1;
+            const bufferW = Math.round(previewW * dpr);
+            const bufferH = Math.round(previewH * dpr);
+
+            if (cropCanvas.width !== bufferW || cropCanvas.height !== bufferH) {
+                cropCanvas.width = bufferW;
+                cropCanvas.height = bufferH;
+                cropCanvas.style.width = previewW + 'px';
+                cropCanvas.style.height = previewH + 'px';
             }
-            renderFrameOnto(cropCanvas.getContext('2d'), previewW, previewH, selectedBgColor);
+            const ctx = cropCanvas.getContext('2d');
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS-pixel coordinates on the higher-res buffer
+            renderFrameOnto(ctx, previewW, previewH, selectedBgColor);
         }
 
         function scheduleRenderOutput() {
@@ -564,8 +582,11 @@
             if (!isDragging) return;
             const dx = e.clientX - dragStartX;
             const dy = e.clientY - dragStartY;
-            cropState.offsetXPercent = clamp(dragStartOffsetX + (dx / (cropCanvas.width / 2)) * 100, -150, 150);
-            cropState.offsetYPercent = clamp(dragStartOffsetY + (dy / (cropCanvas.height / 2)) * 100, -150, 150);
+            // Use the CSS display size (clientWidth/clientHeight), not the
+            // devicePixelRatio-scaled buffer size, so drag distance feels
+            // consistent regardless of screen DPI.
+            cropState.offsetXPercent = clamp(dragStartOffsetX + (dx / (cropCanvas.clientWidth / 2)) * 100, -150, 150);
+            cropState.offsetYPercent = clamp(dragStartOffsetY + (dy / (cropCanvas.clientHeight / 2)) * 100, -150, 150);
             updateCropPreview();
         });
         cropCanvas.addEventListener('pointerup', () => {
@@ -714,6 +735,8 @@
             canvas.width = targetW;
             canvas.height = targetH;
             const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
 
             if (color !== 'transparent') {
                 ctx.fillStyle = color;
