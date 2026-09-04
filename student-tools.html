@@ -146,8 +146,91 @@
             font-size: 0.85rem;
         }
 
-      
-    
+        /* =========================
+           GPA
+        ========================= */
+
+        .course-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.7rem;
+        }
+
+        .course-row {
+            display: grid;
+            grid-template-columns: 1fr 100px 100px 40px;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .remove-course {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 9px;
+            background: #dc3545;
+            color: white;
+            cursor: pointer;
+        }
+
+        .gpa-buttons {
+            display: flex;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 600px) {
+            .course-row {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .course-row .course-name {
+                grid-column: 1 / -1;
+            }
+        }
+
+        /* =========================
+           POMODORO
+        ========================= */
+
+        .timer-display {
+            text-align: center;
+            font-size: clamp(3rem, 12vw, 5rem);
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--text-primary);
+            margin: 0.5rem 0;
+        }
+
+        .timer-mode {
+            text-align: center;
+            color: var(--accent-color);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .timer-progress {
+            width: 100%;
+            height: 7px;
+            background: var(--border-color);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .timer-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--accent-color);
+            transition: width 0.3s linear;
+        }
+
         /* =========================
            AGE
         ========================= */
@@ -374,7 +457,192 @@
             opacity: 0.9;
         }
 
-       
+        /* =========================
+           TEXT SUMMARIZER
+        ========================= */
+
+        .summary-output {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            min-height: 80px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="navbar">
+    <div class="nav-container">
+
+        <a href="index.html" class="logo">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+            Sakil <span>Web Tools</span>
+        </a>
+
+        <nav class="nav-menu" id="navMenu">
+            <a href="index.html" class="nav-link">Home</a>
+            <a href="index.html#image-tools" class="nav-link">Image Tools</a>
+            <a href="index.html#pdf-tools" class="nav-link">PDF Tools</a>
+            <a href="student-tools.html" class="nav-link active">Student Tools</a>
+            <a href="about.html" class="nav-link">About</a>
+            <a href="contact.html" class="nav-link">Contact</a>
+        </nav>
+
+        <div class="nav-actions">
+            <button id="theme-toggle" class="theme-btn">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+
+            <button class="hamburger" id="hamburger" aria-label="Menu">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+        </div>
+
+    </div>
+</header>
+
+
+<main class="main-container" style="padding-top: 8rem;">
+
+    <div class="section-header">
+        <h2>
+            <i class="fa-solid fa-graduation-cap"></i>
+            Student Tools
+        </h2>
+
+        <p>
+            Quick calculators and helpers for everyday student work —
+            all running right in your browser.
+        </p>
+    </div>
+
+
+    <div class="student-dashboard">
+
+
+        <!-- =========================================
+             GPA / CGPA CALCULATOR
+        ========================================== -->
+
+        <div class="tool-box" id="gpaBox">
+
+            <h3>
+                <i class="fa-solid fa-calculator"></i>
+                GPA / CGPA Calculator
+            </h3>
+
+            <p class="tool-desc">
+                Add your courses with credit and grade to calculate your GPA.
+            </p>
+
+            <div class="course-header">
+                <span>Course</span>
+                <span>Credit</span>
+                <span>Grade</span>
+                <span></span>
+            </div>
+
+            <div id="courseList" class="course-list"></div>
+
+            <div class="gpa-buttons">
+
+                <button class="tool-btn" id="addCourseBtn">
+                    <i class="fa-solid fa-plus"></i>
+                    Add Course
+                </button>
+
+                <button class="tool-btn secondary" id="calculateGpaBtn">
+                    Calculate GPA
+                </button>
+
+                <button class="tool-btn danger" id="clearGpaBtn">
+                    Clear
+                </button>
+
+            </div>
+
+            <div class="result-box" id="gpaResult">
+                <div class="result-main">0.00</div>
+                <div class="result-small">
+                    Add courses and calculate your GPA
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- =========================================
+             PERCENTAGE & GRADE (EXAM MARKS)
+        ========================================== -->
+
+        <div class="tool-box" id="percentBox">
+
+            <h3>
+                <i class="fa-solid fa-percent"></i>
+                Exam Marks Percentage & Grade
+            </h3>
+
+            <p class="tool-desc">
+                Enter your obtained and total marks to get percentage and grade.
+            </p>
+
+            <div class="input-row">
+
+                <div class="input-group">
+                    <label>Obtained Marks</label>
+                    <input
+                        type="number"
+                        id="obtainedMarks"
+                        class="tool-input"
+                        placeholder="e.g. 420"
+                        min="0"
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label>Total Marks</label>
+                    <input
+                        type="number"
+                        id="totalMarks"
+                        class="tool-input"
+                        placeholder="e.g. 500"
+                        min="1"
+                    >
+                </div>
+
+            </div>
+
+            <div id="percentageError" class="error-message">
+                Please enter valid marks.
+            </div>
+
+            <button class="tool-btn" id="calculatePercentageBtn">
+                <i class="fa-solid fa-calculator"></i>
+                Calculate
+            </button>
+
+            <div class="result-box">
+
+                <div class="result-main" id="percentageResult">
+                    0.00%
+                </div>
+
+                <div class="result-small" id="gradeResult">
+                    Grade: —
+                </div>
+
+            </div>
+
+        </div>
+
+
         <!-- =========================================
              POMODORO TIMER
         ========================================== -->
@@ -695,6 +963,49 @@
 
 
         <!-- =========================================
+             TEXT SUMMARIZER
+        ========================================== -->
+
+        <div class="tool-box" id="summarizerBox">
+
+            <h3>
+                <i class="fa-solid fa-align-left"></i>
+                Text Summarizer
+            </h3>
+
+            <p class="tool-desc">
+                Paste a long passage and get a short extractive summary — runs
+                fully in your browser, no waiting on a server.
+            </p>
+
+            <textarea
+                id="summarizerInput"
+                class="tool-textarea"
+                placeholder="Paste an article, chapter, or notes here...">
+            </textarea>
+
+            <div class="input-group">
+                <label>Summary Length</label>
+                <select id="summarizerLength" class="tool-select">
+                    <option value="3">Short (3 sentences)</option>
+                    <option value="5" selected>Medium (5 sentences)</option>
+                    <option value="8">Long (8 sentences)</option>
+                </select>
+            </div>
+
+            <button class="tool-btn" id="summarizeBtn">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                Summarize
+            </button>
+
+            <div class="summary-output" id="summaryOutput">
+                Your summary will appear here.
+            </div>
+
+        </div>
+
+
+        <!-- =========================================
              SCIENTIFIC CALCULATOR
         ========================================== -->
 
@@ -906,9 +1217,470 @@ if (hamburger && navMenu) {
 }
 
 
+/* =====================================================
+   GPA / CGPA CALCULATOR
+===================================================== */
+
+const courseList =
+    document.getElementById('courseList');
+
+const addCourseBtn =
+    document.getElementById('addCourseBtn');
+
+const calculateGpaBtn =
+    document.getElementById('calculateGpaBtn');
+
+const clearGpaBtn =
+    document.getElementById('clearGpaBtn');
 
 
-====================
+/*
+    Standard 4.0 GPA scale
+*/
+
+const gradePoints = {
+
+    'A+': 4.0,
+    'A': 4.0,
+    'A-': 3.7,
+    'B+': 3.3,
+    'B': 3.0,
+    'B-': 2.7,
+    'C+': 2.3,
+    'C': 2.0,
+    'C-': 1.7,
+    'D': 1.0,
+    'F': 0.0
+
+};
+
+
+function createCourseRow() {
+
+    const row =
+        document.createElement('div');
+
+    row.className = 'course-row';
+
+    row.innerHTML = `
+
+        <input
+            type="text"
+            class="tool-input course-name"
+            placeholder="Course name"
+        >
+
+        <input
+            type="number"
+            class="tool-input course-credit"
+            placeholder="Credit"
+            min="0.1"
+            step="0.5"
+            value="3"
+        >
+
+        <select class="tool-select course-grade">
+
+            <option value="A+">A+</option>
+            <option value="A">A</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B">B</option>
+            <option value="B-">B-</option>
+            <option value="C+">C+</option>
+            <option value="C">C</option>
+            <option value="C-">C-</option>
+            <option value="D">D</option>
+            <option value="F">F</option>
+
+        </select>
+
+        <button
+            class="remove-course"
+            title="Remove course">
+
+            <i class="fa-solid fa-trash"></i>
+
+        </button>
+
+    `;
+
+    row.querySelector('.remove-course')
+        .addEventListener('click', () => {
+
+            row.remove();
+
+            if (courseList.children.length === 0) {
+                createCourseRow();
+            }
+
+        });
+
+    courseList.appendChild(row);
+}
+
+
+function calculateGPA() {
+
+    const rows =
+        document.querySelectorAll('.course-row');
+
+    let totalPoints = 0;
+    let totalCredits = 0;
+
+    rows.forEach(row => {
+
+        const credit =
+            parseFloat(
+                row.querySelector('.course-credit').value
+            );
+
+        const grade =
+            row.querySelector('.course-grade').value;
+
+        const points =
+            gradePoints[grade];
+
+        if (
+            !isNaN(credit) &&
+            credit > 0
+        ) {
+
+            totalCredits += credit;
+            totalPoints += credit * points;
+
+        }
+
+    });
+
+    const result =
+        document.getElementById('gpaResult');
+
+    if (totalCredits === 0) {
+
+        result.innerHTML = `
+            <div class="result-main">0.00</div>
+            <div class="result-small">
+                Enter valid course credits
+            </div>
+        `;
+
+        return;
+    }
+
+    const gpa =
+        totalPoints / totalCredits;
+
+    result.innerHTML = `
+        <div class="result-main">
+            ${gpa.toFixed(2)}
+        </div>
+
+        <div class="result-small">
+            GPA • Total Credits: ${totalCredits}
+        </div>
+    `;
+}
+
+
+addCourseBtn.addEventListener(
+    'click',
+    createCourseRow
+);
+
+calculateGpaBtn.addEventListener(
+    'click',
+    calculateGPA
+);
+
+clearGpaBtn.addEventListener(
+    'click',
+    () => {
+
+        courseList.innerHTML = '';
+
+        createCourseRow();
+
+        document.getElementById('gpaResult')
+            .innerHTML = `
+                <div class="result-main">0.00</div>
+                <div class="result-small">
+                    Add courses and calculate your GPA
+                </div>
+            `;
+
+    }
+);
+
+
+/* Add first course automatically */
+
+createCourseRow();
+
+
+/* =====================================================
+   PERCENTAGE & GRADE CALCULATOR
+===================================================== */
+
+const obtainedMarks =
+    document.getElementById('obtainedMarks');
+
+const totalMarks =
+    document.getElementById('totalMarks');
+
+const calculatePercentageBtn =
+    document.getElementById(
+        'calculatePercentageBtn'
+    );
+
+const percentageResult =
+    document.getElementById('percentageResult');
+
+const gradeResult =
+    document.getElementById('gradeResult');
+
+const percentageError =
+    document.getElementById('percentageError');
+
+
+function getGrade(percentage) {
+
+    /*
+       Grade scale can be changed easily here.
+    */
+
+    if (percentage >= 90) return 'A+';
+    if (percentage >= 80) return 'A';
+    if (percentage >= 70) return 'B+';
+    if (percentage >= 60) return 'B';
+    if (percentage >= 50) return 'C+';
+    if (percentage >= 40) return 'C';
+    if (percentage >= 30) return 'D';
+
+    return 'F';
+}
+
+
+calculatePercentageBtn.addEventListener(
+    'click',
+    () => {
+
+        const obtained =
+            parseFloat(obtainedMarks.value);
+
+        const total =
+            parseFloat(totalMarks.value);
+
+        percentageError.style.display = 'none';
+
+        if (
+            isNaN(obtained) ||
+            isNaN(total) ||
+            total <= 0 ||
+            obtained < 0 ||
+            obtained > total
+        ) {
+
+            percentageError.style.display =
+                'block';
+
+            percentageResult.textContent =
+                '0.00%';
+
+            gradeResult.textContent =
+                'Grade: —';
+
+            return;
+        }
+
+        const percentage =
+            (obtained / total) * 100;
+
+        const grade =
+            getGrade(percentage);
+
+        percentageResult.textContent =
+            percentage.toFixed(2) + '%';
+
+        gradeResult.textContent =
+            'Grade: ' + grade;
+
+    }
+);
+
+
+/* =====================================================
+   POMODORO TIMER
+===================================================== */
+
+const timerDisplay =
+    document.getElementById('timerDisplay');
+
+const timerMode =
+    document.getElementById('timerMode');
+
+const timerProgressBar =
+    document.getElementById(
+        'timerProgressBar'
+    );
+
+const startTimerBtn =
+    document.getElementById(
+        'startTimerBtn'
+    );
+
+const pauseTimerBtn =
+    document.getElementById(
+        'pauseTimerBtn'
+    );
+
+const resetTimerBtn =
+    document.getElementById(
+        'resetTimerBtn'
+    );
+
+
+const FOCUS_TIME = 25 * 60;
+const BREAK_TIME = 5 * 60;
+
+let timerSeconds = FOCUS_TIME;
+let timerInterval = null;
+let isFocusMode = true;
+
+
+function updateTimerDisplay() {
+
+    const minutes =
+        Math.floor(timerSeconds / 60);
+
+    const seconds =
+        timerSeconds % 60;
+
+    timerDisplay.textContent =
+        String(minutes).padStart(2, '0')
+        + ':'
+        + String(seconds).padStart(2, '0');
+
+
+    const totalTime =
+        isFocusMode
+        ? FOCUS_TIME
+        : BREAK_TIME;
+
+    const elapsed =
+        totalTime - timerSeconds;
+
+    const progress =
+        (elapsed / totalTime) * 100;
+
+    timerProgressBar.style.width =
+        progress + '%';
+
+    timerMode.textContent =
+        isFocusMode
+        ? 'Focus Time'
+        : 'Break Time';
+
+    document.title =
+        `${minutes}:${String(seconds).padStart(2, '0')} - Sakil Web Tools`;
+}
+
+
+function switchTimerMode() {
+
+    isFocusMode =
+        !isFocusMode;
+
+    timerSeconds =
+        isFocusMode
+        ? FOCUS_TIME
+        : BREAK_TIME;
+
+    updateTimerDisplay();
+
+}
+
+
+function startTimer() {
+
+    if (timerInterval !== null) {
+        return;
+    }
+
+    timerInterval =
+        setInterval(() => {
+
+            if (timerSeconds > 0) {
+
+                timerSeconds--;
+
+                updateTimerDisplay();
+
+            } else {
+
+                clearInterval(timerInterval);
+
+                timerInterval = null;
+
+                /*
+                    Automatically switch
+                    between focus and break.
+                */
+
+                switchTimerMode();
+
+                startTimer();
+
+            }
+
+        }, 1000);
+}
+
+
+function pauseTimer() {
+
+    if (timerInterval !== null) {
+
+        clearInterval(timerInterval);
+        timerInterval = null;
+
+    }
+
+}
+
+
+function resetTimer() {
+
+    pauseTimer();
+
+    isFocusMode = true;
+
+    timerSeconds = FOCUS_TIME;
+
+    updateTimerDisplay();
+
+}
+
+
+startTimerBtn.addEventListener(
+    'click',
+    startTimer
+);
+
+pauseTimerBtn.addEventListener(
+    'click',
+    pauseTimer
+);
+
+resetTimerBtn.addEventListener(
+    'click',
+    resetTimer
+);
+
+updateTimerDisplay();
+
+
+/* =====================================================
    AGE CALCULATOR
 ===================================================== */
 
@@ -1346,6 +2118,104 @@ ttsStopBtn.addEventListener('click', () => {
 });
 
 
+/* =====================================================
+   TEXT SUMMARIZER (extractive, frequency-based)
+===================================================== */
+
+const summarizerInput = document.getElementById('summarizerInput');
+const summarizerLength = document.getElementById('summarizerLength');
+const summarizeBtn = document.getElementById('summarizeBtn');
+const summaryOutput = document.getElementById('summaryOutput');
+
+const stopWords = new Set([
+    'a', 'an', 'the', 'and', 'or', 'but', 'if', 'then', 'so', 'to', 'of',
+    'in', 'on', 'at', 'for', 'with', 'is', 'are', 'was', 'were', 'be',
+    'been', 'being', 'this', 'that', 'these', 'those', 'it', 'its', 'as',
+    'by', 'from', 'into', 'than', 'which', 'who', 'whom', 'what', 'when',
+    'where', 'why', 'how', 'not', 'no', 'do', 'does', 'did', 'can',
+    'could', 'should', 'would', 'will', 'shall', 'have', 'has', 'had',
+    'i', 'you', 'he', 'she', 'we', 'they', 'them', 'his', 'her', 'their',
+    'our'
+]);
+
+function summarizeText() {
+
+    const text = summarizerInput.value.trim();
+
+    if (!text) {
+
+        summaryOutput.textContent =
+            'Please paste some text to summarize.';
+
+        return;
+    }
+
+    const sentenceCount =
+        parseInt(summarizerLength.value);
+
+    const sentences =
+        text.match(/[^.!?]+[.!?]+|\S+$/g) || [text];
+
+    if (sentences.length <= sentenceCount) {
+
+        summaryOutput.textContent = text;
+
+        return;
+    }
+
+    const wordFrequency = {};
+
+    const words =
+        text.toLowerCase().match(/[a-z']+/g) || [];
+
+    words.forEach(word => {
+
+        if (stopWords.has(word) || word.length < 3) {
+            return;
+        }
+
+        wordFrequency[word] =
+            (wordFrequency[word] || 0) + 1;
+
+    });
+
+    const sentenceScores =
+        sentences.map((sentence, index) => {
+
+            const sentenceWords =
+                sentence.toLowerCase().match(/[a-z']+/g) || [];
+
+            let score = 0;
+
+            sentenceWords.forEach(word => {
+                score += wordFrequency[word] || 0;
+            });
+
+            const normalizedScore =
+                sentenceWords.length > 0
+                ? score / sentenceWords.length
+                : 0;
+
+            return {
+                sentence: sentence.trim(),
+                index,
+                score: normalizedScore
+            };
+
+        });
+
+    const topSentences =
+        sentenceScores
+            .sort((a, b) => b.score - a.score)
+            .slice(0, sentenceCount)
+            .sort((a, b) => a.index - b.index);
+
+    summaryOutput.textContent =
+        topSentences.map(s => s.sentence).join(' ');
+
+}
+
+summarizeBtn.addEventListener('click', summarizeText);
 
 
 /* =====================================================
