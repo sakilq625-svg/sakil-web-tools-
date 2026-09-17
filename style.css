@@ -510,31 +510,3 @@ a {
     .hamburger.active .bar:nth-child(1) { transform: translateY(8px) rotate(45deg); }
     .hamburger.active .bar:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
 }
-/* ==========================================================================
-   BACKGROUND PATTERN — pure CSS, zero images, zero JS, zero extra requests
-   ========================================================================== */
-
-body {
-    position: relative;
-}
-
-body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-
-    background-image: radial-gradient(
-        circle,
-        var(--text-primary) 1px,
-        transparent 1px
-    );
-    background-size: 26px 26px;
-
-    opacity: 0.05;
-}
-
-[data-theme="dark"] body::before {
-    opacity: 0.07;
-}
