@@ -51,12 +51,37 @@
 }
 
 body {
+    position: relative;
     font-family: 'Inter', sans-serif;
     background-color: var(--bg-primary);
     color: var(--text-primary);
     line-height: 1.6;
     overflow-x: hidden;
     transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+/* Background pattern — pure CSS dot-grid, zero images, zero JS, zero
+   extra network requests. Fixed + negative z-index so it never repaints
+   on scroll and never interferes with clicks. */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+
+    background-image: radial-gradient(
+        circle,
+        var(--text-primary) 1.5px,
+        transparent 1.5px
+    );
+    background-size: 24px 24px;
+
+    opacity: 0.14;
+}
+
+[data-theme="dark"] body::before {
+    opacity: 0.18;
 }
 
 a {
@@ -509,32 +534,4 @@ a {
     .hamburger.active .bar:nth-child(2) { opacity: 0; }
     .hamburger.active .bar:nth-child(1) { transform: translateY(8px) rotate(45deg); }
     .hamburger.active .bar:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
-}
-/* ==========================================================================
-   BACKGROUND PATTERN — pure CSS, zero images, zero JS, zero extra requests
-   ========================================================================== */
-
-body {
-    position: relative;
-}
-
-body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-
-    background-image: radial-gradient(
-        circle,
-        var(--text-primary) 1px,
-        transparent 1px
-    );
-    background-size: 26px 26px;
-
-    opacity: 0.05;
-}
-
-[data-theme="dark"] body::before {
-    opacity: 0.07;
 }
