@@ -18,6 +18,10 @@
     --glass-blur: blur(12px);
     --transition-speed: 0.3s;
 
+    /* Background dot-pattern color — baked-in opacity so it works as a
+       plain background-image with no z-index/stacking tricks needed */
+    --pattern-dot: rgba(36, 27, 27, 0.15);
+
     /* Icon Category Colors — kept distinct per category but pulled into
        the same warm family instead of indigo/red/green */
     --img-icon-bg: rgba(192, 57, 43, 0.10);
@@ -38,6 +42,7 @@
     --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
     --card-hover-shadow: 0 20px 40px -12px rgba(232, 106, 78, 0.28);
     --border-color: #3D2E29;
+    --pattern-dot: rgba(243, 233, 225, 0.16);
 }
 
 /* ==========================================================================
@@ -51,37 +56,22 @@
 }
 
 body {
-    position: relative;
     font-family: 'Inter', sans-serif;
-    background-color: var(--bg-primary);
     color: var(--text-primary);
     line-height: 1.6;
     overflow-x: hidden;
     transition: background-color var(--transition-speed), color var(--transition-speed);
-}
 
-/* Background pattern — pure CSS dot-grid, zero images, zero JS, zero
-   extra network requests. Fixed + negative z-index so it never repaints
-   on scroll and never interferes with clicks. */
-body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-
+    /* Background: base color + dot-grid pattern, both as native
+       background layers on body itself — no pseudo-element, no z-index,
+       no stacking-context issues. Guaranteed to always paint. */
+    background-color: var(--bg-primary);
     background-image: radial-gradient(
         circle,
-        var(--text-primary) 1.5px,
+        var(--pattern-dot) 1.5px,
         transparent 1.5px
     );
     background-size: 24px 24px;
-
-    opacity: 0.14;
-}
-
-[data-theme="dark"] body::before {
-    opacity: 0.18;
 }
 
 a {
