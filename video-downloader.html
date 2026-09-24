@@ -34,7 +34,7 @@
 
         .url-input-group {
             display: flex;
-            gap: 0.8rem;
+            gap: 0.6rem;
             flex-direction: column;
         }
 
@@ -44,9 +44,16 @@
             }
         }
 
-        .url-input {
+        .input-wrapper {
+            position: relative;
             flex: 1;
-            padding: 1rem 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .url-input {
+            width: 100%;
+            padding: 1rem 5.5rem 1rem 1.2rem;
             border-radius: 12px;
             border: 1px solid var(--border-color);
             background: var(--bg-primary);
@@ -60,6 +67,29 @@
         .url-input:focus {
             border-color: var(--accent-color);
             box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
+        }
+
+        .btn-paste {
+            position: absolute;
+            right: 0.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.45rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all var(--transition-speed);
+        }
+
+        .btn-paste:hover {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+            background: var(--bg-primary);
         }
 
         .btn-fetch {
@@ -95,11 +125,12 @@
             background: var(--bg-secondary);
             border: 1px dashed var(--accent-color);
             border-radius: 14px;
-            padding: 1.5rem;
+            padding: 1.2rem;
             text-align: center;
             color: var(--accent-color);
-            font-weight: 500;
-            font-size: 0.95rem;
+            font-weight: 600;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
         }
 
         .error-banner {
@@ -294,13 +325,18 @@
         <div class="downloader-layout">
             <div class="input-card">
                 <div class="url-input-group">
-                    <input 
-                        type="url" 
-                        id="videoUrlInput" 
-                        class="url-input" 
-                        placeholder="Paste video link here (YouTube, Instagram Reel, Facebook)..." 
-                        autocomplete="off"
-                    >
+                    <div class="input-wrapper">
+                        <input 
+                            type="url" 
+                            id="videoUrlInput" 
+                            class="url-input" 
+                            placeholder="Paste video link here (YouTube, Instagram Reel, Facebook)..." 
+                            autocomplete="off"
+                        >
+                        <button class="btn-paste" id="pasteBtn" type="button" onclick="pasteFromClipboard()">
+                            <i class="fa-regular fa-clipboard"></i> Paste
+                        </button>
+                    </div>
                     <button class="btn-fetch" id="fetchVideoBtn" onclick="fetchVideoData()">
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <span>Fetch Video</span>
@@ -309,9 +345,10 @@
                 <div id="errorBanner" class="error-banner"></div>
             </div>
 
+            <!-- Simplified Loading State showing only "Searching..." -->
             <div id="statusBox" class="status-box">
                 <i class="fa-solid fa-circle-notch fa-spin" style="margin-right: 0.5rem;"></i>
-                <span id="statusMessage">Extracting media streams and validating audio tracks...</span>
+                <span>Searching...</span>
             </div>
 
             <div id="resultCard" class="result-card">
@@ -356,8 +393,8 @@
 
     <script>
         // ==========================================
-        // 1. BACKEND API CONFIGURATION
-        // Render-এ ডিপ্লয় করার পর তোমার আসল ব্যাকএন্ড URL এখানে দেবে:
+        // 1. BACKEND API URL
+        // গুরুত্বপূর্ণ: তোমার Render ব্যাকএন্ডের আসল লাইভ URL এখানে বসাবে
         // ==========================================
         const API_BASE_URL = "https://sakil-downloader-api.onrender.com"; 
 
@@ -402,7 +439,28 @@
         }
 
         // ==========================================
-        // 4. VIDEO DOWNLOADER CONTROLLER
+        // 4. ONE-CLICK CLIPBOARD PASTE
+        // ==========================================
+        async function pasteFromClipboard() {
+            const input = document.getElementById('videoUrlInput');
+            try {
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    const text = await navigator.clipboard.readText();
+                    if (text) {
+                        input.value = text.trim();
+                        input.focus();
+                    }
+                } else {
+                    input.focus();
+                    document.execCommand('paste');
+                }
+            } catch (err) {
+                input.focus();
+            }
+        }
+
+        // ==========================================
+        // 5. VIDEO DOWNLOADER CONTROLLER
         // ==========================================
         function formatDuration(seconds) {
             if (!seconds) return "0:00";
@@ -415,7 +473,6 @@
             const input = document.getElementById('videoUrlInput');
             const btn = document.getElementById('fetchVideoBtn');
             const statusBox = document.getElementById('statusBox');
-            const statusMsg = document.getElementById('statusMessage');
             const errorBanner = document.getElementById('errorBanner');
             const resultCard = document.getElementById('resultCard');
 
@@ -428,7 +485,6 @@
             errorBanner.style.display = 'none';
             resultCard.style.display = 'none';
             statusBox.style.display = 'block';
-            statusMsg.textContent = "Connecting to server and analyzing video qualities (Free server may take ~30s to wake up)...";
             btn.disabled = true;
 
             try {
@@ -441,12 +497,12 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(data.detail || "Unable to retrieve details for this link. Ensure the video is public.");
+                    throw new Error(data.detail || "Unable to retrieve details. Ensure the video is public.");
                 }
 
                 renderVideoResult(data, url);
             } catch (err) {
-                showError(err.message || "Failed to reach processing engine. If the server was idle, please try again in a moment.");
+                showError(err.message || "Failed to fetch video. Please check the backend connection.");
             } finally {
                 statusBox.style.display = 'none';
                 btn.disabled = false;
