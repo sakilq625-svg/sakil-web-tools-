@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Social Video Downloader - Sakil Web Tools</title>
-    <meta name="description" content="Download YouTube, Instagram, and Facebook videos in 4K, 2K, 1080p HD, and MP3 audio with file size preview.">
+    <meta name="description" content="Download YouTube, Instagram, and Facebook videos in HD with direct download links.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -343,7 +343,7 @@
     <main class="main-container" style="padding-top: 8rem; padding-bottom: 5rem;">
         <div class="section-header" style="text-align: center;">
             <h2><i class="fa-solid fa-video" style="color: var(--accent-color);"></i> Social Video Downloader</h2>
-            <p>Download YouTube, Instagram Reels & Facebook videos in 4K, 2K, 1080p HD, and MP3 with full sound.</p>
+            <p>Download YouTube, Instagram Reels & Facebook videos in HD with direct link & file size preview.</p>
         </div>
 
         <div class="downloader-layout">
@@ -372,7 +372,7 @@
             <!-- Loading State -->
             <div id="statusBox" class="status-box">
                 <i class="fa-solid fa-circle-notch fa-spin" style="margin-right: 0.5rem;"></i>
-                <span>Searching...</span>
+                <span id="statusText">Searching...</span>
             </div>
 
             <div id="resultCard" class="result-card">
@@ -471,19 +471,15 @@
             }
         }
 
-        // YouTube ID helper
         function extractYouTubeID(url) {
             const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
             return match ? match[1] : null;
         }
 
-        // Estimated File Size Calculator
         function getEstimatedSize(durationSeconds, quality) {
             const sec = (durationSeconds && durationSeconds > 0) ? durationSeconds : 180;
             let mbps = 2.5; 
-            if (quality === '4K') mbps = 20.0;
-            else if (quality === '2K') mbps = 10.0;
-            else if (quality === '1080p') mbps = 5.0;
+            if (quality === '1080p') mbps = 5.0;
             else if (quality === '720p') mbps = 2.5;
             else if (quality === '480p') mbps = 1.2;
             else if (quality === '360p') mbps = 0.7;
@@ -496,16 +492,23 @@
             return `~${Math.round(sizeMB)} MB`;
         }
 
-        // Safe Downloader Dispatcher
-        function triggerDownload(targetUrl) {
-            window.open(targetUrl, '_blank', 'noopener,noreferrer');
+        // Direct stream downloader
+        async function downloadDirect(link, filename) {
+            const a = document.createElement('a');
+            a.href = link;
+            a.download = filename || 'video.mp4';
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
-        // Main Video Data Resolver
         async function fetchVideoData() {
             const input = document.getElementById('videoUrlInput');
             const btn = document.getElementById('fetchVideoBtn');
             const statusBox = document.getElementById('statusBox');
+            const statusText = document.getElementById('statusText');
             const errorBanner = document.getElementById('errorBanner');
             const resultCard = document.getElementById('resultCard');
 
@@ -518,13 +521,14 @@
             errorBanner.style.display = 'none';
             resultCard.style.display = 'none';
             statusBox.style.display = 'block';
+            statusText.textContent = "Searching...";
             btn.disabled = true;
 
             const ytId = extractYouTubeID(url);
 
             try {
                 if (ytId) {
-                    // YouTube Resolver
+                    // Fetch YouTube details via oEmbed
                     const metaRes = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${ytId}`);
                     const metaData = await metaRes.json();
                     
@@ -532,39 +536,61 @@
                     const author = metaData.author_name || "YouTube Creator";
                     const thumbnail = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
 
+                    // Generate working direct converter links without timeouts
                     const formats = [
-                        { label: "4K Ultra HD (2160p)", quality: "4K", sub: "Ultra Sharp 2160p with Audio 🔊", dl: `https://yt5s.biz/en/download?url=https://www.youtube.com/watch?v=${ytId}&f=2160` },
-                        { label: "2K Quad HD (1440p)", quality: "2K", sub: "Super Sharp 1440p with Audio 🔊", dl: `https://yt5s.biz/en/download?url=https://www.youtube.com/watch?v=${ytId}&f=1440` },
-                        { label: "Full HD 1080p", quality: "1080p", sub: "Crisp 1080p with Audio 🔊", dl: `https://yt5s.biz/en/download?url=https://www.youtube.com/watch?v=${ytId}&f=1080` },
-                        { label: "HD 720p", quality: "720p", sub: "Standard High Definition 720p 🔊", dl: `https://yt5s.biz/en/download?url=https://www.youtube.com/watch?v=${ytId}&f=720` },
-                        { label: "Audio Only (MP3)", quality: "MP3", sub: "Crystal Clear 320kbps Audio 🎵", dl: `https://yt5s.biz/en/download?url=https://www.youtube.com/watch?v=${ytId}&f=mp3` }
+                        { label: "Full HD 1080p", quality: "1080p", sub: "Crisp 1080p Video + Audio 🔊", dl: `https://www.y2mate.com/youtube/${ytId}` },
+                        { label: "HD 720p", quality: "720p", sub: "Standard 720p Video + Audio 🔊", dl: `https://en.savefrom.net/1-youtube-video-downloader-4/?url=https://www.youtube.com/watch?v=${ytId}` },
+                        { label: "Audio Only (MP3)", quality: "MP3", sub: "Crystal Clear 320kbps MP3 🎵", dl: `https://www.y2mate.com/youtube-mp3/${ytId}` }
                     ];
 
-                    renderYouTubeResults(title, author, thumbnail, formats);
+                    renderResults(title, author, thumbnail, formats);
                 } else {
-                    // Instagram & Facebook Resolver (Using Universal Social Gateway)
-                    const cleanUrl = encodeURIComponent(url);
-                    const title = url.includes("instagram.com") ? "Instagram Reel / Video" : "Facebook Video / Reel";
-                    const author = url.includes("instagram.com") ? "Instagram" : "Facebook";
-                    const thumbnail = "https://placehold.co/600x400/241C19/ffffff?text=Social+Video+Ready";
+                    // Instagram & Facebook direct parse via API
+                    statusText.textContent = "Fetching media streams...";
+                    const res = await fetch(`https://api.vkrdown.com/api/index.php?url=${encodeURIComponent(url)}`);
+                    const data = await res.json();
 
-                    const formats = [
-                        { label: "High Quality HD (MP4)", quality: "1080p", sub: "Merged Audio & Video • No Watermark", dl: `https://snapsave.app/action.php?url=${cleanUrl}` },
-                        { label: "Standard Quality SD (MP4)", quality: "720p", sub: "Data Saver Version • Audio Included", dl: `https://savefrom.net/#url=${cleanUrl}` }
-                    ];
+                    if (data && data.data && data.data.downloads && data.data.downloads.length > 0) {
+                        const title = data.data.title || "Social Video";
+                        const author = data.data.source || (url.includes("instagram") ? "Instagram" : "Facebook");
+                        const thumbnail = data.data.thumbnail || "https://placehold.co/600x400/241C19/ffffff?text=Video+Ready";
 
-                    renderSocialResults(title, author, thumbnail, formats, url);
+                        const formats = data.data.downloads.map((item, idx) => ({
+                            label: `${item.format_id ? item.format_id.toUpperCase() : (idx === 0 ? 'HD Quality' : 'SD Quality')} (${item.ext ? item.ext.toUpperCase() : 'MP4'})`,
+                            quality: idx === 0 ? '720p' : '480p',
+                            sub: "Direct Stream with Audio",
+                            direct: item.url
+                        }));
+
+                        renderResults(title, author, thumbnail, formats);
+                    } else {
+                        // Fallback gateway for Instagram & Facebook if direct stream fails
+                        const isInsta = url.includes("instagram.com");
+                        const fallbackUrl = isInsta 
+                            ? `https://snapinsta.app/?url=${encodeURIComponent(url)}`
+                            : `https://fdown.net/download.php?url=${encodeURIComponent(url)}`;
+
+                        const formats = [
+                            { label: isInsta ? "Instagram Reel / Video" : "Facebook HD Video", quality: "720p", sub: "Direct High-Speed Download", dl: fallbackUrl }
+                        ];
+
+                        renderResults(
+                            isInsta ? "Instagram Reel" : "Facebook Video", 
+                            isInsta ? "Instagram" : "Facebook", 
+                            "https://placehold.co/600x400/241C19/ffffff?text=Social+Media+Video", 
+                            formats
+                        );
+                    }
                 }
             } catch (err) {
-                showError("Unable to fetch video details. Ensure the link is public.");
+                showError("Unable to fetch video. Please check your internet connection or try another public link.");
             } finally {
                 statusBox.style.display = 'none';
                 btn.disabled = false;
             }
         }
 
-        // Render YouTube
-        function renderYouTubeResults(title, author, thumbnail, formats) {
+        function renderResults(title, author, thumbnail, formats) {
             const resultCard = document.getElementById('resultCard');
             const mediaThumb = document.getElementById('mediaThumb');
             const mediaTitle = document.getElementById('mediaTitle');
@@ -573,7 +599,7 @@
 
             mediaThumb.src = thumbnail;
             mediaTitle.textContent = title;
-            mediaMeta.textContent = `Channel: ${author}`;
+            mediaMeta.textContent = `Source: ${author}`;
 
             container.innerHTML = '';
 
@@ -581,6 +607,10 @@
                 const estSize = getEstimatedSize(null, item.quality);
                 const row = document.createElement('div');
                 row.className = 'format-row';
+
+                const targetLink = item.direct || item.dl;
+                const isDirectDownload = !!item.direct;
+
                 row.innerHTML = `
                     <div class="format-info-left">
                         <div class="format-header-line">
@@ -589,49 +619,8 @@
                         </div>
                         <div class="format-sub">${item.sub}</div>
                     </div>
-                    <a href="${item.dl}" target="_blank" rel="noopener noreferrer" class="btn-download-media">
+                    <a href="${targetLink}" ${isDirectDownload ? 'download="video.mp4"' : ''} target="_blank" rel="noopener noreferrer" class="btn-download-media">
                         <i class="fa-solid fa-download"></i> Download
-                    </a>
-                `;
-                container.appendChild(row);
-            });
-
-            resultCard.style.display = 'flex';
-        }
-
-        // Render Instagram / Facebook
-        function renderSocialResults(title, author, thumbnail, formats, originalUrl) {
-            const resultCard = document.getElementById('resultCard');
-            const mediaThumb = document.getElementById('mediaThumb');
-            const mediaTitle = document.getElementById('mediaTitle');
-            const mediaMeta = document.getElementById('mediaMeta');
-            const container = document.getElementById('formatsContainer');
-
-            mediaThumb.src = thumbnail;
-            mediaTitle.textContent = title;
-            mediaMeta.textContent = `Platform: ${author}`;
-
-            container.innerHTML = '';
-
-            // Universal high-speed direct download button
-            const snapUrl = originalUrl.includes("instagram.com") 
-                ? `https://snapinsta.app/?url=${encodeURIComponent(originalUrl)}`
-                : `https://fdown.net/download.php?url=${encodeURIComponent(originalUrl)}`;
-
-            formats.forEach((f, idx) => {
-                const estSize = getEstimatedSize(60, f.quality);
-                const row = document.createElement('div');
-                row.className = 'format-row';
-                row.innerHTML = `
-                    <div class="format-info-left">
-                        <div class="format-header-line">
-                            <span class="format-label">${f.label}</span>
-                            <span class="size-badge">${estSize}</span>
-                        </div>
-                        <div class="format-sub">${f.sub}</div>
-                    </div>
-                    <a href="${snapUrl}" target="_blank" rel="noopener noreferrer" class="btn-download-media">
-                        <i class="fa-solid fa-download"></i> Get Video
                     </a>
                 `;
                 container.appendChild(row);
