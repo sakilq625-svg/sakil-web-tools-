@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Video Downloader - Sakil Web Tools</title>
+    <meta name="description" content="Download YouTube, Instagram, and Facebook videos and audio in high definition directly with sound.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .downloader-layout {
+            max-width: 800px;
+            margin: 2rem auto 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .input-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            text-align: center;
+        }
+
+        .url-input-group {
+            display: flex;
+            gap: 0.8rem;
+            flex-direction: column;
+        }
+
+        @media (min-width: 640px) {
+            .url-input-group {
+                flex-direction: row;
+            }
+        }
+
+        .url-input {
+            flex: 1;
+            padding: 1rem 1.2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color var(--transition-speed);
+        }
+
+        .url-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
+        }
+
+        .btn-fetch {
+            background: var(--accent-gradient);
+            color: #ffffff;
+            border: none;
+            padding: 1rem 1.8rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: opacity var(--transition-speed), transform 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-fetch:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .btn-fetch:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-box {
+            display: none;
+            background: var(--bg-secondary);
+            border: 1px dashed var(--accent-color);
+            border-radius: 14px;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--accent-color);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .error-banner {
+            display: none;
+            background: rgba(192, 57, 43, 0.1);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            border-radius: 12px;
+            padding: 1rem 1.2rem;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
+        .result-card {
+            display: none;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .media-header {
+            display: flex;
+            flex-direction: column;
+            gap: 1.4rem;
+            align-items: center;
+        }
+
+        @media (min-width: 640px) {
+            .media-header {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+        }
+
+        .media-thumbnail {
+            width: 100%;
+            max-width: 240px;
+            height: 140px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+        }
+
+        .media-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .media-title {
+            font-family: 'Fraunces', serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.35;
+        }
+
+        .media-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .badge-verified {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            background: rgba(192, 57, 43, 0.1);
+            padding: 0.3rem 0.7rem;
+            border-radius: 20px;
+            width: fit-content;
+            margin-top: 0.2rem;
+            border: 1px solid rgba(192, 57, 43, 0.2);
+        }
+
+        .formats-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.6rem;
+            margin-top: 0.5rem;
+        }
+
+        .formats-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 0.8rem;
+        }
+
+        .format-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.9rem 1.2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            transition: border-color var(--transition-speed), transform 0.15s ease;
+        }
+
+        .format-row:hover {
+            border-color: var(--accent-color);
+            transform: translateX(2px);
+        }
+
+        .format-label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .format-sub {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .btn-download-media {
+            background: var(--accent-gradient);
+            color: #ffffff;
+            border: none;
+            padding: 0.65rem 1.3rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .btn-download-media:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span>
+            </a>
+            <nav class="nav-menu" id="navMenu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="index.html#image-tools" class="nav-link">Image Tools</a>
+                <a href="bg-remover.html" class="nav-link">BG Remover</a>
+                <a href="index.html#pdf-tools" class="nav-link">PDF Tools</a>
+                <a href="student-tools.html" class="nav-link">Student Tools</a>
+                <a href="video-downloader.html" class="nav-link active">Video Downloader</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+            </nav>
+            <div class="nav-actions">
+                <button id="theme-toggle" class="theme-btn" aria-label="Toggle Theme">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+                <button class="hamburger" id="hamburger" aria-label="Menu">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container" style="padding-top: 8rem; padding-bottom: 5rem;">
+        <div class="section-header" style="text-align: center;">
+            <h2><i class="fa-solid fa-video" style="color: var(--accent-color);"></i> Social Video Downloader</h2>
+            <p>Download videos from YouTube, Instagram, and Facebook in crisp HD quality with full audio integration.</p>
+        </div>
+
+        <div class="downloader-layout">
+            <div class="input-card">
+                <div class="url-input-group">
+                    <input 
+                        type="url" 
+                        id="videoUrlInput" 
+                        class="url-input" 
+                        placeholder="Paste video link here (YouTube, Instagram Reel, Facebook)..." 
+                        autocomplete="off"
+                    >
+                    <button class="btn-fetch" id="fetchVideoBtn" onclick="fetchVideoData()">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <span>Fetch Video</span>
+                    </button>
+                </div>
+                <div id="errorBanner" class="error-banner"></div>
+            </div>
+
+            <div id="statusBox" class="status-box">
+                <i class="fa-solid fa-circle-notch fa-spin" style="margin-right: 0.5rem;"></i>
+                <span id="statusMessage">Extracting media streams and validating audio tracks...</span>
+            </div>
+
+            <div id="resultCard" class="result-card">
+                <div class="media-header">
+                    <img id="mediaThumb" class="media-thumbnail" src="" alt="Thumbnail">
+                    <div class="media-info">
+                        <div id="mediaTitle" class="media-title"></div>
+                        <div id="mediaMeta" class="media-meta"></div>
+                        <div class="badge-verified">
+                            <i class="fa-solid fa-check-circle"></i> Merged Audio & Video Track
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="formats-title">Available Resolutions & Formats</div>
+                    <div class="formats-list" id="formatsContainer"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <a href="index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Tools</span></a>
+                <p>A lightweight workspace for your daily web tasks</p>
+            </div>
+            <div class="footer-links">
+                <h4>Quick Links</h4>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+                <a href="bg-remover.html">BG Remover</a>
+                <a href="student-tools.html">Student Tools</a>
+                <a href="video-downloader.html">Video Downloader</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Sakil Web Tools. Designed & Developed by Md Sakil</p>
+        </div>
+    </footer>
+
+    <script>
+        // ==========================================
+        // 1. BACKEND API CONFIGURATION
+        // Render-এ ডিপ্লয় করার পর তোমার আসল ব্যাকএন্ড URL এখানে দেবে:
+        // ==========================================
+        const API_BASE_URL = "https://sakil-downloader-api.onrender.com"; 
+
+        // ==========================================
+        // 2. THEME SYNC ENGINE
+        // ==========================================
+        const htmlElement = document.documentElement;
+        const themeBtn = document.getElementById('theme-toggle');
+        const themeIcon = themeBtn.querySelector('i');
+
+        function applyTheme(theme) {
+            htmlElement.setAttribute('data-theme', theme);
+            themeIcon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            if (theme === 'dark') themeIcon.style.color = '#fbbf24'; else themeIcon.style.color = '';
+        }
+
+        applyTheme(localStorage.getItem('sakil-tools-theme') || 'light');
+
+        themeBtn.addEventListener('click', () => {
+            const current = htmlElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('sakil-tools-theme', next);
+            applyTheme(next);
+        });
+
+        // ==========================================
+        // 3. RESPONSIVE MENU
+        // ==========================================
+        const hamburger = document.getElementById('hamburger');
+        const navMenu = document.getElementById('navMenu');
+        if (hamburger && navMenu) {
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('active');
+                navMenu.classList.toggle('active');
+            });
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    hamburger.classList.remove('active');
+                    navMenu.classList.remove('active');
+                });
+            });
+        }
+
+        // ==========================================
+        // 4. VIDEO DOWNLOADER CONTROLLER
+        // ==========================================
+        function formatDuration(seconds) {
+            if (!seconds) return "0:00";
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        async function fetchVideoData() {
+            const input = document.getElementById('videoUrlInput');
+            const btn = document.getElementById('fetchVideoBtn');
+            const statusBox = document.getElementById('statusBox');
+            const statusMsg = document.getElementById('statusMessage');
+            const errorBanner = document.getElementById('errorBanner');
+            const resultCard = document.getElementById('resultCard');
+
+            const url = input.value.trim();
+            if (!url) {
+                showError("Please enter or paste a valid video URL.");
+                return;
+            }
+
+            errorBanner.style.display = 'none';
+            resultCard.style.display = 'none';
+            statusBox.style.display = 'block';
+            statusMsg.textContent = "Connecting to server and analyzing video qualities (Free server may take ~30s to wake up)...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/fetch-info`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || "Unable to retrieve details for this link. Ensure the video is public.");
+                }
+
+                renderVideoResult(data, url);
+            } catch (err) {
+                showError(err.message || "Failed to reach processing engine. If the server was idle, please try again in a moment.");
+            } finally {
+                statusBox.style.display = 'none';
+                btn.disabled = false;
+            }
+        }
+
+        function renderVideoResult(data, sourceUrl) {
+            const resultCard = document.getElementById('resultCard');
+            const mediaThumb = document.getElementById('mediaThumb');
+            const mediaTitle = document.getElementById('mediaTitle');
+            const mediaMeta = document.getElementById('mediaMeta');
+            const container = document.getElementById('formatsContainer');
+
+            mediaThumb.src = data.thumbnail || "https://placehold.co/600x400?text=No+Thumbnail";
+            mediaTitle.textContent = data.title;
+            mediaMeta.textContent = `Uploader: ${data.uploader} • Duration: ${formatDuration(data.duration)}`;
+
+            container.innerHTML = '';
+
+            if (!data.formats || data.formats.length === 0) {
+                container.innerHTML = `<p style="font-size:0.85rem; color:var(--text-secondary);">No downloadable streams detected.</p>`;
+            } else {
+                data.formats.forEach(fmt => {
+                    const downloadUrl = `${API_BASE_URL}/api/download?video_url=${encodeURIComponent(sourceUrl)}&format_id=${encodeURIComponent(fmt.format_id)}&title=${encodeURIComponent(data.title)}&type=${fmt.type}`;
+
+                    const row = document.createElement('div');
+                    row.className = 'format-row';
+
+                    row.innerHTML = `
+                        <div>
+                            <div class="format-label">${fmt.label}</div>
+                            <div class="format-sub">${fmt.type === 'audio' ? 'Pure Audio Stream' : 'Full Merged Audio & Video'}</div>
+                        </div>
+                        <a href="${downloadUrl}" class="btn-download-media">
+                            <i class="fa-solid fa-download"></i> Download
+                        </a>
+                    `;
+                    container.appendChild(row);
+                });
+            }
+
+            resultCard.style.display = 'flex';
+        }
+
+        function showError(msg) {
+            const errorBanner = document.getElementById('errorBanner');
+            errorBanner.textContent = msg;
+            errorBanner.style.display = 'block';
+        }
+
+        document.getElementById('videoUrlInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') fetchVideoData();
+        });
+    </script>
+</body>
+</html>
