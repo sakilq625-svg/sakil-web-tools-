@@ -345,7 +345,7 @@
                 <div id="errorBanner" class="error-banner"></div>
             </div>
 
-            <!-- Simplified Loading State showing only "Searching..." -->
+            <!-- Loading State -->
             <div id="statusBox" class="status-box">
                 <i class="fa-solid fa-circle-notch fa-spin" style="margin-right: 0.5rem;"></i>
                 <span>Searching...</span>
@@ -394,7 +394,7 @@
     <script>
         // ==========================================
         // 1. BACKEND API URL
-        // গুরুত্বপূর্ণ: তোমার Render ব্যাকএন্ডের আসল লাইভ URL এখানে বসাবে
+        // এখানে তোমার Render.com-এর আসল লাইভ URL বসাবে
         // ==========================================
         const API_BASE_URL = "https://sakil-downloader-api.onrender.com"; 
 
@@ -439,7 +439,7 @@
         }
 
         // ==========================================
-        // 4. ONE-CLICK CLIPBOARD PASTE
+        // 4. CLIPBOARD PASTE
         // ==========================================
         async function pasteFromClipboard() {
             const input = document.getElementById('videoUrlInput');
