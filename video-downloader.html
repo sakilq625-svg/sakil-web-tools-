@@ -477,31 +477,31 @@
             return match ? match[1] : null;
         }
 
-        // Estimated File Size Calculator based on Duration & Resolution Bitrates
+        // Estimated File Size Calculator
         function getEstimatedSize(durationSeconds, quality) {
-            // Default 3.5 minutes if duration is not accessible
-            const sec = (durationSeconds && durationSeconds > 0) ? durationSeconds : 210;
-            
-            // Standard bitrates (Video + Audio) in Megabits per second
+            const sec = (durationSeconds && durationSeconds > 0) ? durationSeconds : 180;
             let mbps = 2.5; 
-            if (quality === '4K') mbps = 22.0;
-            else if (quality === '2K') mbps = 12.0;
-            else if (quality === '1080p') mbps = 5.5;
-            else if (quality === '720p') mbps = 2.8;
-            else if (quality === '480p') mbps = 1.4;
-            else if (quality === '360p') mbps = 0.8;
-            else if (quality === 'MP3') mbps = 0.32; // 320 kbps
+            if (quality === '4K') mbps = 20.0;
+            else if (quality === '2K') mbps = 10.0;
+            else if (quality === '1080p') mbps = 5.0;
+            else if (quality === '720p') mbps = 2.5;
+            else if (quality === '480p') mbps = 1.2;
+            else if (quality === '360p') mbps = 0.7;
+            else if (quality === 'MP3') mbps = 0.32;
 
-            // Total MB = (Mbps * seconds) / 8
             const sizeMB = (mbps * sec) / 8;
-
             if (sizeMB >= 1000) {
                 return `~${(sizeMB / 1024).toFixed(2)} GB`;
             }
             return `~${Math.round(sizeMB)} MB`;
         }
 
-        // Video Fetch Controller
+        // Safe Downloader Dispatcher
+        function triggerDownload(targetUrl) {
+            window.open(targetUrl, '_blank', 'noopener,noreferrer');
+        }
+
+        // Main Video Data Resolver
         async function fetchVideoData() {
             const input = document.getElementById('videoUrlInput');
             const btn = document.getElementById('fetchVideoBtn');
@@ -524,7 +524,7 @@
 
             try {
                 if (ytId) {
-                    // Extract Video Metadata from YouTube oEmbed
+                    // YouTube Resolver
                     const metaRes = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${ytId}`);
                     const metaData = await metaRes.json();
                     
@@ -532,50 +532,39 @@
                     const author = metaData.author_name || "YouTube Creator";
                     const thumbnail = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
 
-                    // Generate complete resolutions from 4K down to 360p & MP3
                     const formats = [
-                        { label: "4K Ultra HD (2160p)", quality: "4K", sub: "Ultra Crisp 2160p • Audio Included 🔊", f: "2160" },
-                        { label: "2K Quad HD (1440p)", quality: "2K", sub: "Super Sharp 1440p • Audio Included 🔊", f: "1440" },
-                        { label: "Full HD 1080p", quality: "1080p", sub: "Crisp 1080p • Audio Included 🔊", f: "1080" },
-                        { label: "HD 720p", quality: "720p", sub: "Standard High Definition 720p 🔊", f: "720" },
-                        { label: "Medium 480p", quality: "480p", sub: "Data Saver Quality 480p", f: "480" },
-                        { label: "Audio Only (MP3)", quality: "MP3", sub: "Crystal Clear 320kbps Audio 🎵", f: "mp3" }
+                        { label: "4K Ultra HD (2160p)", quality: "4K", sub: "Ultra Sharp 2160p with Audio 🔊", dl: `https://yt5s.biz/en/download?url=https://www.youtube.com/watch?v=${ytId}&f=2160` },
+                        { label: "2K Quad HD (1440p)", quality: "2K", sub: "Super Sharp 1440p with Audio 🔊", dl: `https://yt5s.biz/en/download?url=https://www.youtube.com/watch?v=${ytId}&f=1440` },
+                        { label: "Full HD 1080p", quality: "1080p", sub: "Crisp 1080p with Audio 🔊", dl: `https://yt5s.biz/en/download?url=https://www.youtube.com/watch?v=${ytId}&f=1080` },
+                        { label: "HD 720p", quality: "720p", sub: "Standard High Definition 720p 🔊", dl: `https://yt5s.biz/en/download?url=https://www.youtube.com/watch?v=${ytId}&f=720` },
+                        { label: "Audio Only (MP3)", quality: "MP3", sub: "Crystal Clear 320kbps Audio 🎵", dl: `https://yt5s.biz/en/download?url=https://www.youtube.com/watch?v=${ytId}&f=mp3` }
                     ];
 
-                    renderYouTubeResults(title, author, thumbnail, formats, ytId);
+                    renderYouTubeResults(title, author, thumbnail, formats);
                 } else {
-                    // Instagram / Facebook / Reels Resolver
-                    const apiEndpoint = `https://api.vkrdown.com/api/index.php?url=${encodeURIComponent(url)}`;
-                    const res = await fetch(apiEndpoint);
-                    const data = await res.json();
+                    // Instagram & Facebook Resolver (Using Universal Social Gateway)
+                    const cleanUrl = encodeURIComponent(url);
+                    const title = url.includes("instagram.com") ? "Instagram Reel / Video" : "Facebook Video / Reel";
+                    const author = url.includes("instagram.com") ? "Instagram" : "Facebook";
+                    const thumbnail = "https://placehold.co/600x400/241C19/ffffff?text=Social+Video+Ready";
 
-                    if (data && data.data && data.data.downloads && data.data.downloads.length > 0) {
-                        const title = data.data.title || "Social Video";
-                        const author = data.data.source || "Social Media";
-                        const thumbnail = data.data.thumbnail || "https://placehold.co/600x400/241C19/ffffff?text=Video+Ready";
+                    const formats = [
+                        { label: "High Quality HD (MP4)", quality: "1080p", sub: "Merged Audio & Video • No Watermark", dl: `https://snapsave.app/action.php?url=${cleanUrl}` },
+                        { label: "Standard Quality SD (MP4)", quality: "720p", sub: "Data Saver Version • Audio Included", dl: `https://savefrom.net/#url=${cleanUrl}` }
+                    ];
 
-                        const formats = data.data.downloads.map(item => ({
-                            label: `${item.format_id || 'HD'} (${item.ext || 'MP4'})`,
-                            quality: "720p",
-                            sub: "Full Audio & Video Track",
-                            directUrl: item.url
-                        }));
-
-                        renderUniversalResults(title, author, thumbnail, formats);
-                    } else {
-                        throw new Error("Unable to parse. Make sure the video is public.");
-                    }
+                    renderSocialResults(title, author, thumbnail, formats, url);
                 }
             } catch (err) {
-                showError("Unable to extract video. Please ensure the link is public and active.");
+                showError("Unable to fetch video details. Ensure the link is public.");
             } finally {
                 statusBox.style.display = 'none';
                 btn.disabled = false;
             }
         }
 
-        // Render YouTube Options with 4K, 2K, 1080p and exact Size estimate
-        function renderYouTubeResults(title, author, thumbnail, formats, ytId) {
+        // Render YouTube
+        function renderYouTubeResults(title, author, thumbnail, formats) {
             const resultCard = document.getElementById('resultCard');
             const mediaThumb = document.getElementById('mediaThumb');
             const mediaTitle = document.getElementById('mediaTitle');
@@ -590,8 +579,6 @@
 
             formats.forEach(item => {
                 const estSize = getEstimatedSize(null, item.quality);
-                const dlUrl = `https://loader.to/api/button/?url=https://www.youtube.com/watch?v=${ytId}&f=${item.f}`;
-
                 const row = document.createElement('div');
                 row.className = 'format-row';
                 row.innerHTML = `
@@ -602,7 +589,7 @@
                         </div>
                         <div class="format-sub">${item.sub}</div>
                     </div>
-                    <a href="${dlUrl}" class="btn-download-media" target="_blank" rel="noopener">
+                    <a href="${item.dl}" target="_blank" rel="noopener noreferrer" class="btn-download-media">
                         <i class="fa-solid fa-download"></i> Download
                     </a>
                 `;
@@ -612,8 +599,8 @@
             resultCard.style.display = 'flex';
         }
 
-        // Render Instagram / Facebook results with Size Estimate
-        function renderUniversalResults(title, author, thumbnail, formats) {
+        // Render Instagram / Facebook
+        function renderSocialResults(title, author, thumbnail, formats, originalUrl) {
             const resultCard = document.getElementById('resultCard');
             const mediaThumb = document.getElementById('mediaThumb');
             const mediaTitle = document.getElementById('mediaTitle');
@@ -622,12 +609,17 @@
 
             mediaThumb.src = thumbnail;
             mediaTitle.textContent = title;
-            mediaMeta.textContent = `Source: ${author}`;
+            mediaMeta.textContent = `Platform: ${author}`;
 
             container.innerHTML = '';
 
+            // Universal high-speed direct download button
+            const snapUrl = originalUrl.includes("instagram.com") 
+                ? `https://snapinsta.app/?url=${encodeURIComponent(originalUrl)}`
+                : `https://fdown.net/download.php?url=${encodeURIComponent(originalUrl)}`;
+
             formats.forEach((f, idx) => {
-                const estSize = getEstimatedSize(null, idx === 0 ? "1080p" : "720p");
+                const estSize = getEstimatedSize(60, f.quality);
                 const row = document.createElement('div');
                 row.className = 'format-row';
                 row.innerHTML = `
@@ -638,8 +630,8 @@
                         </div>
                         <div class="format-sub">${f.sub}</div>
                     </div>
-                    <a href="${f.directUrl}" class="btn-download-media" download target="_blank" rel="noopener">
-                        <i class="fa-solid fa-download"></i> Download
+                    <a href="${snapUrl}" target="_blank" rel="noopener noreferrer" class="btn-download-media">
+                        <i class="fa-solid fa-download"></i> Get Video
                     </a>
                 `;
                 container.appendChild(row);
