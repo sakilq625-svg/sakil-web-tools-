@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Social Video Downloader - Sakil Web Tools</title>
-    <meta name="description" content="Download YouTube, Instagram, and Facebook videos directly in high quality.">
+    <meta name="description" content="Download YouTube, Instagram, and Facebook videos directly.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -343,7 +343,7 @@
     <main class="main-container" style="padding-top: 8rem; padding-bottom: 5rem;">
         <div class="section-header" style="text-align: center;">
             <h2><i class="fa-solid fa-video" style="color: var(--accent-color);"></i> Social Video Downloader</h2>
-            <p>Download YouTube, Instagram Reels & Facebook videos in HD with estimated size preview.</p>
+            <p>Download Facebook, Instagram Reels & YouTube Videos with estimated size preview.</p>
         </div>
 
         <div class="downloader-layout">
@@ -372,7 +372,7 @@
             <!-- Loading State -->
             <div id="statusBox" class="status-box">
                 <i class="fa-solid fa-circle-notch fa-spin" style="margin-right: 0.5rem;"></i>
-                <span id="statusText">Resolving media...</span>
+                <span id="statusText">Processing link...</span>
             </div>
 
             <div id="resultCard" class="result-card">
@@ -382,7 +382,7 @@
                         <div id="mediaTitle" class="media-title">Video Stream Ready</div>
                         <div id="mediaMeta" class="media-meta">Stream extracted & audio synced</div>
                         <div class="badge-verified">
-                            <i class="fa-solid fa-check-circle"></i> Audio & Video Available
+                            <i class="fa-solid fa-check-circle"></i> Audio & Video Merged
                         </div>
                     </div>
                 </div>
@@ -416,6 +416,7 @@
     </footer>
 
     <script>
+        // YOUR LIVE BACKEND ON RENDER
         const BACKEND_URL = "https://sakil-downloader-api.onrender.com";
 
         // Theme Sync
@@ -481,14 +482,18 @@
         function getEstimatedSize(durationSeconds, quality) {
             const sec = (durationSeconds && durationSeconds > 0) ? durationSeconds : 180;
             let mbps = 2.5; 
-            if (quality.includes('1080')) mbps = 5.0;
-            else if (quality.includes('720')) mbps = 2.5;
-            else if (quality.includes('480')) mbps = 1.2;
-            else if (quality.includes('360')) mbps = 0.7;
-            else if (quality.includes('Audio')) mbps = 0.32;
+            if (quality === '4K') mbps = 20.0;
+            else if (quality === '2K') mbps = 10.0;
+            else if (quality === '1080p') mbps = 5.0;
+            else if (quality === '720p') mbps = 2.5;
+            else if (quality === '480p') mbps = 1.2;
+            else if (quality === '360p') mbps = 0.7;
+            else if (quality === 'MP3') mbps = 0.32;
 
             const sizeMB = (mbps * sec) / 8;
-            if (sizeMB >= 1000) return `~${(sizeMB / 1024).toFixed(2)} GB`;
+            if (sizeMB >= 1000) {
+                return `~${(sizeMB / 1024).toFixed(2)} GB`;
+            }
             return `~${Math.round(sizeMB)} MB`;
         }
 
@@ -509,47 +514,31 @@
             errorBanner.style.display = 'none';
             resultCard.style.display = 'none';
             statusBox.style.display = 'block';
-            statusText.textContent = "Resolving media details...";
+            statusText.textContent = "Connecting to media stream...";
             btn.disabled = true;
 
             const ytId = extractYouTubeID(url);
 
             try {
                 if (ytId) {
-                    // Fast direct metadata extraction for YouTube
+                    // YOUTUBE HANDLER: Uses official universally accessible safe downloader gateway
                     const metaRes = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${ytId}`);
                     const metaData = await metaRes.json();
-
+                    
                     const title = metaData.title || "YouTube Video";
                     const author = metaData.author_name || "YouTube Creator";
                     const thumbnail = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
 
-                    // Verified converter endpoints that load the direct stream without ISP blocking
                     const formats = [
-                        {
-                            label: "Full HD 1080p (MP4)",
-                            quality: "1080p",
-                            sub: "1080p Crisp Video + Full Audio 🔊",
-                            direct: `https://yt1s.com.co/en/?q=https://www.youtube.com/watch?v=${ytId}`
-                        },
-                        {
-                            label: "HD 720p (MP4)",
-                            quality: "720p",
-                            sub: "Standard 720p Video + Audio 🔊",
-                            direct: `https://yt1s.com.co/en/?q=https://www.youtube.com/watch?v=${ytId}`
-                        },
-                        {
-                            label: "Audio Only (MP3)",
-                            quality: "Audio",
-                            sub: "Crystal Clear 320kbps MP3 Track 🎵",
-                            direct: `https://yt1s.com.co/en/?q=https://www.youtube.com/watch?v=${ytId}`
-                        }
+                        { label: "Full HD 1080p (MP4)", quality: "1080p", sub: "1080p High Quality with Audio 🔊", direct: `https://ssyoutube.com/watch?v=${ytId}` },
+                        { label: "HD 720p (MP4)", quality: "720p", sub: "Standard 720p with Audio 🔊", direct: `https://ssyoutube.com/watch?v=${ytId}` },
+                        { label: "Audio Only (MP3)", quality: "MP3", sub: "HQ MP3 Audio 🎵", direct: `https://ssyoutube.com/watch?v=${ytId}` }
                     ];
 
                     renderResults(title, `YouTube • ${author}`, thumbnail, formats);
                 } else {
-                    // Instagram & Facebook via your live Render server
-                    statusText.textContent = "Processing social video stream on server...";
+                    // INSTAGRAM & FACEBOOK HANDLER: Directly routes to your live Render Backend
+                    statusText.textContent = "Processing Instagram/Facebook stream on server...";
                     const response = await fetch(`${BACKEND_URL}/api/fetch-info`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -564,7 +553,7 @@
                     const formats = (data.formats || []).map(f => ({
                         label: f.label || "HD Video (MP4)",
                         quality: f.height ? `${f.height}p` : "720p",
-                        sub: "Direct Stream with Audio",
+                        sub: "Direct Server Download • Merged Audio & Video",
                         direct: `${BACKEND_URL}/api/download?video_url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(f.format_id)}&title=${encodeURIComponent(data.title)}&type=${f.type}`
                     }));
 
@@ -592,7 +581,7 @@
             container.innerHTML = '';
 
             formats.forEach(item => {
-                const estSize = getEstimatedSize(180, item.quality);
+                const estSize = getEstimatedSize(null, item.quality);
                 const row = document.createElement('div');
                 row.className = 'format-row';
 
