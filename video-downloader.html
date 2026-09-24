@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Social Video Downloader - Sakil Web Tools</title>
-    <meta name="description" content="Download YouTube, Instagram, and Facebook videos directly.">
+    <meta name="description" content="Download YouTube, Instagram, and Facebook videos directly in high quality.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -343,7 +343,7 @@
     <main class="main-container" style="padding-top: 8rem; padding-bottom: 5rem;">
         <div class="section-header" style="text-align: center;">
             <h2><i class="fa-solid fa-video" style="color: var(--accent-color);"></i> Social Video Downloader</h2>
-            <p>Download Facebook, Instagram Reels & YouTube Videos with estimated size preview.</p>
+            <p>Download Facebook, Instagram Reels & YouTube Videos with full sound and size preview.</p>
         </div>
 
         <div class="downloader-layout">
@@ -382,7 +382,7 @@
                         <div id="mediaTitle" class="media-title">Video Stream Ready</div>
                         <div id="mediaMeta" class="media-meta">Stream extracted & audio synced</div>
                         <div class="badge-verified">
-                            <i class="fa-solid fa-check-circle"></i> Audio & Video Merged
+                            <i class="fa-solid fa-check-circle"></i> Audio & Video Available
                         </div>
                     </div>
                 </div>
@@ -416,8 +416,15 @@
     </footer>
 
     <script>
-        // YOUR LIVE BACKEND ON RENDER
         const BACKEND_URL = "https://sakil-downloader-api.onrender.com";
+
+        // Global fallback Invidious nodes for YouTube stream extraction
+        const INVIDIOUS_INSTANCES = [
+            "https://inv.tux.pizza",
+            "https://invidious.nerdvpn.de",
+            "https://invidious.projectsegfau.lt",
+            "https://yt.artemislena.eu"
+        ];
 
         // Theme Sync
         const htmlElement = document.documentElement;
@@ -482,19 +489,81 @@
         function getEstimatedSize(durationSeconds, quality) {
             const sec = (durationSeconds && durationSeconds > 0) ? durationSeconds : 180;
             let mbps = 2.5; 
-            if (quality === '4K') mbps = 20.0;
-            else if (quality === '2K') mbps = 10.0;
-            else if (quality === '1080p') mbps = 5.0;
+            if (quality === '1080p') mbps = 5.0;
             else if (quality === '720p') mbps = 2.5;
             else if (quality === '480p') mbps = 1.2;
             else if (quality === '360p') mbps = 0.7;
-            else if (quality === 'MP3') mbps = 0.32;
+            else if (quality === 'Audio') mbps = 0.32;
 
             const sizeMB = (mbps * sec) / 8;
             if (sizeMB >= 1000) {
                 return `~${(sizeMB / 1024).toFixed(2)} GB`;
             }
             return `~${Math.round(sizeMB)} MB`;
+        }
+
+        // YouTube fetcher using Invidious direct stream API
+        async function fetchYouTubeVideo(ytId) {
+            let videoData = null;
+            let lastErr = null;
+
+            for (const instance of INVIDIOUS_INSTANCES) {
+                try {
+                    const res = await fetch(`${instance}/api/v1/videos/${ytId}?fields=title,author,videoThumbnails,lengthSeconds,formatStreams,adaptiveFormats`, {
+                        signal: AbortSignal.timeout(4000)
+                    });
+                    if (res.ok) {
+                        videoData = await res.json();
+                        break;
+                    }
+                } catch (e) {
+                    lastErr = e;
+                }
+            }
+
+            if (!videoData) {
+                throw new Error("Unable to parse YouTube video streams directly.");
+            }
+
+            const title = videoData.title || "YouTube Video";
+            const author = videoData.author || "YouTube Channel";
+            const thumbnail = (videoData.videoThumbnails && videoData.videoThumbnails.length > 0) 
+                ? videoData.videoThumbnails[0].url 
+                : `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+            const duration = videoData.lengthSeconds || 180;
+
+            const formats = [];
+            const seen = new Set();
+
+            // Combined audio+video streams (Instant play/download)
+            if (videoData.formatStreams) {
+                videoData.formatStreams.forEach(f => {
+                    if (f.url && f.resolution && !seen.has(f.resolution)) {
+                        seen.add(f.resolution);
+                        formats.push({
+                            label: `${f.resolution} (${f.container || 'mp4'})`,
+                            quality: f.resolution,
+                            sub: "Direct Stream • Full Audio & Video",
+                            direct: f.url
+                        });
+                    }
+                });
+            }
+
+            // Audio track stream
+            if (videoData.adaptiveFormats) {
+                const audioStream = videoData.adaptiveFormats.find(f => f.type && f.type.startsWith('audio/'));
+                if (audioStream && audioStream.url) {
+                    formats.push({
+                        label: `HQ Audio (${audioStream.container || 'm4a'})`,
+                        quality: "Audio",
+                        sub: "Crystal Clear Audio Track 🎵",
+                        direct: audioStream.url
+                    });
+                }
+            }
+
+            return { title, author, thumbnail, duration, formats };
         }
 
         async function fetchVideoData() {
@@ -521,23 +590,10 @@
 
             try {
                 if (ytId) {
-                    // YOUTUBE HANDLER: Uses official universally accessible safe downloader gateway
-                    const metaRes = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${ytId}`);
-                    const metaData = await metaRes.json();
-                    
-                    const title = metaData.title || "YouTube Video";
-                    const author = metaData.author_name || "YouTube Creator";
-                    const thumbnail = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
-
-                    const formats = [
-                        { label: "Full HD 1080p (MP4)", quality: "1080p", sub: "1080p High Quality with Audio 🔊", direct: `https://ssyoutube.com/watch?v=${ytId}` },
-                        { label: "HD 720p (MP4)", quality: "720p", sub: "Standard 720p with Audio 🔊", direct: `https://ssyoutube.com/watch?v=${ytId}` },
-                        { label: "Audio Only (MP3)", quality: "MP3", sub: "HQ MP3 Audio 🎵", direct: `https://ssyoutube.com/watch?v=${ytId}` }
-                    ];
-
-                    renderResults(title, `YouTube • ${author}`, thumbnail, formats);
+                    statusText.textContent = "Resolving YouTube HD streams...";
+                    const ytData = await fetchYouTubeVideo(ytId);
+                    renderResults(ytData.title, `YouTube • ${ytData.author}`, ytData.thumbnail, ytData.formats, ytData.duration);
                 } else {
-                    // INSTAGRAM & FACEBOOK HANDLER: Directly routes to your live Render Backend
                     statusText.textContent = "Processing Instagram/Facebook stream on server...";
                     const response = await fetch(`${BACKEND_URL}/api/fetch-info`, {
                         method: 'POST',
@@ -557,7 +613,7 @@
                         direct: `${BACKEND_URL}/api/download?video_url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(f.format_id)}&title=${encodeURIComponent(data.title)}&type=${f.type}`
                     }));
 
-                    renderResults(data.title, data.uploader || "Social Media", data.thumbnail || "https://placehold.co/600x400/241C19/ffffff?text=Video+Ready", formats);
+                    renderResults(data.title, data.uploader || "Social Media", data.thumbnail || "https://placehold.co/600x400/241C19/ffffff?text=Video+Ready", formats, data.duration);
                 }
             } catch (err) {
                 showError(err.message || "Failed to process video link. Make sure the video is public.");
@@ -567,7 +623,7 @@
             }
         }
 
-        function renderResults(title, author, thumbnail, formats) {
+        function renderResults(title, author, thumbnail, formats, duration) {
             const resultCard = document.getElementById('resultCard');
             const mediaThumb = document.getElementById('mediaThumb');
             const mediaTitle = document.getElementById('mediaTitle');
@@ -581,7 +637,7 @@
             container.innerHTML = '';
 
             formats.forEach(item => {
-                const estSize = getEstimatedSize(null, item.quality);
+                const estSize = getEstimatedSize(duration, item.quality);
                 const row = document.createElement('div');
                 row.className = 'format-row';
 
@@ -593,7 +649,7 @@
                         </div>
                         <div class="format-sub">${item.sub}</div>
                     </div>
-                    <a href="${item.direct}" target="_blank" rel="noopener noreferrer" class="btn-download-media">
+                    <a href="${item.direct}" target="_blank" rel="noopener noreferrer" download class="btn-download-media">
                         <i class="fa-solid fa-download"></i> Download
                     </a>
                 `;
