@@ -9,7 +9,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -30,6 +30,7 @@
                 <a href="bg-remover.html" class="nav-link">BG Remover</a>
                 <a href="#pdf-tools" class="nav-link">PDF Tools</a>
                 <a href="student-tools.html" class="nav-link">Student Tools</a>
+                <a href="video-downloader.html" class="nav-link">Video Downloader</a>
                 <a href="#utility-tools" class="nav-link">Utilities</a>
                 <a href="about.html" class="nav-link">About</a>
                 <a href="contact.html" class="nav-link">Contact</a>
@@ -54,13 +55,14 @@
             
             <div class="search-container">
                 <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input type="text" id="tool-search" placeholder="Search for tools... (e.g., Resize, PDF, QR, Student, BG)">
+                <input type="text" id="tool-search" placeholder="Search for tools... (e.g., Resize, PDF, Video, QR, Student, BG)">
             </div>
         </div>
     </section>
 
     <main class="main-container">
 
+        <!-- Image Tools -->
         <section class="tool-section" id="image-tools">
             <div class="section-header">
                 <h2><i class="fa-regular fa-image"></i> Image Processing Tools</h2>
@@ -80,9 +82,8 @@
                 <a href="image-converter.html" class="tool-card" data-keywords="image convert jpg png webp format">
                     <div class="tool-icon img-icon"><i class="fa-solid fa-repeat"></i></div>
                     <h3>All-in-one converter</h3>
-                    <p>Convert between JPG, PNG, WebP, PDF formates</p>
+                    <p>Convert between JPG, PNG, WebP, PDF formats</p>
                 </a>
-                <!-- NEW TOOL ADDED: AI Background Remover -->
                 <a href="bg-remover.html" class="tool-card" data-keywords="image remove background bg transparent erase">
                     <div class="tool-icon img-icon"><i class="fa-solid fa-scissors"></i></div>
                     <h3>Remove Background</h3>
@@ -91,10 +92,11 @@
             </div>
         </section>
 
+        <!-- PDF Tools -->
         <section class="tool-section" id="pdf-tools">
             <div class="section-header">
                 <h2><i class="fa-regular fa-file-pdf"></i> PDF Management Suite</h2>
-                <p>Everything you need to edit, Marge, Split Or secure your PDFs</p>
+                <p>Everything you need to edit, Merge, Split Or secure your PDFs</p>
             </div>
             <div class="tools-grid">
                 <a href="pdf-tools.html" class="tool-card" data-keywords="pdf merge split convert unlock protect compress">
@@ -105,19 +107,25 @@
             </div>
         </section>
 
+        <!-- Utility, Video & Student Tools -->
         <section class="tool-section" id="utility-tools">
             <div class="section-header">
-                <h2><i class="fa-solid fa-gears"></i> Developer, student & Utility Tools</h2>
-                <p>Practical utilities for students, developers, and creators</p>
+                <h2><i class="fa-solid fa-gears"></i> Developer, Student & Media Tools</h2>
+                <p>Practical utilities for students, developers, and content creators</p>
             </div>
             <div class="tools-grid">
+                <!-- Social Video Downloader -->
+                <a href="video-downloader.html" class="tool-card" data-keywords="video download youtube instagram facebook reel audio mp3 mp4 media downloader">
+                    <div class="tool-icon util-icon" style="color: var(--accent-color);"><i class="fa-solid fa-video"></i></div>
+                    <h3>Social Video Downloader</h3>
+                    <p>Download YouTube, Instagram & FB videos in HD with merged sound</p>
+                </a>
                 <a href="qr-generator.html" class="tool-card" data-keywords="qr code barcode generator scanning maker">
                     <div class="tool-icon util-icon"><i class="fa-solid fa-qrcode"></i></div>
                     <h3>QR & Barcode Generator</h3>
                     <p>Create custom QR codes and barcodes for any text or URLs</p>
                 </a>
-                <!-- NEW TOOL ADDED: Student Tools -->
-                <a href="student-tools.html" class="tool-card" data-keywords="student tools education study academic calculator notes">
+                <a href="student-tools.html" class="tool-card" data-keywords="student tools education study academic calculator notes age word counter">
                     <div class="tool-icon util-icon"><i class="fa-solid fa-graduation-cap"></i></div>
                     <h3>Student Tools</h3>
                     <p>Essential digital utilities and calculators designed for students</p>
@@ -127,7 +135,7 @@
 
         <div id="no-results" class="no-results hidden">
             <i class="fa-solid fa-face-laugh-squint"></i>
-            <p> Why are you hitting random keys? Type properly. Bujhte parli to...</p>
+            <p>Why are you hitting random keys? Type properly. Bujhte parli to...</p>
         </div>
 
     </main>
@@ -142,13 +150,13 @@
                 <h4>Quick Links</h4>
                 <a href="about.html">About Us</a>
                 <a href="contact.html">Contact</a>
-                <a href="#">Privacy Policy</a>
                 <a href="bg-remover.html">BG Remover</a>
                 <a href="student-tools.html">Student Tools</a>
+                <a href="video-downloader.html">Video Downloader</a>
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2026 Sakil Web Tools. Designed & Developed by Md Sakil </p>
+            <p>&copy; 2026 Sakil Web Tools. Designed & Developed by Md Sakil</p>
         </div>
     </footer>
 
