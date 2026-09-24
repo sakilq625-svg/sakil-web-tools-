@@ -343,7 +343,7 @@
     <main class="main-container" style="padding-top: 8rem; padding-bottom: 5rem;">
         <div class="section-header" style="text-align: center;">
             <h2><i class="fa-solid fa-video" style="color: var(--accent-color);"></i> Social Video Downloader</h2>
-            <p>Download Facebook, Instagram Reels & YouTube Videos with full sound and size preview.</p>
+            <p>Download YouTube, Instagram Reels & Facebook videos with direct high-speed streams.</p>
         </div>
 
         <div class="downloader-layout">
@@ -369,10 +369,10 @@
                 <div id="errorBanner" class="error-banner"></div>
             </div>
 
-            <!-- Loading State -->
+            <!-- Loading Box -->
             <div id="statusBox" class="status-box">
                 <i class="fa-solid fa-circle-notch fa-spin" style="margin-right: 0.5rem;"></i>
-                <span id="statusText">Processing link...</span>
+                <span id="statusText">Resolving video streams...</span>
             </div>
 
             <div id="resultCard" class="result-card">
@@ -382,7 +382,7 @@
                         <div id="mediaTitle" class="media-title">Video Stream Ready</div>
                         <div id="mediaMeta" class="media-meta">Stream extracted & audio synced</div>
                         <div class="badge-verified">
-                            <i class="fa-solid fa-check-circle"></i> Audio & Video Available
+                            <i class="fa-solid fa-check-circle"></i> Audio & Video Merged
                         </div>
                     </div>
                 </div>
@@ -418,12 +418,11 @@
     <script>
         const BACKEND_URL = "https://sakil-downloader-api.onrender.com";
 
-        // Global fallback Invidious nodes for YouTube stream extraction
-        const INVIDIOUS_INSTANCES = [
-            "https://inv.tux.pizza",
-            "https://invidious.nerdvpn.de",
-            "https://invidious.projectsegfau.lt",
-            "https://yt.artemislena.eu"
+        // Verified High Uptime Piped API endpoints for YouTube
+        const PIPED_APIS = [
+            "https://pipedapi.kavin.rocks",
+            "https://api.piped.privacy.com.de",
+            "https://pipedapi.tokhmi.xyz"
         ];
 
         // Theme Sync
@@ -446,7 +445,7 @@
             applyTheme(next);
         });
 
-        // Mobile Nav
+        // Responsive Hamburger Menu
         const hamburger = document.getElementById('hamburger');
         const navMenu = document.getElementById('navMenu');
         if (hamburger && navMenu) {
@@ -462,7 +461,7 @@
             });
         }
 
-        // Paste Action
+        // Paste functionality
         async function pasteFromClipboard() {
             const input = document.getElementById('videoUrlInput');
             try {
@@ -486,84 +485,109 @@
             return match ? match[1] : null;
         }
 
+        function formatBytes(bytes) {
+            if (!bytes || bytes === 0) return null;
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
         function getEstimatedSize(durationSeconds, quality) {
             const sec = (durationSeconds && durationSeconds > 0) ? durationSeconds : 180;
             let mbps = 2.5; 
-            if (quality === '1080p') mbps = 5.0;
-            else if (quality === '720p') mbps = 2.5;
-            else if (quality === '480p') mbps = 1.2;
-            else if (quality === '360p') mbps = 0.7;
-            else if (quality === 'Audio') mbps = 0.32;
+            if (quality.includes('1080')) mbps = 5.0;
+            else if (quality.includes('720')) mbps = 2.5;
+            else if (quality.includes('480')) mbps = 1.2;
+            else if (quality.includes('360')) mbps = 0.7;
+            else if (quality.includes('Audio')) mbps = 0.32;
 
             const sizeMB = (mbps * sec) / 8;
-            if (sizeMB >= 1000) {
-                return `~${(sizeMB / 1024).toFixed(2)} GB`;
-            }
+            if (sizeMB >= 1000) return `~${(sizeMB / 1024).toFixed(2)} GB`;
             return `~${Math.round(sizeMB)} MB`;
         }
 
-        // YouTube fetcher using Invidious direct stream API
-        async function fetchYouTubeVideo(ytId) {
-            let videoData = null;
-            let lastErr = null;
-
-            for (const instance of INVIDIOUS_INSTANCES) {
+        // Piped YouTube Stream Extractor
+        async function fetchYouTubeFromPiped(ytId) {
+            let data = null;
+            for (const api of PIPED_APIS) {
                 try {
-                    const res = await fetch(`${instance}/api/v1/videos/${ytId}?fields=title,author,videoThumbnails,lengthSeconds,formatStreams,adaptiveFormats`, {
-                        signal: AbortSignal.timeout(4000)
+                    const res = await fetch(`${api}/streams/${ytId}`, {
+                        signal: AbortSignal.timeout(5000)
                     });
                     if (res.ok) {
-                        videoData = await res.json();
-                        break;
+                        data = await res.json();
+                        if (data && (data.videoStreams || data.audioStreams)) break;
                     }
                 } catch (e) {
-                    lastErr = e;
+                    continue;
                 }
             }
 
-            if (!videoData) {
-                throw new Error("Unable to parse YouTube video streams directly.");
-            }
-
-            const title = videoData.title || "YouTube Video";
-            const author = videoData.author || "YouTube Channel";
-            const thumbnail = (videoData.videoThumbnails && videoData.videoThumbnails.length > 0) 
-                ? videoData.videoThumbnails[0].url 
-                : `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
-            const duration = videoData.lengthSeconds || 180;
+            if (!data) throw new Error("Could not fetch YouTube streams directly.");
 
             const formats = [];
-            const seen = new Set();
+            const seenRes = new Set();
 
-            // Combined audio+video streams (Instant play/download)
-            if (videoData.formatStreams) {
-                videoData.formatStreams.forEach(f => {
-                    if (f.url && f.resolution && !seen.has(f.resolution)) {
-                        seen.add(f.resolution);
+            // Direct Playable Video Streams (Audio + Video combined)
+            if (data.videoStreams) {
+                const combined = data.videoStreams.filter(v => v.videoOnly === false);
+                combined.sort((a, b) => (parseInt(b.quality) || 0) - (parseInt(a.quality) || 0));
+
+                combined.forEach(v => {
+                    const res = v.quality || `${v.height}p`;
+                    if (!seenRes.has(res) && v.url) {
+                        seenRes.add(res);
                         formats.push({
-                            label: `${f.resolution} (${f.container || 'mp4'})`,
-                            quality: f.resolution,
+                            label: `${res} HD (${v.format || 'MP4'})`,
+                            quality: res,
+                            size: formatBytes(v.contentLength) || getEstimatedSize(data.duration, res),
                             sub: "Direct Stream • Full Audio & Video",
-                            direct: f.url
+                            direct: v.url
                         });
                     }
                 });
-            }
 
-            // Audio track stream
-            if (videoData.adaptiveFormats) {
-                const audioStream = videoData.adaptiveFormats.find(f => f.type && f.type.startsWith('audio/'));
-                if (audioStream && audioStream.url) {
-                    formats.push({
-                        label: `HQ Audio (${audioStream.container || 'm4a'})`,
-                        quality: "Audio",
-                        sub: "Crystal Clear Audio Track 🎵",
-                        direct: audioStream.url
+                // If only videoOnly streams exist (High Resolutions like 1080p)
+                if (formats.length === 0) {
+                    const uniqueVideoOnly = data.videoStreams.filter(v => v.format === 'MPEG_4' || v.format === 'WEBM');
+                    uniqueVideoOnly.slice(0, 3).forEach(v => {
+                        const res = v.quality || `${v.height}p`;
+                        if (!seenRes.has(res) && v.url) {
+                            seenRes.add(res);
+                            formats.push({
+                                label: `${res} (${v.format || 'MP4'})`,
+                                quality: res,
+                                size: formatBytes(v.contentLength) || getEstimatedSize(data.duration, res),
+                                sub: "High Quality Video Track",
+                                direct: v.url
+                            });
+                        }
                     });
                 }
             }
 
-            return { title, author, thumbnail, duration, formats };
+            // Audio Stream
+            if (data.audioStreams && data.audioStreams.length > 0) {
+                const bestAudio = data.audioStreams.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0))[0];
+                if (bestAudio && bestAudio.url) {
+                    formats.push({
+                        label: `HQ Audio (${bestAudio.format || 'M4A'})`,
+                        quality: "Audio",
+                        size: formatBytes(bestAudio.contentLength) || getEstimatedSize(data.duration, "Audio"),
+                        sub: `Audio Track • ${bestAudio.quality || 'High Bitrate'} 🎵`,
+                        direct: bestAudio.url
+                    });
+                }
+            }
+
+            return {
+                title: data.title || "YouTube Video",
+                author: data.uploader || "YouTube Creator",
+                thumbnail: data.thumbnailUrl || `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`,
+                duration: data.duration || 180,
+                formats: formats
+            };
         }
 
         async function fetchVideoData() {
@@ -583,18 +607,19 @@
             errorBanner.style.display = 'none';
             resultCard.style.display = 'none';
             statusBox.style.display = 'block';
-            statusText.textContent = "Connecting to media stream...";
+            statusText.textContent = "Resolving video streams...";
             btn.disabled = true;
 
             const ytId = extractYouTubeID(url);
 
             try {
                 if (ytId) {
-                    statusText.textContent = "Resolving YouTube HD streams...";
-                    const ytData = await fetchYouTubeVideo(ytId);
-                    renderResults(ytData.title, `YouTube • ${ytData.author}`, ytData.thumbnail, ytData.formats, ytData.duration);
+                    statusText.textContent = "Extracting YouTube HD tracks...";
+                    const ytData = await fetchYouTubeFromPiped(ytId);
+                    renderResults(ytData.title, `YouTube • ${ytData.author}`, ytData.thumbnail, ytData.formats);
                 } else {
-                    statusText.textContent = "Processing Instagram/Facebook stream on server...";
+                    // Instagram & Facebook via your active Render backend
+                    statusText.textContent = "Processing social video stream...";
                     const response = await fetch(`${BACKEND_URL}/api/fetch-info`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -609,21 +634,22 @@
                     const formats = (data.formats || []).map(f => ({
                         label: f.label || "HD Video (MP4)",
                         quality: f.height ? `${f.height}p` : "720p",
-                        sub: "Direct Server Download • Merged Audio & Video",
+                        size: getEstimatedSize(data.duration, f.height ? `${f.height}p` : "720p"),
+                        sub: "Server Merged Video & Audio Track",
                         direct: `${BACKEND_URL}/api/download?video_url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(f.format_id)}&title=${encodeURIComponent(data.title)}&type=${f.type}`
                     }));
 
-                    renderResults(data.title, data.uploader || "Social Media", data.thumbnail || "https://placehold.co/600x400/241C19/ffffff?text=Video+Ready", formats, data.duration);
+                    renderResults(data.title, data.uploader || "Social Media", data.thumbnail || "https://placehold.co/600x400/241C19/ffffff?text=Video+Ready", formats);
                 }
             } catch (err) {
-                showError(err.message || "Failed to process video link. Make sure the video is public.");
+                showError(err.message || "Unable to load video. Ensure the video is public and unrestricted.");
             } finally {
                 statusBox.style.display = 'none';
                 btn.disabled = false;
             }
         }
 
-        function renderResults(title, author, thumbnail, formats, duration) {
+        function renderResults(title, author, thumbnail, formats) {
             const resultCard = document.getElementById('resultCard');
             const mediaThumb = document.getElementById('mediaThumb');
             const mediaTitle = document.getElementById('mediaTitle');
@@ -637,7 +663,6 @@
             container.innerHTML = '';
 
             formats.forEach(item => {
-                const estSize = getEstimatedSize(duration, item.quality);
                 const row = document.createElement('div');
                 row.className = 'format-row';
 
@@ -645,11 +670,11 @@
                     <div class="format-info-left">
                         <div class="format-header-line">
                             <span class="format-label">${item.label}</span>
-                            <span class="size-badge">${estSize}</span>
+                            <span class="size-badge">${item.size}</span>
                         </div>
                         <div class="format-sub">${item.sub}</div>
                     </div>
-                    <a href="${item.direct}" target="_blank" rel="noopener noreferrer" download class="btn-download-media">
+                    <a href="${item.direct}" target="_blank" rel="noopener noreferrer" download="video.mp4" class="btn-download-media">
                         <i class="fa-solid fa-download"></i> Download
                     </a>
                 `;
