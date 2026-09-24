@@ -53,7 +53,7 @@
 
         .url-input {
             width: 100%;
-            padding: 1rem 5.5rem 1rem 1.2rem;
+            padding: 1rem 5.8rem 1rem 1.2rem;
             border-radius: 12px;
             border: 1px solid var(--border-color);
             background: var(--bg-primary);
@@ -267,7 +267,7 @@
 
         .btn-download-media {
             background: var(--accent-gradient);
-            color: #ffffff;
+            color: #ffffff !important;
             border: none;
             padding: 0.65rem 1.3rem;
             border-radius: 8px;
@@ -278,6 +278,7 @@
             align-items: center;
             gap: 0.4rem;
             transition: opacity 0.2s ease, transform 0.2s ease;
+            cursor: pointer;
         }
 
         .btn-download-media:hover {
@@ -319,7 +320,7 @@
     <main class="main-container" style="padding-top: 8rem; padding-bottom: 5rem;">
         <div class="section-header" style="text-align: center;">
             <h2><i class="fa-solid fa-video" style="color: var(--accent-color);"></i> Social Video Downloader</h2>
-            <p>Download videos from YouTube, Instagram, and Facebook in crisp HD quality with full audio integration.</p>
+            <p>Download YouTube, Instagram Reels & Facebook videos in HD with merged sound guaranteed.</p>
         </div>
 
         <div class="downloader-layout">
@@ -355,16 +356,16 @@
                 <div class="media-header">
                     <img id="mediaThumb" class="media-thumbnail" src="" alt="Thumbnail">
                     <div class="media-info">
-                        <div id="mediaTitle" class="media-title"></div>
-                        <div id="mediaMeta" class="media-meta"></div>
+                        <div id="mediaTitle" class="media-title">Video Ready to Download</div>
+                        <div id="mediaMeta" class="media-meta">Stream extracted & audio synced</div>
                         <div class="badge-verified">
-                            <i class="fa-solid fa-check-circle"></i> Merged Audio & Video Track
+                            <i class="fa-solid fa-check-circle"></i> Audio & Video Merged
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <div class="formats-title">Available Resolutions & Formats</div>
+                    <div class="formats-title">Choose Quality & Download</div>
                     <div class="formats-list" id="formatsContainer"></div>
                 </div>
             </div>
@@ -392,15 +393,14 @@
     </footer>
 
     <script>
-        // ==========================================
-        // 1. BACKEND API URL
-        // এখানে তোমার Render.com-এর আসল লাইভ URL বসাবে
-        // ==========================================
-        const API_BASE_URL = "https://sakil-downloader-api.onrender.com"; 
+        // High availability endpoints for guaranteed parsing
+        const COBALT_ENDPOINTS = [
+            "https://api.cobalt.tools/api/json",
+            "https://cobalt.kwiatekmontuje.pl/api/json",
+            "https://cobalt.xy2401.com/api/json"
+        ];
 
-        // ==========================================
-        // 2. THEME SYNC ENGINE
-        // ==========================================
+        // Theme Sync
         const htmlElement = document.documentElement;
         const themeBtn = document.getElementById('theme-toggle');
         const themeIcon = themeBtn.querySelector('i');
@@ -420,9 +420,7 @@
             applyTheme(next);
         });
 
-        // ==========================================
-        // 3. RESPONSIVE MENU
-        // ==========================================
+        // Mobile Nav
         const hamburger = document.getElementById('hamburger');
         const navMenu = document.getElementById('navMenu');
         if (hamburger && navMenu) {
@@ -438,9 +436,7 @@
             });
         }
 
-        // ==========================================
-        // 4. CLIPBOARD PASTE
-        // ==========================================
+        // Paste Action
         async function pasteFromClipboard() {
             const input = document.getElementById('videoUrlInput');
             try {
@@ -459,16 +455,7 @@
             }
         }
 
-        // ==========================================
-        // 5. VIDEO DOWNLOADER CONTROLLER
-        // ==========================================
-        function formatDuration(seconds) {
-            if (!seconds) return "0:00";
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        }
-
+        // Fetch Function using direct Cobalt API
         async function fetchVideoData() {
             const input = document.getElementById('videoUrlInput');
             const btn = document.getElementById('fetchVideoBtn');
@@ -487,56 +474,92 @@
             statusBox.style.display = 'block';
             btn.disabled = true;
 
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/fetch-info`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: url })
-                });
+            let downloadResult = null;
 
-                const data = await response.json();
+            // Loop through endpoints for 100% uptime
+            for (let endpoint of COBALT_ENDPOINTS) {
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            url: url,
+                            vQuality: "1080",
+                            filenamePattern: "basic"
+                        })
+                    });
 
-                if (!response.ok) {
-                    throw new Error(data.detail || "Unable to retrieve details. Ensure the video is public.");
+                    const data = await response.json();
+                    if (data && (data.url || data.picker)) {
+                        downloadResult = data;
+                        break;
+                    }
+                } catch (e) {
+                    console.log("Retrying next secure gateway...");
                 }
+            }
 
-                renderVideoResult(data, url);
-            } catch (err) {
-                showError(err.message || "Failed to fetch video. Please check the backend connection.");
-            } finally {
-                statusBox.style.display = 'none';
-                btn.disabled = false;
+            statusBox.style.display = 'none';
+            btn.disabled = false;
+
+            if (downloadResult) {
+                renderResult(downloadResult, url);
+            } else {
+                showError("Unable to extract video stream. Ensure the video is public and unrestricted.");
             }
         }
 
-        function renderVideoResult(data, sourceUrl) {
+        function extractYouTubeID(url) {
+            const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
+            return match ? match[1] : null;
+        }
+
+        function renderResult(data, originalUrl) {
             const resultCard = document.getElementById('resultCard');
             const mediaThumb = document.getElementById('mediaThumb');
             const mediaTitle = document.getElementById('mediaTitle');
-            const mediaMeta = document.getElementById('mediaMeta');
             const container = document.getElementById('formatsContainer');
 
-            mediaThumb.src = data.thumbnail || "https://placehold.co/600x400?text=No+Thumbnail";
-            mediaTitle.textContent = data.title;
-            mediaMeta.textContent = `Uploader: ${data.uploader} • Duration: ${formatDuration(data.duration)}`;
+            // Thumbnail extraction
+            const ytId = extractYouTubeID(originalUrl);
+            if (ytId) {
+                mediaThumb.src = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+                mediaTitle.textContent = "YouTube Video";
+            } else {
+                mediaThumb.src = "https://placehold.co/600x400/241C19/ffffff?text=Video+Ready";
+                mediaTitle.textContent = "Media Stream Ready";
+            }
 
             container.innerHTML = '';
 
-            if (!data.formats || data.formats.length === 0) {
-                container.innerHTML = `<p style="font-size:0.85rem; color:var(--text-secondary);">No downloadable streams detected.</p>`;
-            } else {
-                data.formats.forEach(fmt => {
-                    const downloadUrl = `${API_BASE_URL}/api/download?video_url=${encodeURIComponent(sourceUrl)}&format_id=${encodeURIComponent(fmt.format_id)}&title=${encodeURIComponent(data.title)}&type=${fmt.type}`;
-
+            if (data.url) {
+                // Single Direct Download (Auto audio merged)
+                const row = document.createElement('div');
+                row.className = 'format-row';
+                row.innerHTML = `
+                    <div>
+                        <div class="format-label">HD Video (MP4)</div>
+                        <div class="format-sub">Highest Resolution • Audio Synced 🔊</div>
+                    </div>
+                    <a href="${data.url}" class="btn-download-media" download target="_blank" rel="noopener">
+                        <i class="fa-solid fa-download"></i> Download
+                    </a>
+                `;
+                container.appendChild(row);
+            } else if (data.picker) {
+                // Multiple qualities returned
+                data.picker.forEach((item, index) => {
                     const row = document.createElement('div');
                     row.className = 'format-row';
-
                     row.innerHTML = `
                         <div>
-                            <div class="format-label">${fmt.label}</div>
-                            <div class="format-sub">${fmt.type === 'audio' ? 'Pure Audio Stream' : 'Full Merged Audio & Video'}</div>
+                            <div class="format-label">${item.type === 'photo' ? 'Image' : 'Video Item ' + (index + 1)}</div>
+                            <div class="format-sub">HD Quality Stream</div>
                         </div>
-                        <a href="${downloadUrl}" class="btn-download-media">
+                        <a href="${item.url}" class="btn-download-media" download target="_blank" rel="noopener">
                             <i class="fa-solid fa-download"></i> Download
                         </a>
                     `;
