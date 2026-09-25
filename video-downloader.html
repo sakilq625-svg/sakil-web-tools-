@@ -474,21 +474,16 @@
             }
         }
 
-        function extractYouTubeID(url) {
-            const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
-            return match ? match[1] : null;
-        }
-
         function getEstimatedSize(durationSeconds, quality) {
             const sec = (durationSeconds && durationSeconds > 0) ? durationSeconds : 180;
-            let mbps = 2.5; 
+            let mbps = 2.5;
             if (quality === '4K') mbps = 20.0;
             else if (quality === '2K') mbps = 10.0;
             else if (quality === '1080p') mbps = 5.0;
             else if (quality === '720p') mbps = 2.5;
             else if (quality === '480p') mbps = 1.2;
             else if (quality === '360p') mbps = 0.7;
-            else if (quality === 'MP3') mbps = 0.32;
+            else if (quality === 'Audio' || quality === 'MP3') mbps = 0.32;
 
             const sizeMB = (mbps * sec) / 8;
             if (sizeMB >= 1000) {
@@ -497,6 +492,17 @@
             return `~${Math.round(sizeMB)} MB`;
         }
 
+        /*
+            Every platform (YouTube, Instagram, Facebook) is routed through
+            the same backend (/api/fetch-info + /api/download), which uses
+            yt-dlp under the hood and already supports all three natively.
+
+            Previously YouTube had a separate branch using noembed.com for
+            metadata and ssyoutube.com for the "download" link — but
+            ssyoutube.com is just a webpage, not a direct-download API, so
+            every quality button pointed at the same dead link and nothing
+            actually downloaded. Removing that branch fixes YouTube.
+        */
         async function fetchVideoData() {
             const input = document.getElementById('videoUrlInput');
             const btn = document.getElementById('fetchVideoBtn');
@@ -517,48 +523,39 @@
             statusText.textContent = "Connecting to media stream...";
             btn.disabled = true;
 
-            const ytId = extractYouTubeID(url);
-
             try {
-                if (ytId) {
-                    // YOUTUBE HANDLER: Uses official universally accessible safe downloader gateway
-                    const metaRes = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${ytId}`);
-                    const metaData = await metaRes.json();
-                    
-                    const title = metaData.title || "YouTube Video";
-                    const author = metaData.author_name || "YouTube Creator";
-                    const thumbnail = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
 
-                    const formats = [
-                        { label: "Full HD 1080p (MP4)", quality: "1080p", sub: "1080p High Quality with Audio 🔊", direct: `https://ssyoutube.com/watch?v=${ytId}` },
-                        { label: "HD 720p (MP4)", quality: "720p", sub: "Standard 720p with Audio 🔊", direct: `https://ssyoutube.com/watch?v=${ytId}` },
-                        { label: "Audio Only (MP3)", quality: "MP3", sub: "HQ MP3 Audio 🎵", direct: `https://ssyoutube.com/watch?v=${ytId}` }
-                    ];
+                statusText.textContent = "Processing video stream on server...";
 
-                    renderResults(title, `YouTube • ${author}`, thumbnail, formats);
-                } else {
-                    // INSTAGRAM & FACEBOOK HANDLER: Directly routes to your live Render Backend
-                    statusText.textContent = "Processing Instagram/Facebook stream on server...";
-                    const response = await fetch(`${BACKEND_URL}/api/fetch-info`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ url: url })
-                    });
+                const response = await fetch(`${BACKEND_URL}/api/fetch-info`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
 
-                    const data = await response.json();
-                    if (!response.ok) {
-                        throw new Error(data.detail || "Unable to extract media from this link.");
-                    }
+                const data = await response.json();
 
-                    const formats = (data.formats || []).map(f => ({
-                        label: f.label || "HD Video (MP4)",
-                        quality: f.height ? `${f.height}p` : "720p",
-                        sub: "Direct Server Download • Merged Audio & Video",
-                        direct: `${BACKEND_URL}/api/download?video_url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(f.format_id)}&title=${encodeURIComponent(data.title)}&type=${f.type}`
-                    }));
-
-                    renderResults(data.title, data.uploader || "Social Media", data.thumbnail || "https://placehold.co/600x400/241C19/ffffff?text=Video+Ready", formats);
+                if (!response.ok) {
+                    throw new Error(data.detail || "Unable to extract media from this link.");
                 }
+
+                const formats = (data.formats || []).map(f => ({
+                    label: f.label || (f.type === 'audio' ? 'High Quality Audio (MP3)' : 'HD Video (MP4)'),
+                    quality: f.quality || (f.height ? `${f.height}p` : '720p'),
+                    sub: f.type === 'audio'
+                        ? 'Direct Server Download • Audio Only'
+                        : 'Direct Server Download • Merged Audio & Video',
+                    duration: data.duration,
+                    direct: `${BACKEND_URL}/api/download?video_url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(f.format_id)}&title=${encodeURIComponent(data.title)}&type=${f.type}`
+                }));
+
+                renderResults(
+                    data.title,
+                    data.uploader || "Social Media",
+                    data.thumbnail || "https://placehold.co/600x400/241C19/ffffff?text=Video+Ready",
+                    formats
+                );
+
             } catch (err) {
                 showError(err.message || "Failed to process video link. Make sure the video is public.");
             } finally {
@@ -581,7 +578,7 @@
             container.innerHTML = '';
 
             formats.forEach(item => {
-                const estSize = getEstimatedSize(null, item.quality);
+                const estSize = getEstimatedSize(item.duration, item.quality);
                 const row = document.createElement('div');
                 row.className = 'format-row';
 
