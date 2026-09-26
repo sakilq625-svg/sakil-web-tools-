@@ -9,10 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    
+
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    
+    <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+
     <style>
         .tool-layout {
             display: grid;
@@ -145,7 +147,7 @@
     <main class="main-container" style="padding-top: 8rem;">
         <div class="section-header">
             <h2><i class="fa-solid fa-repeat"></i> Universal Converter & Size Reducer</h2>
-            <p>Convert file extensions and restrict target KB/MB sizes instantly.</p>
+            <p>Convert Images or PDFs into JPG, PNG, WEBP, PDF, Word (.docx), or PowerPoint (.pptx) — with optional target file size.</p>
         </div>
 
         <div class="tool-layout">
@@ -176,7 +178,7 @@
                     <div class="input-group">
                         <label style="color: #047857;"><i class="fa-solid fa-weight-hanging"></i> Target File Size (Optional KB)</label>
                         <input type="number" id="targetKbInput" class="input-box" placeholder="e.g. 200 (Leave blank for Max Quality)" min="10">
-                        <span style="font-size:0.75rem; color: var(--text-secondary); margin-top:0.2rem;">System will auto-compress to stay under your target KB.</span>
+                        <span style="font-size:0.75rem; color: var(--text-secondary); margin-top:0.2rem;">System will auto-compress to stay under your target KB (also applies to Word/PowerPoint output).</span>
                     </div>
                 </div>
 
@@ -215,6 +217,10 @@
         const convertBtn = document.getElementById('convertBtn');
         const statusLoading = document.getElementById('statusLoading');
 
+        // MIME identifiers used for the new Word / PowerPoint output options
+        const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        const PPTX_MIME = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+
         let loadedFileData = null; 
         let isPdfInput = false;
         let fileName = "sakil-converted";
@@ -237,6 +243,8 @@
                 formatSelect.innerHTML = `
                     <option value="image/jpeg">JPG (.jpg)</option>
                     <option value="image/png">PNG (.png)</option>
+                    <option value="${DOCX_MIME}">Word (.docx)</option>
+                    <option value="${PPTX_MIME}">PowerPoint (.pptx)</option>
                 `;
                 showWorkspace();
             } else if (file.type.startsWith("image/")) {
@@ -247,6 +255,8 @@
                     <option value="image/jpeg">JPG (.jpg)</option>
                     <option value="image/png">PNG (.png)</option>
                     <option value="image/webp">WEBP (.webp)</option>
+                    <option value="${DOCX_MIME}">Word (.docx)</option>
+                    <option value="${PPTX_MIME}">PowerPoint (.pptx)</option>
                 `;
                 const reader = new FileReader();
                 reader.onload = (event) => {
@@ -267,22 +277,22 @@
         convertBtn.addEventListener('click', async () => {
             const targetFormat = formatSelect.value;
             const maxAllowedKb = parseInt(targetKbInput.value);
-            
+
             convertBtn.style.display = 'none';
             statusLoading.style.display = 'block';
 
             try {
                 if (isPdfInput) {
                     // ==========================================
-                    // RUNNER: PDF TO IMAGE WITH KB LIMITS
+                    // RUNNER: PDF PAGE 1 -> ANY OUTPUT FORMAT
                     // ==========================================
                     const fileReader = new FileReader();
                     fileReader.onload = async function() {
                         const typedarray = new Uint8Array(this.result);
                         const pdf = await pdfjsLib.getDocument(typedarray).promise;
                         const page = await pdf.getPage(1);
-                        const viewport = page.getViewport({ scale: 2.0 }); 
-                        
+                        const viewport = page.getViewport({ scale: 2.0 });
+
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
                         canvas.height = viewport.height;
@@ -290,65 +300,21 @@
 
                         await page.render({ canvasContext: ctx, viewport: viewport }).promise;
 
-                        let finalDataUrl = canvas.toDataURL(targetFormat, 0.95);
-                        
-                        // Handle strict KB filtering on images extracted from PDF
-                        if (maxAllowedKb && targetFormat !== "image/png") {
-                            finalDataUrl = optimizeCanvasToKb(canvas, targetFormat, maxAllowedKb);
-                        }
-
-                        const ext = targetFormat === "image/png" ? "png" : "jpg";
-                        triggerDownload(finalDataUrl, `${fileName}.${ext}`);
+                        await outputFromCanvas(canvas, targetFormat, maxAllowedKb);
                         resetLoadingState();
                     };
                     fileReader.readAsArrayBuffer(loadedFileData);
 
                 } else {
                     // ==========================================
-                    // RUNNER: IMAGE TO IMAGE OR IMAGE TO PDF
+                    // RUNNER: IMAGE -> ANY OUTPUT FORMAT
                     // ==========================================
-                    if (targetFormat === "application/pdf") {
-                        // IMAGE TO PDF WITH KB SIZE REDUCTION
-                        const canvas = document.createElement('canvas');
-                        canvas.width = imageElementForPdf.width;
-                        canvas.height = imageElementForPdf.height;
-                        canvas.getContext('2d').drawImage(imageElementForPdf, 0, 0);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = imageElementForPdf.width;
+                    canvas.height = imageElementForPdf.height;
+                    canvas.getContext('2d').drawImage(imageElementForPdf, 0, 0);
 
-                        let imgQuality = 0.9;
-                        let imgDataUrl = canvas.toDataURL("image/jpeg", imgQuality);
-                        
-                        // Check if compression for intermediate image asset is needed
-                        if (maxAllowedKb) {
-                            imgDataUrl = optimizeCanvasToKb(canvas, "image/jpeg", maxAllowedKb * 0.85); // buffer for PDF wrapper structure
-                        }
-
-                        const pdfDoc = await PDFLib.PDFDocument.create();
-                        const compressedBuffer = await fetch(imgDataUrl).then(res => res.arrayBuffer());
-                        const embedImage = await pdfDoc.embedJpg(compressedBuffer);
-
-                        const page = pdfDoc.addPage([embedImage.width, embedImage.height]);
-                        page.drawImage(embedImage, { x: 0, y: 0, width: embedImage.width, height: embedImage.height });
-                        
-                        const pdfBytes = await pdfDoc.save();
-                        const blob = new Blob([pdfBytes], { type: "application/pdf" });
-                        triggerDownload(URL.createObjectURL(blob), `${fileName}.pdf`);
-                    } else {
-                        // STANDARD IMAGE TO IMAGE VARIANT
-                        const canvas = document.createElement('canvas');
-                        canvas.width = imageElementForPdf.width;
-                        canvas.height = imageElementForPdf.height;
-                        canvas.getContext('2d').drawImage(imageElementForPdf, 0, 0);
-
-                        let finalDataUrl = canvas.toDataURL(targetFormat, 0.95);
-                        let ext = targetFormat.split('/')[1];
-                        if(ext === "jpeg") ext = "jpg";
-
-                        if (maxAllowedKb && targetFormat !== "image/png") {
-                            finalDataUrl = optimizeCanvasToKb(canvas, targetFormat, maxAllowedKb);
-                        }
-
-                        triggerDownload(finalDataUrl, `${fileName}.${ext}`);
-                    }
+                    await outputFromCanvas(canvas, targetFormat, maxAllowedKb);
                     resetLoadingState();
                 }
             } catch (error) {
@@ -357,6 +323,116 @@
                 resetLoadingState();
             }
         });
+
+        // Central output router — takes a rendered canvas (from either an
+        // image or a PDF's first page) and writes it out in whichever
+        // format the user picked. Keeping this in one place avoids
+        // duplicating the PDF/Word/PowerPoint logic per input type.
+        async function outputFromCanvas(canvas, targetFormat, maxAllowedKb) {
+
+            if (targetFormat === "application/pdf") {
+                let imgDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+
+                if (maxAllowedKb) {
+                    imgDataUrl = optimizeCanvasToKb(canvas, "image/jpeg", maxAllowedKb * 0.85); // buffer for PDF wrapper structure
+                }
+
+                const pdfDoc = await PDFLib.PDFDocument.create();
+                const compressedBuffer = await fetch(imgDataUrl).then(res => res.arrayBuffer());
+                const embedImage = await pdfDoc.embedJpg(compressedBuffer);
+
+                const page = pdfDoc.addPage([embedImage.width, embedImage.height]);
+                page.drawImage(embedImage, { x: 0, y: 0, width: embedImage.width, height: embedImage.height });
+
+                const pdfBytes = await pdfDoc.save();
+                const blob = new Blob([pdfBytes], { type: "application/pdf" });
+                triggerDownload(URL.createObjectURL(blob), `${fileName}.pdf`);
+                return;
+            }
+
+            if (targetFormat === DOCX_MIME) {
+                let imgDataUrl = canvas.toDataURL("image/jpeg", 0.95);
+                if (maxAllowedKb) {
+                    imgDataUrl = optimizeCanvasToKb(canvas, "image/jpeg", maxAllowedKb);
+                }
+                await generateDocxFromImage(imgDataUrl, `${fileName}.docx`);
+                return;
+            }
+
+            if (targetFormat === PPTX_MIME) {
+                let imgDataUrl = canvas.toDataURL("image/jpeg", 0.95);
+                if (maxAllowedKb) {
+                    imgDataUrl = optimizeCanvasToKb(canvas, "image/jpeg", maxAllowedKb);
+                }
+                await generatePptxFromImage(imgDataUrl, `${fileName}.pptx`);
+                return;
+            }
+
+            // Standard image-to-image output (JPG / PNG / WEBP)
+            let finalDataUrl = canvas.toDataURL(targetFormat, 0.95);
+            let ext = targetFormat.split('/')[1];
+            if (ext === "jpeg") ext = "jpg";
+
+            if (maxAllowedKb && targetFormat !== "image/png") {
+                finalDataUrl = optimizeCanvasToKb(canvas, targetFormat, maxAllowedKb);
+            }
+
+            triggerDownload(finalDataUrl, `${fileName}.${ext}`);
+        }
+
+        // Wraps a rendered image inside a one-page Word document
+        async function generateDocxFromImage(dataUrl, outFileName) {
+            const img = await loadImageFromDataUrl(dataUrl);
+
+            // Fit inside a normal page width (~6.25in at 96dpi)
+            const maxW = 600;
+            let width = img.width;
+            let height = img.height;
+            if (width > maxW) {
+                const ratio = maxW / width;
+                width = maxW;
+                height = Math.round(height * ratio);
+            }
+
+            const arrayBuffer = await fetch(dataUrl).then(res => res.arrayBuffer());
+            const mimeType = dataUrl.split(';')[0].split('/')[1]; // "jpeg"
+
+            const doc = new docx.Document({
+                sections: [{
+                    children: [
+                        new docx.Paragraph({
+                            children: [
+                                new docx.ImageRun({
+                                    data: arrayBuffer,
+                                    transformation: { width, height },
+                                    type: mimeType,
+                                })
+                            ]
+                        })
+                    ]
+                }]
+            });
+
+            const blob = await docx.Packer.toBlob(doc);
+            triggerDownload(URL.createObjectURL(blob), outFileName);
+        }
+
+        // Wraps a rendered image as a single full-bleed PowerPoint slide
+        async function generatePptxFromImage(dataUrl, outFileName) {
+            const pptx = new PptxGenJS();
+            const slide = pptx.addSlide();
+            slide.addImage({ data: dataUrl, x: 0, y: 0, w: '100%', h: '100%' });
+            await pptx.writeFile({ fileName: outFileName });
+        }
+
+        function loadImageFromDataUrl(dataUrl) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = dataUrl;
+            });
+        }
 
         // Binary search compression engine to meet target KB exactly
         function optimizeCanvasToKb(canvas, format, targetKb) {
