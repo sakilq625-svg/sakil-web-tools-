@@ -467,30 +467,28 @@
                     </div>
                 </div>
 
-                <!-- Step 6 & 7: Grid & Zero Margin Custom Layout -->
+                <!-- Step 6 & 7: Grid & Position (Top-Left Paper Saver) -->
                 <div class="step-block">
-                    <div class="step-heading"><span class="step-num">6</span> Grid & Auto Page-Fit Layout</div>
+                    <div class="step-heading"><span class="step-num">6</span> Grid & Print Position</div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
                         <div>
-                            <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Custom Grid Layout:</label>
-                            <select id="gridPresetSelect" class="form-select" onchange="onGridPresetChange()">
-                                <option value="auto" selected>Auto Optimal Fit</option>
-                                <option value="5x4">5 Rows × 4 Columns (20)</option>
-                                <option value="6x5">6 Rows × 5 Columns (30)</option>
-                                <option value="6x4">6 Rows × 4 Columns (24)</option>
-                                <option value="7x5">7 Rows × 5 Columns (35)</option>
-                                <option value="8x6">8 Rows × 6 Columns (48)</option>
-                                <option value="manual">Manual Row × Col...</option>
+                            <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Print Position Mode:</label>
+                            <select id="alignSelect" class="form-select" onchange="renderSheetPreview()">
+                                <option value="top-left" selected>Top-Left (Save Paper ✂️)</option>
+                                <option value="center">Center of Page</option>
                             </select>
                         </div>
                         <div>
-                            <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Page Margin Mode:</label>
-                            <select id="marginSelect" class="form-select" onchange="renderSheetPreview()">
-                                <option value="0">Zero Margin (Full Bleed)</option>
-                                <option value="3">Minimal (3 mm)</option>
-                                <option value="6" selected>Standard (6 mm)</option>
-                                <option value="12">Wide Studio (12 mm)</option>
+                            <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Custom Grid Preset:</label>
+                            <select id="gridPresetSelect" class="form-select" onchange="onGridPresetChange()">
+                                <option value="auto" selected>Auto Fit (Cols x Rows)</option>
+                                <option value="5x4">5 Rows × 4 Cols (20)</option>
+                                <option value="6x5">6 Rows × 5 Cols (30)</option>
+                                <option value="6x4">6 Rows × 4 Cols (24)</option>
+                                <option value="7x5">7 Rows × 5 Cols (35)</option>
+                                <option value="8x6">8 Rows × 6 Cols (48)</option>
+                                <option value="manual">Manual Row × Col...</option>
                             </select>
                         </div>
                     </div>
@@ -508,31 +506,42 @@
                     </div>
 
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Total Copies to Print:</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Number of Copies:</span>
                         <div class="qty-box">
                             <button class="btn-step" onclick="changeQty(-1)">−</button>
-                            <input type="number" id="qtyInput" class="form-input qty-val" value="20" min="1" max="100" onchange="renderSheetPreview()">
+                            <input type="number" id="qtyInput" class="form-input qty-val" value="4" min="1" max="100" onchange="renderSheetPreview()">
                             <button class="btn-step" onclick="changeQty(1)">+</button>
                         </div>
                     </div>
                     <div class="pills-group">
-                        <button class="pill-btn" onclick="setQuickQty(4)">4</button>
+                        <button class="pill-btn" onclick="setQuickQty(2)">2</button>
+                        <button class="pill-btn active" onclick="setQuickQty(4)">4</button>
+                        <button class="pill-btn" onclick="setQuickQty(6)">6</button>
                         <button class="pill-btn" onclick="setQuickQty(8)">8</button>
                         <button class="pill-btn" onclick="setQuickQty(12)">12</button>
                         <button class="pill-btn" onclick="setQuickQty(20)">20</button>
-                        <button class="pill-btn active" onclick="setQuickQty(24)">24</button>
-                        <button class="pill-btn" onclick="setQuickQty(30)">30</button>
                         <button class="pill-btn" onclick="setQuickQty('max')">Max Fit</button>
                     </div>
 
-                    <div style="margin-top: 0.5rem;">
-                        <label style="font-size: 0.75rem; color: var(--text-secondary);">Spacing between Photos:</label>
-                        <select id="spacingSelect" class="form-select" onchange="renderSheetPreview()">
-                            <option value="0">None / No Gap (0 mm)</option>
-                            <option value="2">Tight (2 mm)</option>
-                            <option value="3" selected>Standard (3 mm)</option>
-                            <option value="5">Comfortable (5 mm)</option>
-                        </select>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-secondary);">Page Margin:</label>
+                            <select id="marginSelect" class="form-select" onchange="renderSheetPreview()">
+                                <option value="0">Zero Margin (Full Bleed)</option>
+                                <option value="4">Small (4 mm)</option>
+                                <option value="8" selected>Standard (8 mm)</option>
+                                <option value="12">Wide Studio (12 mm)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-secondary);">Spacing between Photos:</label>
+                            <select id="spacingSelect" class="form-select" onchange="renderSheetPreview()">
+                                <option value="0">No Gap (0 mm)</option>
+                                <option value="2">Tight (2 mm)</option>
+                                <option value="3" selected>Standard (3 mm)</option>
+                                <option value="5">Comfortable (5 mm)</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -562,9 +571,9 @@
                 <div class="info-data-grid" id="previewMetaBox">
                     <div>Paper: <strong id="metaPaper">A4 Portrait</strong></div>
                     <div>Photo Size: <strong id="metaSize">35 × 45 mm</strong></div>
-                    <div>Photos / Sheet: <strong id="metaCount">20</strong></div>
-                    <div>Layout Grid: <strong id="metaGrid">5 Rows × 4 Cols</strong></div>
-                    <div>Margins & Gap: <strong id="metaSpacing">6mm Margin | 3mm Gap</strong></div>
+                    <div>Copies: <strong id="metaCount">4</strong></div>
+                    <div>Position: <strong id="metaAlign">Top-Left Corner ✂️</strong></div>
+                    <div>Layout Grid: <strong id="metaGrid">1 Row × 4 Cols</strong></div>
                 </div>
 
                 <div style="display: flex; gap: 0.7rem; flex-wrap: wrap; width: 100%;">
@@ -723,37 +732,58 @@
             renderSheetPreview();
         }
 
-        // Lightweight browser portrait cutout engine
-        function removeBackgroundLocal(img) {
+        // High accuracy studio background removal & alpha thresholding
+        function removeBackgroundAdvanced(img) {
             const canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth || img.width;
-            canvas.height = img.naturalHeight || img.height;
+            const w = img.naturalWidth || img.width;
+            const h = img.naturalHeight || img.height;
+            canvas.width = w;
+            canvas.height = h;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0);
 
-            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const imgData = ctx.getImageData(0, 0, w, h);
             const data = imgData.data;
 
-            // Sample corner pixel colors (Top corners usually represent background)
-            const sampleR = (data[0] + data[(canvas.width - 1) * 4]) / 2;
-            const sampleG = (data[1] + data[(canvas.width - 1) * 4 + 1]) / 2;
-            const sampleB = (data[2] + data[(canvas.width - 1) * 4 + 2]) / 2;
+            // Sample multi-point perimeter background references
+            const samples = [
+                0, // Top-Left
+                (w - 1) * 4, // Top-Right
+                (Math.floor(w / 2)) * 4, // Top-Center
+                (w * 2) * 4, // Upper left
+                ((w * 2) + w - 1) * 4 // Upper right
+            ];
 
-            const threshold = 40; // Detection tolerance
+            let sumR = 0, sumG = 0, sumB = 0;
+            samples.forEach(idx => {
+                sumR += data[idx];
+                sumG += data[idx + 1];
+                sumB += data[idx + 2];
+            });
+            const baseR = sumR / samples.length;
+            const baseG = sumG / samples.length;
+            const baseB = sumB / samples.length;
+
+            const threshold = 48;
+            const feather = 18;
 
             for (let i = 0; i < data.length; i += 4) {
                 const r = data[i];
                 const g = data[i + 1];
                 const b = data[i + 2];
 
-                const diff = Math.sqrt(
-                    Math.pow(r - sampleR, 2) +
-                    Math.pow(g - sampleG, 2) +
-                    Math.pow(b - sampleB, 2)
+                const colorDist = Math.sqrt(
+                    (r - baseR) * (r - baseR) +
+                    (g - baseG) * (g - baseG) +
+                    (b - baseB) * (b - baseB)
                 );
 
-                if (diff < threshold) {
-                    data[i + 3] = 0; // Transparent
+                if (colorDist < threshold) {
+                    data[i + 3] = 0; // Pure Transparent
+                } else if (colorDist < threshold + feather) {
+                    // Soft Alpha Blend for natural edge transition
+                    const alpha = ((colorDist - threshold) / feather) * 255;
+                    data[i + 3] = Math.min(data[i + 3], alpha);
                 }
             }
 
@@ -772,7 +802,7 @@
             if (mode === 'remove') {
                 showLoading("Applying studio background cutout...");
                 setTimeout(() => {
-                    cutoutCanvas = removeBackgroundLocal(rawImage);
+                    cutoutCanvas = removeBackgroundAdvanced(rawImage);
                     hideLoading();
                     initCropper(cutoutCanvas.toDataURL());
                 }, 300);
@@ -793,17 +823,12 @@
             const manualRow = document.getElementById('manualGridInputs');
             manualRow.style.display = val === 'manual' ? 'grid' : 'none';
 
-            if (val === '5x4') {
-                document.getElementById('qtyInput').value = 20;
-            } else if (val === '6x5') {
-                document.getElementById('qtyInput').value = 30;
-            } else if (val === '6x4') {
-                document.getElementById('qtyInput').value = 24;
-            } else if (val === '7x5') {
-                document.getElementById('qtyInput').value = 35;
-            } else if (val === '8x6') {
-                document.getElementById('qtyInput').value = 48;
-            }
+            if (val === '5x4') document.getElementById('qtyInput').value = 20;
+            else if (val === '6x5') document.getElementById('qtyInput').value = 30;
+            else if (val === '6x4') document.getElementById('qtyInput').value = 24;
+            else if (val === '7x5') document.getElementById('qtyInput').value = 35;
+            else if (val === '8x6') document.getElementById('qtyInput').value = 48;
+
             renderSheetPreview();
         }
 
@@ -862,14 +887,14 @@
                 rows = parseInt(document.getElementById('manualRows').value) || 5;
                 cols = parseInt(document.getElementById('manualCols').value) || 4;
             } else {
-                // Auto Optimal
+                // Auto Optimal Columns & Rows
                 const reqQty = Math.min(parseInt(document.getElementById('qtyInput').value) || 1, maxPossible);
                 cols = Math.min(reqQty, maxCols);
                 rows = Math.ceil(reqQty / cols);
             }
 
             const totalCapacity = rows * cols;
-            const reqQty = Math.min(parseInt(document.getElementById('qtyInput').value) || totalCapacity, totalCapacity);
+            const reqQty = Math.min(parseInt(document.getElementById('qtyInput').value) || 1, totalCapacity);
 
             return {
                 paperW_MM, paperH_MM,
@@ -898,13 +923,22 @@
             const photoW = (layout.photoW_MM / MM_TO_INCH) * DPI;
             const photoH = (layout.photoH_MM / MM_TO_INCH) * DPI;
             const spacing = (layout.spacingMM / MM_TO_INCH) * DPI;
+            const margin = (layout.marginMM / MM_TO_INCH) * DPI;
 
-            const totalGridW = (layout.cols * photoW) + ((layout.cols - 1) * spacing);
-            const totalGridH = (layout.rows * photoH) + ((layout.rows - 1) * spacing);
+            const alignMode = document.getElementById('alignSelect').value;
+            let startX, startY;
 
-            // Center alignment with respect to margins
-            const startX = (canvasW - totalGridW) / 2;
-            const startY = (canvasH - totalGridH) / 2;
+            if (alignMode === 'top-left') {
+                // START FROM TOP-LEFT (SAVES PAPER SO REST CAN BE CUT AND REUSED)
+                startX = margin;
+                startY = margin;
+            } else {
+                // CENTER OF PAGE
+                const totalGridW = (layout.cols * photoW) + ((layout.cols - 1) * spacing);
+                const totalGridH = (layout.rows * photoH) + ((layout.rows - 1) * spacing);
+                startX = (canvasW - totalGridW) / 2;
+                startY = (canvasH - totalGridH) / 2;
+            }
 
             const singlePhotoCanvas = getRenderedSinglePhoto();
 
@@ -915,19 +949,22 @@
                     const x = startX + c * (photoW + spacing);
                     const y = startY + r * (photoH + spacing);
 
-                    if (singlePhotoCanvas) {
-                        ctx.drawImage(singlePhotoCanvas, x, y, photoW, photoH);
-                    } else {
-                        ctx.fillStyle = "#f8fafc";
-                        ctx.fillRect(x, y, photoW, photoH);
-                        ctx.strokeStyle = "#cbd5e1";
+                    // Ensure photos do not bleed out of paper bounds
+                    if (x + photoW <= canvasW && y + photoH <= canvasH) {
+                        if (singlePhotoCanvas) {
+                            ctx.drawImage(singlePhotoCanvas, x, y, photoW, photoH);
+                        } else {
+                            ctx.fillStyle = "#f8fafc";
+                            ctx.fillRect(x, y, photoW, photoH);
+                            ctx.strokeStyle = "#cbd5e1";
+                            ctx.strokeRect(x, y, photoW, photoH);
+                        }
+
+                        // Cutting outline
+                        ctx.strokeStyle = "rgba(0, 0, 0, 0.16)";
+                        ctx.lineWidth = 1;
                         ctx.strokeRect(x, y, photoW, photoH);
                     }
-
-                    // Cutting outline
-                    ctx.strokeStyle = "rgba(0, 0, 0, 0.18)";
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(x, y, photoW, photoH);
 
                     placed++;
                 }
@@ -936,8 +973,8 @@
             document.getElementById('metaPaper').textContent = `${layout.paperKey} (${layout.orientation})`;
             document.getElementById('metaSize').textContent = layout.photoLabel;
             document.getElementById('metaCount').textContent = layout.reqQty;
+            document.getElementById('metaAlign').textContent = alignMode === 'top-left' ? 'Top-Left Corner ✂️' : 'Center of Page';
             document.getElementById('metaGrid').textContent = `${layout.rows} Rows × ${layout.cols} Cols`;
-            document.getElementById('metaSpacing').textContent = `${layout.marginMM}mm Margin | ${layout.spacingMM}mm Gap`;
         }
 
         function getRenderedSinglePhoto() {
@@ -951,7 +988,7 @@
             buffer.height = h;
             const bCtx = buffer.getContext('2d');
 
-            // Apply selected backdrop color if AI removal mode is enabled
+            // Apply selected background color
             if (bgMode === 'remove') {
                 bCtx.fillStyle = selectedBgColor;
                 bCtx.fillRect(0, 0, w, h);
