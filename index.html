@@ -1,182 +1,157 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sakil Web Tools - Free Online Utility Suite</title>
-    <meta name="description" content="All-in-one free web utility workspace: Image tools, Background remover, Passport Sheet Maker, PDF suite, Student calculation tools, and Video Downloader.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sakil Web Tools - Online Multi-Tools Platform</title>
+    <meta name="description" content="All-in-one professional web tools platform for image processing, PDF management, and digital utilities. Fast, secure, and fully responsive.">
+    <meta name="google-site-verification" content="HGjKCKCV75xpB4ho-zu0k4zSsBUJKRCY6qUo5YFBD5c" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Header & Navigation -->
-    <header class="navbar">
-        <div class="nav-container">
-            <a href="index.html" class="logo">
-                <i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span>
-            </a>
-            <nav class="nav-menu" id="navMenu">
-                <a href="index.html" class="nav-link active">Home</a>
-                <a href="#image-tools" class="nav-link">Image Tools</a>
-                <a href="passport-photo.html" class="nav-link">Passport Sheet</a>
-                <a href="bg-remover.html" class="nav-link">BG Remover</a>
-                <a href="student-tools.html" class="nav-link">Student Tools</a>
-                <a href="video-downloader.html" class="nav-link">Video Downloader</a>
-                <a href="about.html" class="nav-link">About</a>
-                <a href="contact.html" class="nav-link">Contact</a>
-            </nav>
-            <div class="nav-actions">
-                <button id="theme-toggle" class="theme-btn" aria-label="Toggle Theme">
-                    <i class="fa-solid fa-moon"></i>
-                </button>
-                <button class="hamburger" id="hamburger" aria-label="Menu">
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                </button>
-            </div>
-        </div>
-    </header>
+    <div class="loader-wrapper" id="loader">
+        <div class="spinner"></div>
+    </div>
 
-    <!-- Hero Section -->
-    <main class="main-container" style="padding-top: 7.5rem; padding-bottom: 4rem;">
-        <section class="hero-section" style="text-align: center; margin-bottom: 3.5rem;">
-            <h1 style="font-family: 'Fraunces', serif; font-size: 2.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem;">
-                Smart, Lightweight Tools for Daily Productivity
-            </h1>
-            <p style="font-size: 1.05rem; color: var(--text-secondary); max-width: 650px; margin: 0 auto;">
-                Browser-based image processing, printable passport sheets, file conversion, student calculations, and media downloading without software installation.
-            </p>
-        </section>
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span>
+            </a>
+            <nav class="nav-menu" id="navMenu">
+                <a href="index.html" class="nav-link active">Home</a>
+                <a href="#image-tools" class="nav-link">Image Tools</a>
+                <a href="bg-remover.html" class="nav-link">BG Remover</a>
+                <a href="#pdf-tools" class="nav-link">PDF Tools</a>
+                <a href="student-tools.html" class="nav-link">Student Tools</a>
+                <a href="#utility-tools" class="nav-link">Utilities</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+            </nav>
+            <div class="nav-actions">
+                <button id="theme-toggle" aria-label="Toggle Theme" class="theme-btn">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+                <button class="hamburger" id="hamburger" aria-label="Menu">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </button>
+            </div>
+        </div>
+    </header>
 
-        <!-- Tools Grid Section -->
-        <section id="image-tools" class="tools-section">
-            <div class="section-header" style="text-align: center; margin-bottom: 2rem;">
-                <h2><i class="fa-solid fa-layer-group" style="color: var(--accent-color);"></i> Featured Web Tools</h2>
-                <p>Select a utility below to begin processing instantly in your browser.</p>
-            </div>
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1>Maximize Productivity with <br><span class="gradient-text">Sakil Web Tools</span></h1>
+            <p>Free, fast, secure, and ready to use in your browser. No sign-up needed</p>
+            
+            <div class="search-container">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="tool-search" placeholder="Search for tools... (e.g., Resize, PDF, QR, Student, BG)">
+            </div>
+        </div>
+    </section>
 
-            <div class="tools-grid">
-                
-                <!-- NEW TOOL: Passport Photo Sheet Maker -->
-                <div class="tool-card featured-tool" style="border: 2px solid var(--accent-color); position: relative;">
-                    <div style="position: absolute; top: 12px; right: 12px; background: var(--accent-gradient); color: #fff; font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 20px;">
-                        NEW
-                    </div>
-                    <div class="tool-icon" style="color: var(--accent-color);">
-                        <i class="fa-solid fa-id-card-clip"></i>
-                    </div>
-                    <h3>Passport Photo Sheet Maker</h3>
-                    <p>Create millimeter-accurate passport photo sheets on A4 & 4x6 paper with AI cutout, custom backgrounds, and studio print layout.</p>
-                    <a href="passport-photo.html" class="btn-tool">Open Tool <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
+    <main class="main-container">
 
-                <!-- AI Background Remover -->
-                <div class="tool-card">
-                    <div class="tool-icon" style="color: var(--accent-color);">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    </div>
-                    <h3>AI Background Remover</h3>
-                    <p>Cleanly remove backgrounds from photos and portraits directly in your browser with zero data uploads.</p>
-                    <a href="bg-remover.html" class="btn-tool">Open Tool <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
+        <section class="tool-section" id="image-tools">
+            <div class="section-header">
+                <h2><i class="fa-regular fa-image"></i> Image Processing Tools</h2>
+                <p>Resize, compress, and convert images without losing quality</p>
+            </div>
+            <div class="tools-grid">
+                <a href="image-resize.html" class="tool-card" data-keywords="image resize crop dimensions photo">
+                    <div class="tool-icon img-icon"><i class="fa-solid fa-compress"></i></div>
+                    <h3>Image Resizer</h3>
+                    <p>Change image dimensions by exact pixels or percentage</p>
+                </a>
+                <a href="image-compressor.html" class="tool-card" data-keywords="image compress size storage optimize">
+                    <div class="tool-icon img-icon"><i class="fa-solid fa-file-image"></i></div>
+                    <h3>Image Compressor</h3>
+                    <p>Reduce file sizes without losing visual quality</p>
+                </a>
+                <a href="image-converter.html" class="tool-card" data-keywords="image convert jpg png webp format">
+                    <div class="tool-icon img-icon"><i class="fa-solid fa-repeat"></i></div>
+                    <h3>All-in-one converter</h3>
+                    <p>Convert between JPG, PNG, WebP, PDF formates</p>
+                </a>
+                <!-- NEW TOOL ADDED: AI Background Remover -->
+                <a href="bg-remover.html" class="tool-card" data-keywords="image remove background bg transparent erase">
+                    <div class="tool-icon img-icon"><i class="fa-solid fa-scissors"></i></div>
+                    <h3>Remove Background</h3>
+                    <p>Remove image backgrounds and download as transparent PNGs</p>
+                </a>
+            </div>
+        </section>
 
-                <!-- Universal Converter & Size Reducer -->
-                <div class="tool-card">
-                    <div class="tool-icon" style="color: var(--accent-color);">
-                        <i class="fa-solid fa-repeat"></i>
-                    </div>
-                    <h3>Universal Converter & Reducer</h3>
-                    <p>Convert JPG, PNG, WEBP, and PDF documents with exact target file size (KB) controller.</p>
-                    <a href="image-converter.html" class="btn-tool">Open Tool <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
+        <section class="tool-section" id="pdf-tools">
+            <div class="section-header">
+                <h2><i class="fa-regular fa-file-pdf"></i> PDF Management Suite</h2>
+                <p>Everything you need to edit, Marge, Split Or secure your PDFs</p>
+            </div>
+            <div class="tools-grid">
+                <a href="pdf-tools.html" class="tool-card" data-keywords="pdf merge split convert unlock protect compress">
+                    <div class="tool-icon pdf-icon"><i class="fa-solid fa-file-pdf"></i></div>
+                    <h3>PDF Toolkit</h3>
+                    <p>Merge & Split PDFs using our powerful handler</p>
+                </a>
+            </div>
+        </section>
 
-                <!-- Social Video Downloader -->
-                <div class="tool-card">
-                    <div class="tool-icon" style="color: var(--accent-color);">
-                        <i class="fa-solid fa-video"></i>
-                    </div>
-                    <h3>Social Video Downloader</h3>
-                    <p>Download Facebook videos, Instagram Reels, and YouTube videos with audio synced and file size preview.</p>
-                    <a href="video-downloader.html" class="btn-tool">Open Tool <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
+        <section class="tool-section" id="utility-tools">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-gears"></i> Developer, student & Utility Tools</h2>
+                <p>Practical utilities for students, developers, and creators</p>
+            </div>
+            <div class="tools-grid">
+                <a href="qr-generator.html" class="tool-card" data-keywords="qr code barcode generator scanning maker">
+                    <div class="tool-icon util-icon"><i class="fa-solid fa-qrcode"></i></div>
+                    <h3>QR & Barcode Generator</h3>
+                    <p>Create custom QR codes and barcodes for any text or URLs</p>
+                </a>
+                <!-- NEW TOOL ADDED: Student Tools -->
+                <a href="student-tools.html" class="tool-card" data-keywords="student tools education study academic calculator notes">
+                    <div class="tool-icon util-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                    <h3>Student Tools</h3>
+                    <p>Essential digital utilities and calculators designed for students</p>
+                </a>
+            </div>
+        </section>
 
-                <!-- Student Tools -->
-                <div class="tool-card">
-                    <div class="tool-icon" style="color: var(--accent-color);">
-                        <i class="fa-solid fa-graduation-cap"></i>
-                    </div>
-                    <h3>Student & Academic Tools</h3>
-                    <p>Specialized calculators, matrix operations, converters, and daily academic utilities for science students.</p>
-                    <a href="student-tools.html" class="btn-tool">Open Tool <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
+        <div id="no-results" class="no-results hidden">
+            <i class="fa-solid fa-face-laugh-squint"></i>
+            <p> Why are you hitting random keys? Type properly. Bujhte parli to...</p>
+        </div>
 
-            </div>
-        </section>
-    </main>
+    </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-brand">
-                <a href="index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Tools</span></a>
-                <p>A lightweight workspace for your daily web tasks</p>
-            </div>
-            <div class="footer-links">
-                <h4>Quick Links</h4>
-                <a href="about.html">About Us</a>
-                <a href="contact.html">Contact</a>
-                <a href="passport-photo.html">Passport Sheet</a>
-                <a href="bg-remover.html">BG Remover</a>
-                <a href="student-tools.html">Student Tools</a>
-                <a href="video-downloader.html">Video Downloader</a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 Sakil Web Tools. Designed & Developed by Md Sakil</p>
-        </div>
-    </footer>
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <a href="index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Tools</span></a>
+                <p>A lightweight workspace for your daily web tasks</p>
+            </div>
+            <div class="footer-links">
+                <h4>Quick Links</h4>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+                <a href="#">Privacy Policy</a>
+                <a href="bg-remover.html">BG Remover</a>
+                <a href="student-tools.html">Student Tools</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Sakil Web Tools. Designed & Developed by Md Sakil </p>
+        </div>
+    </footer>
 
-    <script>
-        // Theme Engine
-        const htmlElement = document.documentElement;
-        const themeBtn = document.getElementById('theme-toggle');
-        const themeIcon = themeBtn.querySelector('i');
-
-        function applyTheme(theme) {
-            htmlElement.setAttribute('data-theme', theme);
-            themeIcon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-            if (theme === 'dark') themeIcon.style.color = '#fbbf24'; else themeIcon.style.color = '';
-        }
-
-        applyTheme(localStorage.getItem('sakil-tools-theme') || 'light');
-
-        themeBtn.addEventListener('click', () => {
-            const current = htmlElement.getAttribute('data-theme');
-            const next = current === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('sakil-tools-theme', next);
-            applyTheme(next);
-        });
-
-        // Mobile Nav
-        const hamburger = document.getElementById('hamburger');
-        const navMenu = document.getElementById('navMenu');
-        if (hamburger && navMenu) {
-            hamburger.addEventListener('click', () => {
-                hamburger.classList.toggle('active');
-                navMenu.classList.toggle('active');
-            });
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.addEventListener('click', () => {
-                    hamburger.classList.remove('active');
-                    navMenu.classList.remove('active');
-                });
-            });
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
