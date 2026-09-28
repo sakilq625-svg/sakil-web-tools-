@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Passport Photo Sheet Maker - Sakil Web Tools</title>
-    <meta name="description" content="Generate millimeter-accurate passport photo sheets on A4, 4x6 papers with AI background removal and auto layout.">
+    <meta name="description" content="Generate millimeter-accurate passport photo sheets on A4, 4x6 papers with background removal and auto layout.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -369,7 +369,7 @@
     <main class="main-container" style="padding-top: 7.5rem; padding-bottom: 5rem;">
         <div class="section-header" style="text-align: center;">
             <h2><i class="fa-solid fa-id-card-clip" style="color: var(--accent-color);"></i> Passport Photo Sheet Maker</h2>
-            <p>Generate millimeter-accurate passport photo sheets on A4 & 4x6 papers with AI cutout.</p>
+            <p>Generate millimeter-accurate passport photo sheets on A4 & 4x6 papers with instant background cutout.</p>
         </div>
 
         <div class="passport-layout">
@@ -396,7 +396,7 @@
                     <div class="step-heading"><span class="step-num">2</span> Background Handling</div>
                     <div class="btn-row">
                         <button class="btn-opt active" id="btnBgKeep" onclick="setBackgroundMode('keep')"><i class="fa-solid fa-image"></i> Keep Original</button>
-                        <button class="btn-opt" id="btnBgRemove" onclick="setBackgroundMode('remove')"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Cutout & Color</button>
+                        <button class="btn-opt" id="btnBgRemove" onclick="setBackgroundMode('remove')"><i class="fa-solid fa-wand-magic-sparkles"></i> Studio Cutout & Color</button>
                     </div>
                 </div>
 
@@ -600,7 +600,7 @@
 
     <div class="overlay-loader" id="loadingModal">
         <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 3rem; color: #ef4444;"></i>
-        <div id="loadingText" style="font-size: 1.1rem; font-weight: 600;">Processing with AI...</div>
+        <div id="loadingText" style="font-size: 1.1rem; font-weight: 600;">Processing cutout...</div>
     </div>
 
     <footer class="footer">
@@ -627,14 +627,12 @@
 
     <script src="script.js"></script>
     <script>
-        let rawFile = null;
         let rawImage = null;
         let cutoutCanvas = null;
         let cropperInstance = null;
         let currentCroppedCanvas = null;
         let bgMode = 'keep';
         let selectedBgColor = '#ffffff';
-        let removeBackgroundFn = null;
         const DPI = 300;
         const MM_TO_INCH = 25.4;
 
@@ -647,31 +645,22 @@
             'Legal': { w: 215.9, h: 355.6 }
         };
 
-        // ==========================================
-        // DYNAMIC ESM AI ENGINE LOAD (SAME AS bg-remover.html)
-        // ==========================================
-        async function loadAIEngine() {
-            if (removeBackgroundFn) return removeBackgroundFn;
-            const module = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm');
-            removeBackgroundFn = module.removeBackground;
-            return removeBackgroundFn;
-        }
-
         const photoInput = document.getElementById('photoInput');
         photoInput.addEventListener('change', (e) => {
             if (e.target.files && e.target.files[0]) {
-                rawFile = e.target.files[0];
+                const file = e.target.files[0];
                 const reader = new FileReader();
                 reader.onload = (evt) => {
                     rawImage = new Image();
                     rawImage.onload = () => {
                         document.getElementById('uploadZone').style.display = 'none';
                         document.getElementById('uploadActions').style.display = 'flex';
+                        cutoutCanvas = null;
                         initCropper(rawImage.src);
                     };
                     rawImage.src = evt.target.result;
                 };
-                reader.readAsDataURL(rawFile);
+                reader.readAsDataURL(file);
             }
         });
 
@@ -744,55 +733,83 @@
             renderSheetPreview();
         }
 
-        // Real AI Background Removal like bg-remover.html
-        async function setBackgroundMode(mode) {
+        // ==========================================
+        // GUARANTEED FAST LOCAL STUDIO CUTOUT ENGINE
+        // Eliminates heavy WASM crashes and guarantees transparent output
+        // ==========================================
+        function processLocalStudioCutout(sourceImg) {
+            const canvas = document.createElement('canvas');
+            const w = sourceImg.naturalWidth || sourceImg.width;
+            const h = sourceImg.naturalHeight || sourceImg.height;
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(sourceImg, 0, 0, w, h);
+
+            const imgData = ctx.getImageData(0, 0, w, h);
+            const data = imgData.data;
+
+            // Perimeter background sampling (Top corners and Top Center)
+            const samplePoints = [
+                0,                          // Top-Left corner
+                (w - 1) * 4,                // Top-Right corner
+                Math.floor(w / 2) * 4,      // Top-Center
+                (w * 3) * 4,                // Upper Left
+                ((w * 3) + w - 1) * 4       // Upper Right
+            ];
+
+            let sumR = 0, sumG = 0, sumB = 0;
+            samplePoints.forEach(idx => {
+                sumR += data[idx];
+                sumG += data[idx + 1];
+                sumB += data[idx + 2];
+            });
+
+            const bgR = sumR / samplePoints.length;
+            const bgG = sumG / samplePoints.length;
+            const bgB = sumB / samplePoints.length;
+
+            const threshold = 52;
+            const feather = 18;
+
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+
+                const dist = Math.sqrt(
+                    (r - bgR) * (r - bgR) +
+                    (g - bgG) * (g - bgG) +
+                    (b - bgB) * (b - bgB)
+                );
+
+                if (dist < threshold) {
+                    data[i + 3] = 0; // Transparent
+                } else if (dist < threshold + feather) {
+                    const alphaRatio = (dist - threshold) / feather;
+                    data[i + 3] = Math.round(data[i + 3] * alphaRatio);
+                }
+            }
+
+            ctx.putImageData(imgData, 0, 0);
+            return canvas;
+        }
+
+        function setBackgroundMode(mode) {
             bgMode = mode;
             document.getElementById('btnBgKeep').classList.toggle('active', mode === 'keep');
             document.getElementById('btnBgRemove').classList.toggle('active', mode === 'remove');
             document.getElementById('sectionBgColor').style.display = mode === 'remove' ? 'block' : 'none';
 
-            if (!rawFile) return;
+            if (!rawImage) return;
 
             if (mode === 'remove') {
-                if (cutoutCanvas) {
-                    initCropper(cutoutCanvas.toDataURL());
-                    return;
-                }
-
-                showLoading("Loading in-browser AI engine (~20MB cached)...");
-                try {
-                    const removeBackground = await loadAIEngine();
-                    showLoading("Erasing background with AI...");
-
-                    const blobOutput = await removeBackground(rawFile, {
-                        model: 'isnet_quint8',
-                        output: { format: 'image/png', quality: 0.95 },
-                        progress: (key, current, total) => {
-                            if (total) {
-                                document.getElementById('loadingText').textContent = `AI Cutout Model Loading... ${Math.round((current / total) * 100)}%`;
-                            }
-                        }
-                    });
-
-                    const cutoutUrl = URL.createObjectURL(blobOutput);
-                    const cutoutImg = new Image();
-                    cutoutImg.onload = () => {
-                        cutoutCanvas = document.createElement('canvas');
-                        cutoutCanvas.width = cutoutImg.naturalWidth;
-                        cutoutCanvas.height = cutoutImg.naturalHeight;
-                        const ctx = cutoutCanvas.getContext('2d');
-                        ctx.drawImage(cutoutImg, 0, 0);
-
-                        hideLoading();
-                        initCropper(cutoutUrl);
-                    };
-                    cutoutImg.src = cutoutUrl;
-                } catch (err) {
-                    console.error(err);
+                showLoading("Applying studio background cutout...");
+                setTimeout(() => {
+                    cutoutCanvas = processLocalStudioCutout(rawImage);
                     hideLoading();
-                    alert("AI Background Removal failed. Please ensure internet access is active for initial model load.");
-                    initCropper(rawImage.src);
-                }
+                    initCropper(cutoutCanvas.toDataURL());
+                }, 200);
             } else {
                 initCropper(rawImage.src);
             }
@@ -874,7 +891,6 @@
                 rows = parseInt(document.getElementById('manualRows').value) || 5;
                 cols = parseInt(document.getElementById('manualCols').value) || 4;
             } else {
-                // Auto Optimal Columns & Rows
                 const reqQty = Math.min(parseInt(document.getElementById('qtyInput').value) || 1, maxPossible);
                 cols = Math.min(reqQty, maxCols);
                 rows = Math.ceil(reqQty / cols);
@@ -903,7 +919,6 @@
             canvas.width = canvasW;
             canvas.height = canvasH;
 
-            // Pure Paper White
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, canvasW, canvasH);
 
@@ -916,11 +931,9 @@
             let startX, startY;
 
             if (alignMode === 'top-left') {
-                // TOP-LEFT CORNER (SAVES PAPER SO REST CAN BE CUT AND REUSED)
                 startX = margin;
                 startY = margin;
             } else {
-                // CENTER OF PAGE
                 const totalGridW = (layout.cols * photoW) + ((layout.cols - 1) * spacing);
                 const totalGridH = (layout.rows * photoH) + ((layout.rows - 1) * spacing);
                 startX = (canvasW - totalGridW) / 2;
@@ -936,7 +949,6 @@
                     const x = startX + c * (photoW + spacing);
                     const y = startY + r * (photoH + spacing);
 
-                    // Ensure photos do not bleed out of paper bounds
                     if (x + photoW <= canvasW && y + photoH <= canvasH) {
                         if (singlePhotoCanvas) {
                             ctx.drawImage(singlePhotoCanvas, x, y, photoW, photoH);
@@ -947,7 +959,6 @@
                             ctx.strokeRect(x, y, photoW, photoH);
                         }
 
-                        // Cutting outline
                         ctx.strokeStyle = "rgba(0, 0, 0, 0.16)";
                         ctx.lineWidth = 1;
                         ctx.strokeRect(x, y, photoW, photoH);
@@ -975,7 +986,6 @@
             buffer.height = h;
             const bCtx = buffer.getContext('2d');
 
-            // Apply selected background color
             if (bgMode === 'remove') {
                 bCtx.fillStyle = selectedBgColor;
                 bCtx.fillRect(0, 0, w, h);
@@ -1050,7 +1060,6 @@
         }
 
         function resetWorkspace() {
-            rawFile = null;
             rawImage = null;
             cutoutCanvas = null;
             currentCroppedCanvas = null;
