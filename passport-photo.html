@@ -11,11 +11,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 
-    <!-- Client-side Cropper, jsPDF and Background Removal Engine -->
+    <!-- Client-side Cropper & jsPDF -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/bundle.js"></script>
 
     <style>
         .passport-layout {
@@ -397,13 +396,13 @@
                     <div class="step-heading"><span class="step-num">2</span> Background Handling</div>
                     <div class="btn-row">
                         <button class="btn-opt active" id="btnBgKeep" onclick="setBackgroundMode('keep')"><i class="fa-solid fa-image"></i> Keep Original</button>
-                        <button class="btn-opt" id="btnBgRemove" onclick="setBackgroundMode('remove')"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Remove BG</button>
+                        <button class="btn-opt" id="btnBgRemove" onclick="setBackgroundMode('remove')"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Cutout & Color</button>
                     </div>
                 </div>
 
                 <!-- Step 3: Background Color -->
                 <div class="step-block" id="sectionBgColor" style="display: none;">
-                    <div class="step-heading"><span class="step-num">3</span> Backdrop Color</div>
+                    <div class="step-heading"><span class="step-num">3</span> Select Backdrop Color</div>
                     <div class="palette-row">
                         <div class="color-circle active" style="background: #ffffff; border-color: #cbd5e1;" onclick="selectBgColor('#ffffff', this)" title="White"></div>
                         <div class="color-circle" style="background: #e0f2fe;" onclick="selectBgColor('#e0f2fe', this)" title="Light Blue"></div>
@@ -468,45 +467,72 @@
                     </div>
                 </div>
 
-                <!-- Step 6: Quantity & Spacing -->
+                <!-- Step 6 & 7: Grid & Zero Margin Custom Layout -->
                 <div class="step-block">
-                    <div class="step-heading"><span class="step-num">6</span> Copies & Spacing</div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Number of Photos:</span>
+                    <div class="step-heading"><span class="step-num">6</span> Grid & Auto Page-Fit Layout</div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Custom Grid Layout:</label>
+                            <select id="gridPresetSelect" class="form-select" onchange="onGridPresetChange()">
+                                <option value="auto" selected>Auto Optimal Fit</option>
+                                <option value="5x4">5 Rows × 4 Columns (20)</option>
+                                <option value="6x5">6 Rows × 5 Columns (30)</option>
+                                <option value="6x4">6 Rows × 4 Columns (24)</option>
+                                <option value="7x5">7 Rows × 5 Columns (35)</option>
+                                <option value="8x6">8 Rows × 6 Columns (48)</option>
+                                <option value="manual">Manual Row × Col...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Page Margin Mode:</label>
+                            <select id="marginSelect" class="form-select" onchange="renderSheetPreview()">
+                                <option value="0">Zero Margin (Full Bleed)</option>
+                                <option value="3">Minimal (3 mm)</option>
+                                <option value="6" selected>Standard (6 mm)</option>
+                                <option value="12">Wide Studio (12 mm)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Manual Grid Row/Col Inputs -->
+                    <div id="manualGridInputs" style="display: none; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.4rem;">
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-secondary);">Rows:</label>
+                            <input type="number" id="manualRows" class="form-input" value="5" min="1" max="15" onchange="renderSheetPreview()">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-secondary);">Columns:</label>
+                            <input type="number" id="manualCols" class="form-input" value="4" min="1" max="12" onchange="renderSheetPreview()">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Total Copies to Print:</span>
                         <div class="qty-box">
                             <button class="btn-step" onclick="changeQty(-1)">−</button>
-                            <input type="number" id="qtyInput" class="form-input qty-val" value="8" min="1" max="100" onchange="renderSheetPreview()">
+                            <input type="number" id="qtyInput" class="form-input qty-val" value="20" min="1" max="100" onchange="renderSheetPreview()">
                             <button class="btn-step" onclick="changeQty(1)">+</button>
                         </div>
                     </div>
                     <div class="pills-group">
                         <button class="pill-btn" onclick="setQuickQty(4)">4</button>
-                        <button class="pill-btn" onclick="setQuickQty(6)">6</button>
-                        <button class="pill-btn active" onclick="setQuickQty(8)">8</button>
-                        <button class="pill-btn" onclick="setQuickQty(10)">10</button>
+                        <button class="pill-btn" onclick="setQuickQty(8)">8</button>
                         <button class="pill-btn" onclick="setQuickQty(12)">12</button>
-                        <button class="pill-btn" onclick="setQuickQty(16)">16</button>
-                        <button class="pill-btn" onclick="setQuickQty(24)">24</button>
-                        <button class="pill-btn" onclick="setQuickQty('max')">Max Fill</button>
+                        <button class="pill-btn" onclick="setQuickQty(20)">20</button>
+                        <button class="pill-btn active" onclick="setQuickQty(24)">24</button>
+                        <button class="pill-btn" onclick="setQuickQty(30)">30</button>
+                        <button class="pill-btn" onclick="setQuickQty('max')">Max Fit</button>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.6rem;">
-                        <div>
-                            <label style="font-size: 0.75rem; color: var(--text-secondary);">Spacing:</label>
-                            <select id="spacingSelect" class="form-select" onchange="renderSheetPreview()">
-                                <option value="2">Small (2 mm)</option>
-                                <option value="4" selected>Medium (4 mm)</option>
-                                <option value="7">Large (7 mm)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="font-size: 0.75rem; color: var(--text-secondary);">Paper Margin:</label>
-                            <select id="marginSelect" class="form-select" onchange="renderSheetPreview()">
-                                <option value="5">Small (5 mm)</option>
-                                <option value="10" selected>Medium (10 mm)</option>
-                                <option value="15">Large (15 mm)</option>
-                            </select>
-                        </div>
+                    <div style="margin-top: 0.5rem;">
+                        <label style="font-size: 0.75rem; color: var(--text-secondary);">Spacing between Photos:</label>
+                        <select id="spacingSelect" class="form-select" onchange="renderSheetPreview()">
+                            <option value="0">None / No Gap (0 mm)</option>
+                            <option value="2">Tight (2 mm)</option>
+                            <option value="3" selected>Standard (3 mm)</option>
+                            <option value="5">Comfortable (5 mm)</option>
+                        </select>
                     </div>
                 </div>
 
@@ -536,9 +562,9 @@
                 <div class="info-data-grid" id="previewMetaBox">
                     <div>Paper: <strong id="metaPaper">A4 Portrait</strong></div>
                     <div>Photo Size: <strong id="metaSize">35 × 45 mm</strong></div>
-                    <div>Photos / Sheet: <strong id="metaCount">8</strong></div>
-                    <div>Layout Grid: <strong id="metaGrid">2 Rows × 4 Cols</strong></div>
-                    <div>Resolution: <strong>300 DPI Ultra HD</strong></div>
+                    <div>Photos / Sheet: <strong id="metaCount">20</strong></div>
+                    <div>Layout Grid: <strong id="metaGrid">5 Rows × 4 Cols</strong></div>
+                    <div>Margins & Gap: <strong id="metaSpacing">6mm Margin | 3mm Gap</strong></div>
                 </div>
 
                 <div style="display: flex; gap: 0.7rem; flex-wrap: wrap; width: 100%;">
@@ -593,7 +619,7 @@
     <script src="script.js"></script>
     <script>
         let rawImage = null;
-        let processedCutoutCanvas = null;
+        let cutoutCanvas = null;
         let cropperInstance = null;
         let currentCroppedCanvas = null;
         let bgMode = 'keep';
@@ -643,7 +669,7 @@
             cropperInstance = new Cropper(cropperImg, {
                 aspectRatio: spec.w / spec.h,
                 viewMode: 1,
-                autoCropArea: 0.85,
+                autoCropArea: 0.9,
                 background: false,
                 responsive: true
             });
@@ -697,33 +723,61 @@
             renderSheetPreview();
         }
 
-        async function setBackgroundMode(mode) {
+        // Lightweight browser portrait cutout engine
+        function removeBackgroundLocal(img) {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth || img.width;
+            canvas.height = img.naturalHeight || img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imgData.data;
+
+            // Sample corner pixel colors (Top corners usually represent background)
+            const sampleR = (data[0] + data[(canvas.width - 1) * 4]) / 2;
+            const sampleG = (data[1] + data[(canvas.width - 1) * 4 + 1]) / 2;
+            const sampleB = (data[2] + data[(canvas.width - 1) * 4 + 2]) / 2;
+
+            const threshold = 40; // Detection tolerance
+
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+
+                const diff = Math.sqrt(
+                    Math.pow(r - sampleR, 2) +
+                    Math.pow(g - sampleG, 2) +
+                    Math.pow(b - sampleB, 2)
+                );
+
+                if (diff < threshold) {
+                    data[i + 3] = 0; // Transparent
+                }
+            }
+
+            ctx.putImageData(imgData, 0, 0);
+            return canvas;
+        }
+
+        function setBackgroundMode(mode) {
             bgMode = mode;
             document.getElementById('btnBgKeep').classList.toggle('active', mode === 'keep');
             document.getElementById('btnBgRemove').classList.toggle('active', mode === 'remove');
             document.getElementById('sectionBgColor').style.display = mode === 'remove' ? 'block' : 'none';
 
-            if (mode === 'remove' && !processedCutoutCanvas && rawImage) {
-                showLoading("Removing background with AI...");
-                try {
-                    const blob = await imglyRemoveBackground(rawImage.src);
-                    const cutoutImg = new Image();
-                    cutoutImg.onload = () => {
-                        processedCutoutCanvas = document.createElement('canvas');
-                        processedCutoutCanvas.width = cutoutImg.width;
-                        processedCutoutCanvas.height = cutoutImg.height;
-                        const ctx = processedCutoutCanvas.getContext('2d');
-                        ctx.drawImage(cutoutImg, 0, 0);
-                        hideLoading();
-                        initCropper(processedCutoutCanvas.toDataURL());
-                    };
-                    cutoutImg.src = URL.createObjectURL(blob);
-                } catch (err) {
+            if (!rawImage) return;
+
+            if (mode === 'remove') {
+                showLoading("Applying studio background cutout...");
+                setTimeout(() => {
+                    cutoutCanvas = removeBackgroundLocal(rawImage);
                     hideLoading();
-                    initCropper(rawImage.src);
-                }
-            } else if (mode === 'keep') {
-                if (rawImage) initCropper(rawImage.src);
+                    initCropper(cutoutCanvas.toDataURL());
+                }, 300);
+            } else {
+                initCropper(rawImage.src);
             }
         }
 
@@ -731,6 +785,25 @@
             selectedBgColor = color;
             document.querySelectorAll('.color-circle').forEach(d => d.classList.remove('active'));
             if (el) el.classList.add('active');
+            renderSheetPreview();
+        }
+
+        function onGridPresetChange() {
+            const val = document.getElementById('gridPresetSelect').value;
+            const manualRow = document.getElementById('manualGridInputs');
+            manualRow.style.display = val === 'manual' ? 'grid' : 'none';
+
+            if (val === '5x4') {
+                document.getElementById('qtyInput').value = 20;
+            } else if (val === '6x5') {
+                document.getElementById('qtyInput').value = 30;
+            } else if (val === '6x4') {
+                document.getElementById('qtyInput').value = 24;
+            } else if (val === '7x5') {
+                document.getElementById('qtyInput').value = 35;
+            } else if (val === '8x6') {
+                document.getElementById('qtyInput').value = 48;
+            }
             renderSheetPreview();
         }
 
@@ -762,24 +835,41 @@
         function calculateOptimalLayout() {
             const paperKey = document.getElementById('paperSizeSelect').value;
             const orientation = document.getElementById('paperOrientation').value;
-            const marginMM = parseFloat(document.getElementById('marginSelect').value) || 10;
-            const spacingMM = parseFloat(document.getElementById('spacingSelect').value) || 4;
+            const marginMM = parseFloat(document.getElementById('marginSelect').value);
+            const spacingMM = parseFloat(document.getElementById('spacingSelect').value);
             const photoDim = getPhotoDimensionsMM();
 
             let paperSpec = PAPER_SPECS[paperKey] || PAPER_SPECS['A4'];
             let paperW_MM = orientation === 'portrait' ? paperSpec.w : paperSpec.h;
             let paperH_MM = orientation === 'portrait' ? paperSpec.h : paperSpec.w;
 
-            const printableW = paperW_MM - (marginMM * 2);
-            const printableH = paperH_MM - (marginMM * 2);
+            const printableW = Math.max(10, paperW_MM - (marginMM * 2));
+            const printableH = Math.max(10, paperH_MM - (marginMM * 2));
 
             const maxCols = Math.max(1, Math.floor((printableW + spacingMM) / (photoDim.w + spacingMM)));
             const maxRows = Math.max(1, Math.floor((printableH + spacingMM) / (photoDim.h + spacingMM)));
             const maxPossible = maxCols * maxRows;
 
-            const reqQty = Math.min(parseInt(document.getElementById('qtyInput').value) || 1, maxPossible);
-            let cols = Math.min(reqQty, maxCols);
-            let rows = Math.ceil(reqQty / cols);
+            const gridPreset = document.getElementById('gridPresetSelect').value;
+            let rows, cols;
+
+            if (gridPreset === '5x4') { rows = 5; cols = 4; }
+            else if (gridPreset === '6x5') { rows = 6; cols = 5; }
+            else if (gridPreset === '6x4') { rows = 6; cols = 4; }
+            else if (gridPreset === '7x5') { rows = 7; cols = 5; }
+            else if (gridPreset === '8x6') { rows = 8; cols = 6; }
+            else if (gridPreset === 'manual') {
+                rows = parseInt(document.getElementById('manualRows').value) || 5;
+                cols = parseInt(document.getElementById('manualCols').value) || 4;
+            } else {
+                // Auto Optimal
+                const reqQty = Math.min(parseInt(document.getElementById('qtyInput').value) || 1, maxPossible);
+                cols = Math.min(reqQty, maxCols);
+                rows = Math.ceil(reqQty / cols);
+            }
+
+            const totalCapacity = rows * cols;
+            const reqQty = Math.min(parseInt(document.getElementById('qtyInput').value) || totalCapacity, totalCapacity);
 
             return {
                 paperW_MM, paperH_MM,
@@ -801,6 +891,7 @@
             canvas.width = canvasW;
             canvas.height = canvasH;
 
+            // Pure Paper White
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, canvasW, canvasH);
 
@@ -811,6 +902,7 @@
             const totalGridW = (layout.cols * photoW) + ((layout.cols - 1) * spacing);
             const totalGridH = (layout.rows * photoH) + ((layout.rows - 1) * spacing);
 
+            // Center alignment with respect to margins
             const startX = (canvasW - totalGridW) / 2;
             const startY = (canvasH - totalGridH) / 2;
 
@@ -832,7 +924,8 @@
                         ctx.strokeRect(x, y, photoW, photoH);
                     }
 
-                    ctx.strokeStyle = "rgba(0, 0, 0, 0.15)";
+                    // Cutting outline
+                    ctx.strokeStyle = "rgba(0, 0, 0, 0.18)";
                     ctx.lineWidth = 1;
                     ctx.strokeRect(x, y, photoW, photoH);
 
@@ -844,6 +937,7 @@
             document.getElementById('metaSize').textContent = layout.photoLabel;
             document.getElementById('metaCount').textContent = layout.reqQty;
             document.getElementById('metaGrid').textContent = `${layout.rows} Rows × ${layout.cols} Cols`;
+            document.getElementById('metaSpacing').textContent = `${layout.marginMM}mm Margin | ${layout.spacingMM}mm Gap`;
         }
 
         function getRenderedSinglePhoto() {
@@ -857,6 +951,7 @@
             buffer.height = h;
             const bCtx = buffer.getContext('2d');
 
+            // Apply selected backdrop color if AI removal mode is enabled
             if (bgMode === 'remove') {
                 bCtx.fillStyle = selectedBgColor;
                 bCtx.fillRect(0, 0, w, h);
@@ -932,7 +1027,7 @@
 
         function resetWorkspace() {
             rawImage = null;
-            processedCutoutCanvas = null;
+            cutoutCanvas = null;
             currentCroppedCanvas = null;
             if (cropperInstance) cropperInstance.destroy();
             document.getElementById('cropperContainer').style.display = 'none';
