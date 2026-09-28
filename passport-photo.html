@@ -627,12 +627,14 @@
 
     <script src="script.js"></script>
     <script>
+        let rawFile = null;
         let rawImage = null;
         let cutoutCanvas = null;
         let cropperInstance = null;
         let currentCroppedCanvas = null;
         let bgMode = 'keep';
         let selectedBgColor = '#ffffff';
+        let removeBackgroundFn = null;
         const DPI = 300;
         const MM_TO_INCH = 25.4;
 
@@ -645,10 +647,20 @@
             'Legal': { w: 215.9, h: 355.6 }
         };
 
+        // ==========================================
+        // DYNAMIC ESM AI ENGINE LOAD (SAME AS bg-remover.html)
+        // ==========================================
+        async function loadAIEngine() {
+            if (removeBackgroundFn) return removeBackgroundFn;
+            const module = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm');
+            removeBackgroundFn = module.removeBackground;
+            return removeBackgroundFn;
+        }
+
         const photoInput = document.getElementById('photoInput');
         photoInput.addEventListener('change', (e) => {
             if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
+                rawFile = e.target.files[0];
                 const reader = new FileReader();
                 reader.onload = (evt) => {
                     rawImage = new Image();
@@ -659,7 +671,7 @@
                     };
                     rawImage.src = evt.target.result;
                 };
-                reader.readAsDataURL(file);
+                reader.readAsDataURL(rawFile);
             }
         });
 
@@ -732,80 +744,55 @@
             renderSheetPreview();
         }
 
-        // High accuracy studio background removal & alpha thresholding
-        function removeBackgroundAdvanced(img) {
-            const canvas = document.createElement('canvas');
-            const w = img.naturalWidth || img.width;
-            const h = img.naturalHeight || img.height;
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-
-            const imgData = ctx.getImageData(0, 0, w, h);
-            const data = imgData.data;
-
-            // Sample multi-point perimeter background references
-            const samples = [
-                0, // Top-Left
-                (w - 1) * 4, // Top-Right
-                (Math.floor(w / 2)) * 4, // Top-Center
-                (w * 2) * 4, // Upper left
-                ((w * 2) + w - 1) * 4 // Upper right
-            ];
-
-            let sumR = 0, sumG = 0, sumB = 0;
-            samples.forEach(idx => {
-                sumR += data[idx];
-                sumG += data[idx + 1];
-                sumB += data[idx + 2];
-            });
-            const baseR = sumR / samples.length;
-            const baseG = sumG / samples.length;
-            const baseB = sumB / samples.length;
-
-            const threshold = 48;
-            const feather = 18;
-
-            for (let i = 0; i < data.length; i += 4) {
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
-
-                const colorDist = Math.sqrt(
-                    (r - baseR) * (r - baseR) +
-                    (g - baseG) * (g - baseG) +
-                    (b - baseB) * (b - baseB)
-                );
-
-                if (colorDist < threshold) {
-                    data[i + 3] = 0; // Pure Transparent
-                } else if (colorDist < threshold + feather) {
-                    // Soft Alpha Blend for natural edge transition
-                    const alpha = ((colorDist - threshold) / feather) * 255;
-                    data[i + 3] = Math.min(data[i + 3], alpha);
-                }
-            }
-
-            ctx.putImageData(imgData, 0, 0);
-            return canvas;
-        }
-
-        function setBackgroundMode(mode) {
+        // Real AI Background Removal like bg-remover.html
+        async function setBackgroundMode(mode) {
             bgMode = mode;
             document.getElementById('btnBgKeep').classList.toggle('active', mode === 'keep');
             document.getElementById('btnBgRemove').classList.toggle('active', mode === 'remove');
             document.getElementById('sectionBgColor').style.display = mode === 'remove' ? 'block' : 'none';
 
-            if (!rawImage) return;
+            if (!rawFile) return;
 
             if (mode === 'remove') {
-                showLoading("Applying studio background cutout...");
-                setTimeout(() => {
-                    cutoutCanvas = removeBackgroundAdvanced(rawImage);
-                    hideLoading();
+                if (cutoutCanvas) {
                     initCropper(cutoutCanvas.toDataURL());
-                }, 300);
+                    return;
+                }
+
+                showLoading("Loading in-browser AI engine (~20MB cached)...");
+                try {
+                    const removeBackground = await loadAIEngine();
+                    showLoading("Erasing background with AI...");
+
+                    const blobOutput = await removeBackground(rawFile, {
+                        model: 'isnet_quint8',
+                        output: { format: 'image/png', quality: 0.95 },
+                        progress: (key, current, total) => {
+                            if (total) {
+                                document.getElementById('loadingText').textContent = `AI Cutout Model Loading... ${Math.round((current / total) * 100)}%`;
+                            }
+                        }
+                    });
+
+                    const cutoutUrl = URL.createObjectURL(blobOutput);
+                    const cutoutImg = new Image();
+                    cutoutImg.onload = () => {
+                        cutoutCanvas = document.createElement('canvas');
+                        cutoutCanvas.width = cutoutImg.naturalWidth;
+                        cutoutCanvas.height = cutoutImg.naturalHeight;
+                        const ctx = cutoutCanvas.getContext('2d');
+                        ctx.drawImage(cutoutImg, 0, 0);
+
+                        hideLoading();
+                        initCropper(cutoutUrl);
+                    };
+                    cutoutImg.src = cutoutUrl;
+                } catch (err) {
+                    console.error(err);
+                    hideLoading();
+                    alert("AI Background Removal failed. Please ensure internet access is active for initial model load.");
+                    initCropper(rawImage.src);
+                }
             } else {
                 initCropper(rawImage.src);
             }
@@ -929,7 +916,7 @@
             let startX, startY;
 
             if (alignMode === 'top-left') {
-                // START FROM TOP-LEFT (SAVES PAPER SO REST CAN BE CUT AND REUSED)
+                // TOP-LEFT CORNER (SAVES PAPER SO REST CAN BE CUT AND REUSED)
                 startX = margin;
                 startY = margin;
             } else {
@@ -1063,6 +1050,7 @@
         }
 
         function resetWorkspace() {
+            rawFile = null;
             rawImage = null;
             cutoutCanvas = null;
             currentCroppedCanvas = null;
