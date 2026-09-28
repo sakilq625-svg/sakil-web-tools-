@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passport Photo Sheet Maker - Sakil Web Tools</title>
+    <meta name="description" content="Generate millimeter-accurate passport photo sheets on A4, 4x6 papers with AI background removal and auto layout.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Client-side Cropper, jsPDF and Background Removal Engine -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/bundle.js"></script>
+
+    <style>
+        .passport-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (min-width: 992px) {
+            .passport-layout {
+                grid-template-columns: 460px 1fr;
+                align-items: start;
+            }
+        }
+
+        .panel-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.8rem;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 1.3rem;
+        }
+
+        .step-block {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.2rem;
+        }
+
+        .step-block:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .step-heading {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .step-num {
+            background: var(--accent-gradient);
+            color: #ffffff;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 14px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            background: var(--bg-primary);
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent-color);
+        }
+
+        .upload-area i {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-opt {
+            flex: 1;
+            min-width: 90px;
+            padding: 0.65rem 0.8rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            transition: all var(--transition-speed);
+        }
+
+        .btn-opt.active {
+            border-color: var(--accent-color);
+            background: rgba(192, 57, 43, 0.1);
+            color: var(--accent-color);
+        }
+
+        .palette-row {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .color-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            transition: transform 0.15s ease;
+        }
+
+        .color-circle.active {
+            border-color: var(--text-primary);
+            transform: scale(1.15);
+        }
+
+        .form-select, .form-input {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.88rem;
+            outline: none;
+        }
+
+        .form-select:focus, .form-input:focus {
+            border-color: var(--accent-color);
+        }
+
+        .qty-box {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .btn-step {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-step:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .qty-val {
+            width: 60px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .pills-group {
+            display: flex;
+            gap: 0.35rem;
+            flex-wrap: wrap;
+            margin-top: 0.4rem;
+        }
+
+        .pill-btn {
+            padding: 0.3rem 0.65rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .pill-btn.active {
+            background: var(--accent-color);
+            color: #fff;
+            border-color: var(--accent-color);
+        }
+
+        .crop-preview-box {
+            max-height: 250px;
+            background: #111;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .crop-preview-box img {
+            max-width: 100%;
+            display: block;
+        }
+
+        .paper-view-container {
+            background: #64748b;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.25);
+            max-width: 100%;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        #paperCanvas {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        .info-data-grid {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.4rem;
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 0.8rem;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+
+        .info-data-grid strong {
+            color: var(--text-primary);
+            display: block;
+            margin-top: 0.15rem;
+            font-size: 0.92rem;
+        }
+
+        .btn-export-primary {
+            flex: 1;
+            min-width: 140px;
+            padding: 0.85rem 1.2rem;
+            border-radius: 10px;
+            border: none;
+            background: var(--accent-gradient);
+            color: #ffffff;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-export-secondary {
+            padding: 0.85rem 1.2rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .advanced-box {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+        }
+
+        .advanced-box summary {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .overlay-loader {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            gap: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Web Tools</span>
+            </a>
+            <nav class="nav-menu" id="navMenu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="index.html#image-tools" class="nav-link">Image Tools</a>
+                <a href="bg-remover.html" class="nav-link">BG Remover</a>
+                <a href="passport-photo.html" class="nav-link active">Passport Sheet</a>
+                <a href="index.html#pdf-tools" class="nav-link">PDF Tools</a>
+                <a href="student-tools.html" class="nav-link">Student Tools</a>
+                <a href="video-downloader.html" class="nav-link">Video Downloader</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+            </nav>
+            <div class="nav-actions">
+                <button id="theme-toggle" aria-label="Toggle Theme" class="theme-btn">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+                <button class="hamburger" id="hamburger" aria-label="Menu">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container" style="padding-top: 7.5rem; padding-bottom: 5rem;">
+        <div class="section-header" style="text-align: center;">
+            <h2><i class="fa-solid fa-id-card-clip" style="color: var(--accent-color);"></i> Passport Photo Sheet Maker</h2>
+            <p>Generate millimeter-accurate passport photo sheets on A4 & 4x6 papers with AI cutout.</p>
+        </div>
+
+        <div class="passport-layout">
+            <!-- Left Side Control Panel -->
+            <div class="panel-card">
+                
+                <!-- Step 1: Upload Photo -->
+                <div class="step-block">
+                    <div class="step-heading"><span class="step-num">1</span> Upload Portrait Photo</div>
+                    <div class="upload-area" id="uploadZone" onclick="document.getElementById('photoInput').click()">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary);">Click or Drag & Drop Photo</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.3rem;">JPG, JPEG, PNG, WEBP</div>
+                        <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" style="display: none;">
+                    </div>
+                    <div id="uploadActions" style="display: none; gap: 0.5rem;">
+                        <button class="btn-opt" onclick="document.getElementById('photoInput').click()"><i class="fa-solid fa-rotate"></i> Replace</button>
+                        <button class="btn-opt" style="color: #ef4444;" onclick="resetWorkspace()"><i class="fa-solid fa-trash"></i> Remove</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Background Removal -->
+                <div class="step-block">
+                    <div class="step-heading"><span class="step-num">2</span> Background Handling</div>
+                    <div class="btn-row">
+                        <button class="btn-opt active" id="btnBgKeep" onclick="setBackgroundMode('keep')"><i class="fa-solid fa-image"></i> Keep Original</button>
+                        <button class="btn-opt" id="btnBgRemove" onclick="setBackgroundMode('remove')"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Remove BG</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Background Color -->
+                <div class="step-block" id="sectionBgColor" style="display: none;">
+                    <div class="step-heading"><span class="step-num">3</span> Backdrop Color</div>
+                    <div class="palette-row">
+                        <div class="color-circle active" style="background: #ffffff; border-color: #cbd5e1;" onclick="selectBgColor('#ffffff', this)" title="White"></div>
+                        <div class="color-circle" style="background: #e0f2fe;" onclick="selectBgColor('#e0f2fe', this)" title="Light Blue"></div>
+                        <div class="color-circle" style="background: #2563eb;" onclick="selectBgColor('#2563eb', this)" title="Blue"></div>
+                        <div class="color-circle" style="background: #dc2626;" onclick="selectBgColor('#dc2626', this)" title="Red"></div>
+                        <div class="color-circle" style="background: #e2e8f0;" onclick="selectBgColor('#e2e8f0', this)" title="Light Grey"></div>
+                        <input type="color" id="customColorPicker" value="#ffffff" onchange="selectBgColor(this.value, null)" style="width: 32px; height: 32px; border: none; border-radius: 50%; cursor: pointer;">
+                    </div>
+                </div>
+
+                <!-- Step 4: Crop & Size -->
+                <div class="step-block">
+                    <div class="step-heading"><span class="step-num">4</span> Crop & Photo Print Size</div>
+                    <select id="photoPresetSelect" class="form-select" onchange="onPhotoPresetChange()">
+                        <option value="35x45" selected>Passport Size: 35 × 45 mm (Standard)</option>
+                        <option value="50.8x50.8">US Visa / 2 × 2 Inch (51 × 51 mm)</option>
+                        <option value="30x40">Small Portrait: 30 × 40 mm</option>
+                        <option value="40x50">Large Passport: 40 × 50 mm</option>
+                        <option value="25.4x25.4">Stamp Size: 1 × 1 Inch (25 × 25 mm)</option>
+                        <option value="custom">Custom Dimension...</option>
+                    </select>
+
+                    <div id="customSizeRow" style="display: none; gap: 0.4rem; grid-template-columns: 1fr 1fr 1fr; margin-top: 0.4rem;">
+                        <input type="number" id="customW" class="form-input" placeholder="Width" value="35">
+                        <input type="number" id="customH" class="form-input" placeholder="Height" value="45">
+                        <select id="customUnit" class="form-select">
+                            <option value="mm" selected>mm</option>
+                            <option value="cm">cm</option>
+                            <option value="in">inch</option>
+                        </select>
+                    </div>
+
+                    <!-- Cropper Canvas Container -->
+                    <div class="crop-preview-box" id="cropperContainer" style="display: none; margin-top: 0.5rem;">
+                        <img id="cropperImage" src="" alt="Crop Editor">
+                    </div>
+
+                    <div id="cropActionBtns" style="display: none; gap: 0.4rem; margin-top: 0.4rem;">
+                        <button class="btn-opt" onclick="rotateCropper(-90)"><i class="fa-solid fa-rotate-left"></i></button>
+                        <button class="btn-opt" onclick="rotateCropper(90)"><i class="fa-solid fa-rotate-right"></i></button>
+                        <button class="btn-opt" onclick="resetCropper()"><i class="fa-solid fa-arrow-rotate-left"></i> Reset</button>
+                        <button class="btn-opt active" onclick="applyCrop()"><i class="fa-solid fa-check"></i> Apply Crop</button>
+                    </div>
+                </div>
+
+                <!-- Step 5: Paper Selection -->
+                <div class="step-block">
+                    <div class="step-heading"><span class="step-num">5</span> Paper Size & Orientation</div>
+                    <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 0.5rem;">
+                        <select id="paperSizeSelect" class="form-select" onchange="renderSheetPreview()">
+                            <option value="A4" selected>A4 (210 × 297 mm)</option>
+                            <option value="A3">A3 (297 × 420 mm)</option>
+                            <option value="A5">A5 (148 × 210 mm)</option>
+                            <option value="4x6">Photo Paper 4 × 6 Inch (102 × 152 mm)</option>
+                            <option value="Letter">Letter (216 × 279 mm)</option>
+                            <option value="Legal">Legal (216 × 356 mm)</option>
+                        </select>
+                        <select id="paperOrientation" class="form-select" onchange="renderSheetPreview()">
+                            <option value="portrait" selected>Portrait</option>
+                            <option value="landscape">Landscape</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Step 6: Quantity & Spacing -->
+                <div class="step-block">
+                    <div class="step-heading"><span class="step-num">6</span> Copies & Spacing</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Number of Photos:</span>
+                        <div class="qty-box">
+                            <button class="btn-step" onclick="changeQty(-1)">−</button>
+                            <input type="number" id="qtyInput" class="form-input qty-val" value="8" min="1" max="100" onchange="renderSheetPreview()">
+                            <button class="btn-step" onclick="changeQty(1)">+</button>
+                        </div>
+                    </div>
+                    <div class="pills-group">
+                        <button class="pill-btn" onclick="setQuickQty(4)">4</button>
+                        <button class="pill-btn" onclick="setQuickQty(6)">6</button>
+                        <button class="pill-btn active" onclick="setQuickQty(8)">8</button>
+                        <button class="pill-btn" onclick="setQuickQty(10)">10</button>
+                        <button class="pill-btn" onclick="setQuickQty(12)">12</button>
+                        <button class="pill-btn" onclick="setQuickQty(16)">16</button>
+                        <button class="pill-btn" onclick="setQuickQty(24)">24</button>
+                        <button class="pill-btn" onclick="setQuickQty('max')">Max Fill</button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.6rem;">
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-secondary);">Spacing:</label>
+                            <select id="spacingSelect" class="form-select" onchange="renderSheetPreview()">
+                                <option value="2">Small (2 mm)</option>
+                                <option value="4" selected>Medium (4 mm)</option>
+                                <option value="7">Large (7 mm)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-secondary);">Paper Margin:</label>
+                            <select id="marginSelect" class="form-select" onchange="renderSheetPreview()">
+                                <option value="5">Small (5 mm)</option>
+                                <option value="10" selected>Medium (10 mm)</option>
+                                <option value="15">Large (15 mm)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 12: Advanced Adjustments -->
+                <details class="advanced-box">
+                    <summary><i class="fa-solid fa-sliders"></i> Fine Photo Adjustments</summary>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-top: 0.8rem;">
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-secondary);">Brightness: <span id="valBrightness">100</span>%</label>
+                            <input type="range" id="adjBrightness" min="50" max="150" value="100" oninput="updateFilters()" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-secondary);">Contrast: <span id="valContrast">100</span>%</label>
+                            <input type="range" id="adjContrast" min="50" max="150" value="100" oninput="updateFilters()" style="width: 100%;">
+                        </div>
+                    </div>
+                </details>
+
+            </div>
+
+            <!-- Right Side Live Sheet Preview & Actions -->
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; width: 100%;">
+                <div class="paper-view-container">
+                    <canvas id="paperCanvas"></canvas>
+                </div>
+
+                <div class="info-data-grid" id="previewMetaBox">
+                    <div>Paper: <strong id="metaPaper">A4 Portrait</strong></div>
+                    <div>Photo Size: <strong id="metaSize">35 × 45 mm</strong></div>
+                    <div>Photos / Sheet: <strong id="metaCount">8</strong></div>
+                    <div>Layout Grid: <strong id="metaGrid">2 Rows × 4 Cols</strong></div>
+                    <div>Resolution: <strong>300 DPI Ultra HD</strong></div>
+                </div>
+
+                <div style="display: flex; gap: 0.7rem; flex-wrap: wrap; width: 100%;">
+                    <button class="btn-export-primary" onclick="exportDocument('pdf')">
+                        <i class="fa-solid fa-file-pdf"></i> Download PDF
+                    </button>
+                    <button class="btn-export-secondary" onclick="exportDocument('png')">
+                        <i class="fa-solid fa-file-image"></i> PNG Sheet
+                    </button>
+                    <button class="btn-export-secondary" onclick="exportDocument('jpg')">
+                        <i class="fa-solid fa-image"></i> JPG Sheet
+                    </button>
+                    <button class="btn-export-secondary" onclick="printSheetDirect()">
+                        <i class="fa-solid fa-print"></i> Print Sheet
+                    </button>
+                </div>
+
+                <div style="font-size: 0.8rem; color: var(--text-secondary); text-align: center;">
+                    <i class="fa-solid fa-circle-info"></i> For 100% exact millimeter passport printing, set printer scale to <strong>Actual Size (100%)</strong>.
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="overlay-loader" id="loadingModal">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 3rem; color: #ef4444;"></i>
+        <div id="loadingText" style="font-size: 1.1rem; font-weight: 600;">Processing with AI...</div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <a href="index.html" class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> Sakil <span>Tools</span></a>
+                <p>A lightweight workspace for your daily web tasks</p>
+            </div>
+            <div class="footer-links">
+                <h4>Quick Links</h4>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+                <a href="#">Privacy Policy</a>
+                <a href="passport-photo.html">Passport Sheet</a>
+                <a href="video-downloader.html">Video Downloader</a>
+                <a href="bg-remover.html">BG Remover</a>
+                <a href="student-tools.html">Student Tools</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Sakil Web Tools. Designed & Developed by Md Sakil </p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        let rawImage = null;
+        let processedCutoutCanvas = null;
+        let cropperInstance = null;
+        let currentCroppedCanvas = null;
+        let bgMode = 'keep';
+        let selectedBgColor = '#ffffff';
+        const DPI = 300;
+        const MM_TO_INCH = 25.4;
+
+        const PAPER_SPECS = {
+            'A4': { w: 210, h: 297 },
+            'A3': { w: 297, h: 420 },
+            'A5': { w: 148, h: 210 },
+            '4x6': { w: 101.6, h: 152.4 },
+            'Letter': { w: 215.9, h: 279.4 },
+            'Legal': { w: 215.9, h: 355.6 }
+        };
+
+        const photoInput = document.getElementById('photoInput');
+        photoInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    rawImage = new Image();
+                    rawImage.onload = () => {
+                        document.getElementById('uploadZone').style.display = 'none';
+                        document.getElementById('uploadActions').style.display = 'flex';
+                        initCropper(rawImage.src);
+                    };
+                    rawImage.src = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function initCropper(imageSrc) {
+            const container = document.getElementById('cropperContainer');
+            const cropBtns = document.getElementById('cropActionBtns');
+            const cropperImg = document.getElementById('cropperImage');
+
+            container.style.display = 'block';
+            cropBtns.style.display = 'flex';
+
+            if (cropperInstance) cropperInstance.destroy();
+            cropperImg.src = imageSrc;
+
+            const spec = getPhotoDimensionsMM();
+            cropperInstance = new Cropper(cropperImg, {
+                aspectRatio: spec.w / spec.h,
+                viewMode: 1,
+                autoCropArea: 0.85,
+                background: false,
+                responsive: true
+            });
+
+            setTimeout(applyCrop, 400);
+        }
+
+        function getPhotoDimensionsMM() {
+            const preset = document.getElementById('photoPresetSelect').value;
+            if (preset === '35x45') return { w: 35, h: 45, label: '35 × 45 mm' };
+            if (preset === '50.8x50.8') return { w: 50.8, h: 50.8, label: '2 × 2 Inch (51 × 51 mm)' };
+            if (preset === '30x40') return { w: 30, h: 40, label: '30 × 40 mm' };
+            if (preset === '40x50') return { w: 40, h: 50, label: '40 × 50 mm' };
+            if (preset === '25.4x25.4') return { w: 25.4, h: 25.4, label: '1 × 1 Inch (25 × 25 mm)' };
+
+            const w = parseFloat(document.getElementById('customW').value) || 35;
+            const h = parseFloat(document.getElementById('customH').value) || 45;
+            const unit = document.getElementById('customUnit').value;
+            let mult = 1;
+            if (unit === 'cm') mult = 10;
+            if (unit === 'in') mult = 25.4;
+            return { w: w * mult, h: h * mult, label: `${w} × ${h} ${unit}` };
+        }
+
+        function onPhotoPresetChange() {
+            const isCustom = document.getElementById('photoPresetSelect').value === 'custom';
+            document.getElementById('customSizeRow').style.display = isCustom ? 'grid' : 'none';
+            if (cropperInstance) {
+                const spec = getPhotoDimensionsMM();
+                cropperInstance.setAspectRatio(spec.w / spec.h);
+            }
+            applyCrop();
+        }
+
+        function rotateCropper(deg) { if (cropperInstance) cropperInstance.rotate(deg); }
+        function resetCropper() { if (cropperInstance) cropperInstance.reset(); }
+
+        function applyCrop() {
+            if (!cropperInstance) return;
+            const dim = getPhotoDimensionsMM();
+            const pxW = Math.round((dim.w / MM_TO_INCH) * DPI);
+            const pxH = Math.round((dim.h / MM_TO_INCH) * DPI);
+
+            currentCroppedCanvas = cropperInstance.getCroppedCanvas({
+                width: pxW,
+                height: pxH,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+
+            renderSheetPreview();
+        }
+
+        async function setBackgroundMode(mode) {
+            bgMode = mode;
+            document.getElementById('btnBgKeep').classList.toggle('active', mode === 'keep');
+            document.getElementById('btnBgRemove').classList.toggle('active', mode === 'remove');
+            document.getElementById('sectionBgColor').style.display = mode === 'remove' ? 'block' : 'none';
+
+            if (mode === 'remove' && !processedCutoutCanvas && rawImage) {
+                showLoading("Removing background with AI...");
+                try {
+                    const blob = await imglyRemoveBackground(rawImage.src);
+                    const cutoutImg = new Image();
+                    cutoutImg.onload = () => {
+                        processedCutoutCanvas = document.createElement('canvas');
+                        processedCutoutCanvas.width = cutoutImg.width;
+                        processedCutoutCanvas.height = cutoutImg.height;
+                        const ctx = processedCutoutCanvas.getContext('2d');
+                        ctx.drawImage(cutoutImg, 0, 0);
+                        hideLoading();
+                        initCropper(processedCutoutCanvas.toDataURL());
+                    };
+                    cutoutImg.src = URL.createObjectURL(blob);
+                } catch (err) {
+                    hideLoading();
+                    initCropper(rawImage.src);
+                }
+            } else if (mode === 'keep') {
+                if (rawImage) initCropper(rawImage.src);
+            }
+        }
+
+        function selectBgColor(color, el) {
+            selectedBgColor = color;
+            document.querySelectorAll('.color-circle').forEach(d => d.classList.remove('active'));
+            if (el) el.classList.add('active');
+            renderSheetPreview();
+        }
+
+        function changeQty(delta) {
+            const input = document.getElementById('qtyInput');
+            let val = (parseInt(input.value) || 1) + delta;
+            if (val < 1) val = 1;
+            input.value = val;
+            renderSheetPreview();
+        }
+
+        function setQuickQty(qty) {
+            document.querySelectorAll('.pill-btn').forEach(p => p.classList.remove('active'));
+            if (qty === 'max') {
+                const spec = calculateOptimalLayout();
+                document.getElementById('qtyInput').value = spec.maxPossible;
+            } else {
+                document.getElementById('qtyInput').value = qty;
+            }
+            renderSheetPreview();
+        }
+
+        function updateFilters() {
+            document.getElementById('valBrightness').textContent = document.getElementById('adjBrightness').value;
+            document.getElementById('valContrast').textContent = document.getElementById('adjContrast').value;
+            renderSheetPreview();
+        }
+
+        function calculateOptimalLayout() {
+            const paperKey = document.getElementById('paperSizeSelect').value;
+            const orientation = document.getElementById('paperOrientation').value;
+            const marginMM = parseFloat(document.getElementById('marginSelect').value) || 10;
+            const spacingMM = parseFloat(document.getElementById('spacingSelect').value) || 4;
+            const photoDim = getPhotoDimensionsMM();
+
+            let paperSpec = PAPER_SPECS[paperKey] || PAPER_SPECS['A4'];
+            let paperW_MM = orientation === 'portrait' ? paperSpec.w : paperSpec.h;
+            let paperH_MM = orientation === 'portrait' ? paperSpec.h : paperSpec.w;
+
+            const printableW = paperW_MM - (marginMM * 2);
+            const printableH = paperH_MM - (marginMM * 2);
+
+            const maxCols = Math.max(1, Math.floor((printableW + spacingMM) / (photoDim.w + spacingMM)));
+            const maxRows = Math.max(1, Math.floor((printableH + spacingMM) / (photoDim.h + spacingMM)));
+            const maxPossible = maxCols * maxRows;
+
+            const reqQty = Math.min(parseInt(document.getElementById('qtyInput').value) || 1, maxPossible);
+            let cols = Math.min(reqQty, maxCols);
+            let rows = Math.ceil(reqQty / cols);
+
+            return {
+                paperW_MM, paperH_MM,
+                photoW_MM: photoDim.w, photoH_MM: photoDim.h,
+                marginMM, spacingMM,
+                cols, rows, reqQty, maxPossible,
+                paperKey, orientation, photoLabel: photoDim.label
+            };
+        }
+
+        function renderSheetPreview() {
+            const layout = calculateOptimalLayout();
+            const canvas = document.getElementById('paperCanvas');
+            const ctx = canvas.getContext('2d');
+
+            const canvasW = Math.round((layout.paperW_MM / MM_TO_INCH) * DPI);
+            const canvasH = Math.round((layout.paperH_MM / MM_TO_INCH) * DPI);
+
+            canvas.width = canvasW;
+            canvas.height = canvasH;
+
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvasW, canvasH);
+
+            const photoW = (layout.photoW_MM / MM_TO_INCH) * DPI;
+            const photoH = (layout.photoH_MM / MM_TO_INCH) * DPI;
+            const spacing = (layout.spacingMM / MM_TO_INCH) * DPI;
+
+            const totalGridW = (layout.cols * photoW) + ((layout.cols - 1) * spacing);
+            const totalGridH = (layout.rows * photoH) + ((layout.rows - 1) * spacing);
+
+            const startX = (canvasW - totalGridW) / 2;
+            const startY = (canvasH - totalGridH) / 2;
+
+            const singlePhotoCanvas = getRenderedSinglePhoto();
+
+            let placed = 0;
+            for (let r = 0; r < layout.rows; r++) {
+                for (let c = 0; c < layout.cols; c++) {
+                    if (placed >= layout.reqQty) break;
+                    const x = startX + c * (photoW + spacing);
+                    const y = startY + r * (photoH + spacing);
+
+                    if (singlePhotoCanvas) {
+                        ctx.drawImage(singlePhotoCanvas, x, y, photoW, photoH);
+                    } else {
+                        ctx.fillStyle = "#f8fafc";
+                        ctx.fillRect(x, y, photoW, photoH);
+                        ctx.strokeStyle = "#cbd5e1";
+                        ctx.strokeRect(x, y, photoW, photoH);
+                    }
+
+                    ctx.strokeStyle = "rgba(0, 0, 0, 0.15)";
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x, y, photoW, photoH);
+
+                    placed++;
+                }
+            }
+
+            document.getElementById('metaPaper').textContent = `${layout.paperKey} (${layout.orientation})`;
+            document.getElementById('metaSize').textContent = layout.photoLabel;
+            document.getElementById('metaCount').textContent = layout.reqQty;
+            document.getElementById('metaGrid').textContent = `${layout.rows} Rows × ${layout.cols} Cols`;
+        }
+
+        function getRenderedSinglePhoto() {
+            if (!currentCroppedCanvas) return null;
+            const dim = getPhotoDimensionsMM();
+            const w = Math.round((dim.w / MM_TO_INCH) * DPI);
+            const h = Math.round((dim.h / MM_TO_INCH) * DPI);
+
+            const buffer = document.createElement('canvas');
+            buffer.width = w;
+            buffer.height = h;
+            const bCtx = buffer.getContext('2d');
+
+            if (bgMode === 'remove') {
+                bCtx.fillStyle = selectedBgColor;
+                bCtx.fillRect(0, 0, w, h);
+            }
+
+            const b = document.getElementById('adjBrightness').value;
+            const c = document.getElementById('adjContrast').value;
+            bCtx.filter = `brightness(${b}%) contrast(${c}%)`;
+
+            bCtx.drawImage(currentCroppedCanvas, 0, 0, w, h);
+            return buffer;
+        }
+
+        async function exportDocument(type) {
+            if (!currentCroppedCanvas) {
+                alert("Please upload and crop a photo first.");
+                return;
+            }
+            renderSheetPreview();
+            const canvas = document.getElementById('paperCanvas');
+            const layout = calculateOptimalLayout();
+
+            if (type === 'pdf') {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: layout.orientation,
+                    unit: 'mm',
+                    format: layout.paperKey.toLowerCase()
+                });
+                const imgData = canvas.toDataURL('image/jpeg', 0.98);
+                pdf.addImage(imgData, 'JPEG', 0, 0, layout.paperW_MM, layout.paperH_MM, '', 'FAST');
+                pdf.save(`passport_sheet_${layout.paperKey}.pdf`);
+            } else if (type === 'png') {
+                triggerDownload(canvas.toDataURL('image/png'), `passport_sheet_${layout.paperKey}.png`);
+            } else if (type === 'jpg') {
+                triggerDownload(canvas.toDataURL('image/jpeg', 0.98), `passport_sheet_${layout.paperKey}.jpg`);
+            }
+        }
+
+        function printSheetDirect() {
+            if (!currentCroppedCanvas) {
+                alert("Please upload and crop a photo first.");
+                return;
+            }
+            renderSheetPreview();
+            const canvas = document.getElementById('paperCanvas');
+            const dataUrl = canvas.toDataURL('image/png');
+            const printWin = window.open('', '_blank');
+            printWin.document.write(`
+                <html>
+                    <head>
+                        <title>Print Passport Sheet</title>
+                        <style>
+                            @page { size: auto; margin: 0; }
+                            body { margin: 0; display: flex; align-items: center; justify-content: center; }
+                            img { width: 100vw; height: 100vh; object-fit: contain; }
+                        </style>
+                    </head>
+                    <body onload="window.print(); window.close();">
+                        <img src="${dataUrl}">
+                    </body>
+                </html>
+            `);
+            printWin.document.close();
+        }
+
+        function triggerDownload(url, filename) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+        }
+
+        function resetWorkspace() {
+            rawImage = null;
+            processedCutoutCanvas = null;
+            currentCroppedCanvas = null;
+            if (cropperInstance) cropperInstance.destroy();
+            document.getElementById('cropperContainer').style.display = 'none';
+            document.getElementById('cropActionBtns').style.display = 'none';
+            document.getElementById('uploadZone').style.display = 'block';
+            document.getElementById('uploadActions').style.display = 'none';
+            photoInput.value = '';
+            renderSheetPreview();
+        }
+
+        function showLoading(msg) {
+            document.getElementById('loadingText').textContent = msg;
+            document.getElementById('loadingModal').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingModal').style.display = 'none';
+        }
+
+        window.addEventListener('DOMContentLoaded', renderSheetPreview);
+    </script>
+</body>
+</html>
