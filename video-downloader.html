@@ -388,7 +388,7 @@
                 </div>
 
                 <div>
-                    <div class="formats-title">Download Available Qualities & Estimated Size</div>
+                    <div class="formats-title">Download Available Qualities & File Size</div>
                     <div class="formats-list" id="formatsContainer"></div>
                 </div>
             </div>
@@ -418,6 +418,10 @@
     <script>
         // YOUR LIVE BACKEND ON RENDER
         const BACKEND_URL = "https://sakil-downloader-api.onrender.com";
+
+        // How long to wait before giving up (Render free-tier cold start
+        // can take 20-30s, so this needs headroom beyond that).
+        const FETCH_TIMEOUT_MS = 45000;
 
         // Theme Sync
         const htmlElement = document.documentElement;
@@ -474,7 +478,9 @@
             }
         }
 
-        function getEstimatedSize(durationSeconds, quality) {
+        // Rough fallback estimate — only used when the backend doesn't
+        // give us a real filesize for a format.
+        function estimateSize(durationSeconds, quality) {
             const sec = (durationSeconds && durationSeconds > 0) ? durationSeconds : 180;
             let mbps = 2.5;
             if (quality === '4K') mbps = 20.0;
@@ -492,22 +498,66 @@
             return `~${Math.round(sizeMB)} MB`;
         }
 
-        /*
-            Every platform (YouTube, Instagram, Facebook) is routed through
-            the same backend (/api/fetch-info + /api/download), which uses
-            yt-dlp under the hood and already supports all three natively.
+        // Real filesize (in bytes) reported by yt-dlp on the backend, when
+        // available — this is the accurate number, not a guess.
+        function formatExactBytes(bytes) {
+            if (!bytes || bytes <= 0) return null;
+            const mb = bytes / (1024 * 1024);
+            if (mb >= 1000) return `${(mb / 1024).toFixed(2)} GB`;
+            return `${mb.toFixed(1)} MB`;
+        }
 
-            Previously YouTube had a separate branch using noembed.com for
-            metadata and ssyoutube.com for the "download" link — but
-            ssyoutube.com is just a webpage, not a direct-download API, so
-            every quality button pointed at the same dead link and nothing
-            actually downloaded. Removing that branch fixes YouTube.
-        */
+        function getDisplaySize(filesizeBytes, durationSeconds, quality) {
+            const exact = formatExactBytes(filesizeBytes);
+            return exact !== null ? exact : estimateSize(durationSeconds, quality);
+        }
+
+        // Turns a raw backend error into something the user can actually
+        // act on, instead of a generic failure message.
+        function friendlyErrorMessage(raw) {
+            if (!raw) return "Failed to process video link. Make sure the video is public.";
+
+            const lower = raw.toLowerCase();
+
+            if (lower.includes('sign in') || lower.includes('not a bot') || lower.includes('cookie')) {
+                return "YouTube is currently blocking this server as a bot (" + raw + "). This usually means the server's saved login session has expired and needs to be refreshed — Instagram/Facebook links are not affected by this.";
+            }
+
+            return raw;
+        }
+
+        // Rotates the status message so a slow (cold-start) request still
+        // feels like it's making progress instead of looking frozen.
+        let progressTimer = null;
+
+        function startProgressMessages() {
+            const statusText = document.getElementById('statusText');
+            const messages = [
+                "Connecting to media stream...",
+                "Processing video stream on server...",
+                "Still working — the server may be waking up from idle, this can take up to 30s...",
+                "Almost there, extracting available qualities..."
+            ];
+            let idx = 0;
+            statusText.textContent = messages[0];
+
+            progressTimer = setInterval(() => {
+                idx = Math.min(idx + 1, messages.length - 1);
+                statusText.textContent = messages[idx];
+            }, 6000);
+        }
+
+        function stopProgressMessages() {
+            if (progressTimer) {
+                clearInterval(progressTimer);
+                progressTimer = null;
+            }
+        }
+
         async function fetchVideoData() {
             const input = document.getElementById('videoUrlInput');
             const btn = document.getElementById('fetchVideoBtn');
             const statusBox = document.getElementById('statusBox');
-            const statusText = document.getElementById('statusText');
             const errorBanner = document.getElementById('errorBanner');
             const resultCard = document.getElementById('resultCard');
 
@@ -520,18 +570,21 @@
             errorBanner.style.display = 'none';
             resultCard.style.display = 'none';
             statusBox.style.display = 'block';
-            statusText.textContent = "Connecting to media stream...";
             btn.disabled = true;
+            startProgressMessages();
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
             try {
-
-                statusText.textContent = "Processing video stream on server...";
-
                 const response = await fetch(`${BACKEND_URL}/api/fetch-info`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: url })
+                    body: JSON.stringify({ url: url }),
+                    signal: controller.signal
                 });
+
+                clearTimeout(timeoutId);
 
                 const data = await response.json();
 
@@ -546,6 +599,7 @@
                         ? 'Direct Server Download • Audio Only'
                         : 'Direct Server Download • Merged Audio & Video',
                     duration: data.duration,
+                    filesizeBytes: f.filesize || 0,
                     direct: `${BACKEND_URL}/api/download?video_url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(f.format_id)}&title=${encodeURIComponent(data.title)}&type=${f.type}`
                 }));
 
@@ -557,8 +611,14 @@
                 );
 
             } catch (err) {
-                showError(err.message || "Failed to process video link. Make sure the video is public.");
+                clearTimeout(timeoutId);
+                if (err.name === 'AbortError') {
+                    showError("The server took too long to respond — it may be waking up from idle after inactivity. Please wait a few seconds and try again.");
+                } else {
+                    showError(friendlyErrorMessage(err.message));
+                }
             } finally {
+                stopProgressMessages();
                 statusBox.style.display = 'none';
                 btn.disabled = false;
             }
@@ -578,7 +638,7 @@
             container.innerHTML = '';
 
             formats.forEach(item => {
-                const estSize = getEstimatedSize(item.duration, item.quality);
+                const sizeLabel = getDisplaySize(item.filesizeBytes, item.duration, item.quality);
                 const row = document.createElement('div');
                 row.className = 'format-row';
 
@@ -586,7 +646,7 @@
                     <div class="format-info-left">
                         <div class="format-header-line">
                             <span class="format-label">${item.label}</span>
-                            <span class="size-badge">${estSize}</span>
+                            <span class="size-badge">${sizeLabel}</span>
                         </div>
                         <div class="format-sub">${item.sub}</div>
                     </div>
