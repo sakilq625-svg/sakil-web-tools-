@@ -734,7 +734,40 @@
         }
 
         // ==========================================
-        // GUARANTEED FAST LOCAL STUDIO CUTOUT ENGINE
+        // AI-POWERED BACKGROUND REMOVAL (quality + speed)
+        // Runs fully client-side via @imgly/background-removal
+        // (WASM + ONNX model, no backend, no uploads).
+        // Falls back to the fast local cutout if it can't load.
+        // ==========================================
+        let removeBackgroundFn = null;
+        let preloadBgModelFn = null;
+        let bgRemovalLibLoading = null;
+        const BG_REMOVAL_CDN = 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5';
+
+        function loadBgRemovalLibrary() {
+            if (removeBackgroundFn) return Promise.resolve(removeBackgroundFn);
+            if (bgRemovalLibLoading) return bgRemovalLibLoading;
+
+            bgRemovalLibLoading = import(BG_REMOVAL_CDN + '/+esm')
+                .then(module => {
+                    removeBackgroundFn = module.removeBackground || module.default;
+                    preloadBgModelFn = module.preload || null;
+                    return removeBackgroundFn;
+                });
+
+            return bgRemovalLibLoading;
+        }
+
+        // Warm up the AI model as soon as the page loads, in the background,
+        // so by the time the user clicks "Studio Cutout" the model is
+        // usually already downloaded and cached — making the real click
+        // feel instant instead of waiting on a ~40MB first-time download.
+        loadBgRemovalLibrary()
+            .then(() => { if (preloadBgModelFn) preloadBgModelFn().catch(() => {}); })
+            .catch(() => {}); // silent — local fallback still works if this fails
+
+        // ==========================================
+        // GUARANTEED FAST LOCAL STUDIO CUTOUT ENGINE (fallback)
         // Eliminates heavy WASM crashes and guarantees transparent output
         // ==========================================
         function processLocalStudioCutout(sourceImg) {
@@ -795,7 +828,7 @@
             return canvas;
         }
 
-        function setBackgroundMode(mode) {
+        async function setBackgroundMode(mode) {
             bgMode = mode;
             document.getElementById('btnBgKeep').classList.toggle('active', mode === 'keep');
             document.getElementById('btnBgRemove').classList.toggle('active', mode === 'remove');
@@ -804,12 +837,22 @@
             if (!rawImage) return;
 
             if (mode === 'remove') {
-                showLoading("Applying studio background cutout...");
-                setTimeout(() => {
-                    cutoutCanvas = processLocalStudioCutout(rawImage);
+                showLoading("Removing background with AI...");
+                try {
+                    const removeBg = await loadBgRemovalLibrary();
+                    const resultBlob = await removeBg(rawImage.src);
+                    const url = URL.createObjectURL(resultBlob);
                     hideLoading();
-                    initCropper(cutoutCanvas.toDataURL());
-                }, 200);
+                    initCropper(url);
+                } catch (err) {
+                    console.warn("AI cutout unavailable, using quick local cutout instead:", err);
+                    showLoading("Applying studio background cutout...");
+                    setTimeout(() => {
+                        cutoutCanvas = processLocalStudioCutout(rawImage);
+                        hideLoading();
+                        initCropper(cutoutCanvas.toDataURL());
+                    }, 200);
+                }
             } else {
                 initCropper(rawImage.src);
             }
