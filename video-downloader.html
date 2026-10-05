@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social Video Downloader - Sakil Web Tools</title>
-    <meta name="description" content="Download YouTube, Instagram, and Facebook videos directly.">
+    <title>Instagram & Facebook Video Downloader - Sakil Web Tools</title>
+    <meta name="description" content="Download Instagram Reels and Facebook videos directly, fast, with accurate file size.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -342,8 +342,8 @@
 
     <main class="main-container" style="padding-top: 8rem; padding-bottom: 5rem;">
         <div class="section-header" style="text-align: center;">
-            <h2><i class="fa-solid fa-video" style="color: var(--accent-color);"></i> Social Video Downloader</h2>
-            <p>Download Facebook, Instagram Reels & YouTube Videos with estimated size preview.</p>
+            <h2><i class="fa-solid fa-video" style="color: var(--accent-color);"></i> Instagram & Facebook Video Downloader</h2>
+            <p>Download Instagram Reels and Facebook videos fast, with accurate file size shown upfront.</p>
         </div>
 
         <div class="downloader-layout">
@@ -354,7 +354,7 @@
                             type="url" 
                             id="videoUrlInput" 
                             class="url-input" 
-                            placeholder="Paste video link here (YouTube, Instagram Reel, Facebook)..." 
+                            placeholder="Paste Instagram Reel or Facebook video link here..." 
                             autocomplete="off"
                         >
                         <button class="btn-paste" id="pasteBtn" type="button" onclick="pasteFromClipboard()">
@@ -479,13 +479,12 @@
         }
 
         // Rough fallback estimate — only used when the backend doesn't
-        // give us a real filesize for a format.
+        // give us a real filesize for a format (rare for Instagram/Facebook,
+        // which almost always report accurate progressive-MP4 sizes).
         function estimateSize(durationSeconds, quality) {
-            const sec = (durationSeconds && durationSeconds > 0) ? durationSeconds : 180;
+            const sec = (durationSeconds && durationSeconds > 0) ? durationSeconds : 60;
             let mbps = 2.5;
-            if (quality === '4K') mbps = 20.0;
-            else if (quality === '2K') mbps = 10.0;
-            else if (quality === '1080p') mbps = 5.0;
+            if (quality === '1080p') mbps = 5.0;
             else if (quality === '720p') mbps = 2.5;
             else if (quality === '480p') mbps = 1.2;
             else if (quality === '360p') mbps = 0.7;
@@ -498,8 +497,7 @@
             return `~${Math.round(sizeMB)} MB`;
         }
 
-        // Real filesize (in bytes) reported by yt-dlp on the backend, when
-        // available — this is the accurate number, not a guess.
+        // Real filesize (in bytes) reported by yt-dlp on the backend.
         function formatExactBytes(bytes) {
             if (!bytes || bytes <= 0) return null;
             const mb = bytes / (1024 * 1024);
@@ -510,20 +508,6 @@
         function getDisplaySize(filesizeBytes, durationSeconds, quality) {
             const exact = formatExactBytes(filesizeBytes);
             return exact !== null ? exact : estimateSize(durationSeconds, quality);
-        }
-
-        // Turns a raw backend error into something the user can actually
-        // act on, instead of a generic failure message.
-        function friendlyErrorMessage(raw) {
-            if (!raw) return "Failed to process video link. Make sure the video is public.";
-
-            const lower = raw.toLowerCase();
-
-            if (lower.includes('sign in') || lower.includes('not a bot') || lower.includes('cookie')) {
-                return "YouTube is currently blocking this server as a bot (" + raw + "). This usually means the server's saved login session has expired and needs to be refreshed — Instagram/Facebook links are not affected by this.";
-            }
-
-            return raw;
         }
 
         // Rotates the status message so a slow (cold-start) request still
@@ -563,7 +547,7 @@
 
             const url = input.value.trim();
             if (!url) {
-                showError("Please enter or paste a valid video URL.");
+                showError("Please enter or paste a valid Instagram or Facebook video URL.");
                 return;
             }
 
@@ -615,7 +599,7 @@
                 if (err.name === 'AbortError') {
                     showError("The server took too long to respond — it may be waking up from idle after inactivity. Please wait a few seconds and try again.");
                 } else {
-                    showError(friendlyErrorMessage(err.message));
+                    showError(err.message || "Failed to process video link. Make sure the video is public.");
                 }
             } finally {
                 stopProgressMessages();
