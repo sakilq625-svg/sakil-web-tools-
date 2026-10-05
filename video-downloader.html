@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instagram & Facebook Video Downloader - Sakil Web Tools</title>
-    <meta name="description" content="Download Instagram Reels and Facebook videos directly, fast, with accurate file size.">
+    <meta name="description" content="Download Instagram Reels and Facebook videos fast, in HD quality with direct links.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -321,6 +321,7 @@
                 <a href="index.html" class="nav-link">Home</a>
                 <a href="index.html#image-tools" class="nav-link">Image Tools</a>
                 <a href="bg-remover.html" class="nav-link">BG Remover</a>
+                <a href="passport-photo.html" class="nav-link">Passport Sheet</a>
                 <a href="index.html#pdf-tools" class="nav-link">PDF Tools</a>
                 <a href="student-tools.html" class="nav-link">Student Tools</a>
                 <a href="video-downloader.html" class="nav-link active">Video Downloader</a>
@@ -343,7 +344,7 @@
     <main class="main-container" style="padding-top: 8rem; padding-bottom: 5rem;">
         <div class="section-header" style="text-align: center;">
             <h2><i class="fa-solid fa-video" style="color: var(--accent-color);"></i> Instagram & Facebook Video Downloader</h2>
-            <p>Download Instagram Reels and Facebook videos fast, with accurate file size shown upfront.</p>
+            <p>Download Instagram Reels and Facebook videos fast, with direct high-speed streams.</p>
         </div>
 
         <div class="downloader-layout">
@@ -382,7 +383,7 @@
                         <div id="mediaTitle" class="media-title">Video Stream Ready</div>
                         <div id="mediaMeta" class="media-meta">Stream extracted & audio synced</div>
                         <div class="badge-verified">
-                            <i class="fa-solid fa-check-circle"></i> Audio & Video Merged
+                            <i class="fa-solid fa-bolt"></i> High Speed Direct Stream
                         </div>
                     </div>
                 </div>
@@ -405,6 +406,7 @@
                 <h4>Quick Links</h4>
                 <a href="about.html">About Us</a>
                 <a href="contact.html">Contact</a>
+                <a href="passport-photo.html">Passport Sheet</a>
                 <a href="bg-remover.html">BG Remover</a>
                 <a href="student-tools.html">Student Tools</a>
                 <a href="video-downloader.html">Video Downloader</a>
@@ -416,12 +418,8 @@
     </footer>
 
     <script>
-        // YOUR LIVE BACKEND ON RENDER
         const BACKEND_URL = "https://sakil-downloader-api.onrender.com";
-
-        // How long to wait before giving up (Render free-tier cold start
-        // can take 20-30s, so this needs headroom beyond that).
-        const FETCH_TIMEOUT_MS = 45000;
+        const FETCH_TIMEOUT_MS = 35000;
 
         // Theme Sync
         const htmlElement = document.documentElement;
@@ -443,7 +441,7 @@
             applyTheme(next);
         });
 
-        // Mobile Nav
+        // Mobile Navigation
         const hamburger = document.getElementById('hamburger');
         const navMenu = document.getElementById('navMenu');
         if (hamburger && navMenu) {
@@ -478,26 +476,17 @@
             }
         }
 
-        // Rough fallback estimate — only used when the backend doesn't
-        // give us a real filesize for a format (rare for Instagram/Facebook,
-        // which almost always report accurate progressive-MP4 sizes).
         function estimateSize(durationSeconds, quality) {
-            const sec = (durationSeconds && durationSeconds > 0) ? durationSeconds : 60;
+            const sec = (durationSeconds && durationSeconds > 0) ? durationSeconds : 30;
             let mbps = 2.5;
-            if (quality === '1080p') mbps = 5.0;
-            else if (quality === '720p') mbps = 2.5;
-            else if (quality === '480p') mbps = 1.2;
-            else if (quality === '360p') mbps = 0.7;
-            else if (quality === 'Audio' || quality === 'MP3') mbps = 0.32;
+            if (quality.includes('1080')) mbps = 4.5;
+            else if (quality.includes('720')) mbps = 2.2;
+            else if (quality.includes('480')) mbps = 1.1;
 
             const sizeMB = (mbps * sec) / 8;
-            if (sizeMB >= 1000) {
-                return `~${(sizeMB / 1024).toFixed(2)} GB`;
-            }
             return `~${Math.round(sizeMB)} MB`;
         }
 
-        // Real filesize (in bytes) reported by yt-dlp on the backend.
         function formatExactBytes(bytes) {
             if (!bytes || bytes <= 0) return null;
             const mb = bytes / (1024 * 1024);
@@ -505,57 +494,25 @@
             return `${mb.toFixed(1)} MB`;
         }
 
-        function getDisplaySize(filesizeBytes, durationSeconds, quality) {
-            const exact = formatExactBytes(filesizeBytes);
-            return exact !== null ? exact : estimateSize(durationSeconds, quality);
-        }
-
-        // Rotates the status message so a slow (cold-start) request still
-        // feels like it's making progress instead of looking frozen.
-        let progressTimer = null;
-
-        function startProgressMessages() {
-            const statusText = document.getElementById('statusText');
-            const messages = [
-                "Connecting to media stream...",
-                "Processing video stream on server...",
-                "Still working — the server may be waking up from idle, this can take up to 30s...",
-                "Almost there, extracting available qualities..."
-            ];
-            let idx = 0;
-            statusText.textContent = messages[0];
-
-            progressTimer = setInterval(() => {
-                idx = Math.min(idx + 1, messages.length - 1);
-                statusText.textContent = messages[idx];
-            }, 6000);
-        }
-
-        function stopProgressMessages() {
-            if (progressTimer) {
-                clearInterval(progressTimer);
-                progressTimer = null;
-            }
-        }
-
         async function fetchVideoData() {
             const input = document.getElementById('videoUrlInput');
             const btn = document.getElementById('fetchVideoBtn');
             const statusBox = document.getElementById('statusBox');
+            const statusText = document.getElementById('statusText');
             const errorBanner = document.getElementById('errorBanner');
             const resultCard = document.getElementById('resultCard');
 
             const url = input.value.trim();
             if (!url) {
-                showError("Please enter or paste a valid Instagram or Facebook video URL.");
+                showError("Please paste an Instagram Reel or Facebook video link.");
                 return;
             }
 
             errorBanner.style.display = 'none';
             resultCard.style.display = 'none';
             statusBox.style.display = 'block';
+            statusText.textContent = "Connecting to fast stream server...";
             btn.disabled = true;
-            startProgressMessages();
 
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -569,46 +526,28 @@
                 });
 
                 clearTimeout(timeoutId);
-
                 const data = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(data.detail || "Unable to extract media from this link.");
+                    throw new Error(data.detail || "Unable to extract video from this link.");
                 }
 
-                const formats = (data.formats || []).map(f => ({
-                    label: f.label || (f.type === 'audio' ? 'High Quality Audio (MP3)' : 'HD Video (MP4)'),
-                    quality: f.quality || (f.height ? `${f.height}p` : '720p'),
-                    sub: f.type === 'audio'
-                        ? 'Direct Server Download • Audio Only'
-                        : 'Direct Server Download • Merged Audio & Video',
-                    duration: data.duration,
-                    filesizeBytes: f.filesize || 0,
-                    direct: `${BACKEND_URL}/api/download?video_url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(f.format_id)}&title=${encodeURIComponent(data.title)}&type=${f.type}`
-                }));
-
-                renderResults(
-                    data.title,
-                    data.uploader || "Social Media",
-                    data.thumbnail || "https://placehold.co/600x400/241C19/ffffff?text=Video+Ready",
-                    formats
-                );
+                renderResults(data.title, data.uploader, data.thumbnail, data.formats, data.duration);
 
             } catch (err) {
                 clearTimeout(timeoutId);
                 if (err.name === 'AbortError') {
-                    showError("The server took too long to respond — it may be waking up from idle after inactivity. Please wait a few seconds and try again.");
+                    showError("Request timed out. Server might be waking up, please tap Fetch again.");
                 } else {
                     showError(err.message || "Failed to process video link. Make sure the video is public.");
                 }
             } finally {
-                stopProgressMessages();
                 statusBox.style.display = 'none';
                 btn.disabled = false;
             }
         }
 
-        function renderResults(title, author, thumbnail, formats) {
+        function renderResults(title, author, thumbnail, formats, duration) {
             const resultCard = document.getElementById('resultCard');
             const mediaThumb = document.getElementById('mediaThumb');
             const mediaTitle = document.getElementById('mediaTitle');
@@ -617,14 +556,16 @@
 
             mediaThumb.src = thumbnail;
             mediaTitle.textContent = title;
-            mediaMeta.textContent = `Source: ${author}`;
-
+            mediaMeta.textContent = `Source: ${author || 'Instagram / Facebook'}`;
             container.innerHTML = '';
 
             formats.forEach(item => {
-                const sizeLabel = getDisplaySize(item.filesizeBytes, item.duration, item.quality);
+                const sizeLabel = formatExactBytes(item.filesize) || estimateSize(duration, item.quality);
                 const row = document.createElement('div');
                 row.className = 'format-row';
+
+                // direct download URL supports instant CDN download
+                const downloadLink = item.download_url || `${BACKEND_URL}/api/download?video_url=${encodeURIComponent(document.getElementById('videoUrlInput').value.trim())}&format_id=${encodeURIComponent(item.format_id || 'best')}&title=${encodeURIComponent(title)}&type=video`;
 
                 row.innerHTML = `
                     <div class="format-info-left">
@@ -632,9 +573,9 @@
                             <span class="format-label">${item.label}</span>
                             <span class="size-badge">${sizeLabel}</span>
                         </div>
-                        <div class="format-sub">${item.sub}</div>
+                        <div class="format-sub">Fast Direct Stream • Audio Synced</div>
                     </div>
-                    <a href="${item.direct}" target="_blank" rel="noopener noreferrer" class="btn-download-media">
+                    <a href="${downloadLink}" target="_blank" rel="noopener noreferrer" download="video.mp4" class="btn-download-media">
                         <i class="fa-solid fa-download"></i> Download
                     </a>
                 `;
