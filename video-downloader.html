@@ -564,7 +564,6 @@
                 const row = document.createElement('div');
                 row.className = 'format-row';
 
-                // direct download URL supports instant CDN download
                 const downloadLink = item.download_url || `${BACKEND_URL}/api/download?video_url=${encodeURIComponent(document.getElementById('videoUrlInput').value.trim())}&format_id=${encodeURIComponent(item.format_id || 'best')}&title=${encodeURIComponent(title)}&type=video`;
 
                 row.innerHTML = `
