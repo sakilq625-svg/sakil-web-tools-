@@ -479,9 +479,9 @@
         function estimateSize(durationSeconds, quality) {
             const sec = (durationSeconds && durationSeconds > 0) ? durationSeconds : 30;
             let mbps = 2.5;
-            if (quality.includes('1080')) mbps = 4.5;
-            else if (quality.includes('720')) mbps = 2.2;
-            else if (quality.includes('480')) mbps = 1.1;
+            if (quality && quality.includes('1080')) mbps = 4.5;
+            else if (quality && quality.includes('720')) mbps = 2.2;
+            else if (quality && quality.includes('480')) mbps = 1.1;
 
             const sizeMB = (mbps * sec) / 8;
             return `~${Math.round(sizeMB)} MB`;
@@ -602,7 +602,7 @@
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(blobUrl);
             } catch (err) {
-                // If browser CORS policy restricts Blob, open in direct tab
+                // If browser restrictions prevent direct Blob download, open stream
                 window.open(videoUrl, '_blank');
             } finally {
                 btn.innerHTML = originalHTML;
