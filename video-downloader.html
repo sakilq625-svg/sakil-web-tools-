@@ -554,7 +554,7 @@
             const mediaMeta = document.getElementById('mediaMeta');
             const container = document.getElementById('formatsContainer');
 
-            mediaThumb.src = thumbnail;
+            mediaThumb.src = thumbnail || "https://placehold.co/600x400/241C19/ffffff?text=Video+Ready";
             mediaTitle.textContent = title;
             mediaMeta.textContent = `Source: ${author || 'Instagram / Facebook'}`;
             container.innerHTML = '';
@@ -564,24 +564,50 @@
                 const row = document.createElement('div');
                 row.className = 'format-row';
 
-                const downloadLink = item.download_url || `${BACKEND_URL}/api/download?video_url=${encodeURIComponent(document.getElementById('videoUrlInput').value.trim())}&format_id=${encodeURIComponent(item.format_id || 'best')}&title=${encodeURIComponent(title)}&type=video`;
-
                 row.innerHTML = `
                     <div class="format-info-left">
                         <div class="format-header-line">
                             <span class="format-label">${item.label}</span>
                             <span class="size-badge">${sizeLabel}</span>
                         </div>
-                        <div class="format-sub">Fast Direct Stream • Audio Synced</div>
+                        <div class="format-sub">Fast CDN Stream • Full Audio & Video</div>
                     </div>
-                    <a href="${downloadLink}" target="_blank" rel="noopener noreferrer" download="video.mp4" class="btn-download-media">
+                    <button onclick="downloadDirectFile('${item.download_url}', '${title}.mp4', event)" class="btn-download-media">
                         <i class="fa-solid fa-download"></i> Download
-                    </a>
+                    </button>
                 `;
                 container.appendChild(row);
             });
 
             resultCard.style.display = 'flex';
+        }
+
+        // Direct Download Saver
+        async function downloadDirectFile(videoUrl, filename, ev) {
+            const btn = ev.currentTarget;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(videoUrl);
+                const blob = await res.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(blobUrl);
+            } catch (err) {
+                // If browser CORS policy restricts Blob, open in direct tab
+                window.open(videoUrl, '_blank');
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
         }
 
         function showError(msg) {
