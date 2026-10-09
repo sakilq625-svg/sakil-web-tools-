@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instagram & Facebook Video Downloader - Sakil Web Tools</title>
-    <meta name="description" content="Download Instagram Reels and Facebook videos fast, in HD quality with direct links.">
+    <meta name="description" content="Download Instagram Reels and Facebook videos fast, in HD quality, with the real file size shown upfront.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -344,7 +344,7 @@
     <main class="main-container" style="padding-top: 8rem; padding-bottom: 5rem;">
         <div class="section-header" style="text-align: center;">
             <h2><i class="fa-solid fa-video" style="color: var(--accent-color);"></i> Instagram & Facebook Video Downloader</h2>
-            <p>Download Instagram Reels and Facebook videos fast, with direct high-speed streams.</p>
+            <p>Download Instagram Reels and Facebook videos fast, with the real file size shown before you download.</p>
         </div>
 
         <div class="downloader-layout">
@@ -378,12 +378,12 @@
 
             <div id="resultCard" class="result-card">
                 <div class="media-header">
-                    <img id="mediaThumb" class="media-thumbnail" src="" alt="Thumbnail">
+                    <img id="mediaThumb" class="media-thumbnail" src="" alt="Thumbnail" referrerpolicy="no-referrer">
                     <div class="media-info">
                         <div id="mediaTitle" class="media-title">Video Stream Ready</div>
                         <div id="mediaMeta" class="media-meta">Stream extracted & audio synced</div>
                         <div class="badge-verified">
-                            <i class="fa-solid fa-bolt"></i> High Speed Direct Stream
+                            <i class="fa-solid fa-circle-check"></i> Audio & Video Included
                         </div>
                     </div>
                 </div>
@@ -419,7 +419,13 @@
 
     <script>
         const BACKEND_URL = "https://sakil-downloader-api.onrender.com";
-        const FETCH_TIMEOUT_MS = 35000;
+
+        // Render's free tier falls asleep when idle; waking up can take
+        // 20-50s, so the timeout needs headroom beyond that.
+        const FETCH_TIMEOUT_MS = 45000;
+
+        const ALLOWED_HOSTS = ["instagram.com", "instagr.am", "facebook.com", "fb.watch", "fb.com"];
+        const PLACEHOLDER_THUMB = "https://placehold.co/600x400/241C19/ffffff?text=Video+Ready";
 
         // Theme Sync
         const htmlElement = document.documentElement;
@@ -464,7 +470,7 @@
                 if (navigator.clipboard && navigator.clipboard.readText) {
                     const text = await navigator.clipboard.readText();
                     if (text) {
-                        input.value = text.trim();
+                        input.value = extractUrl(text);
                         input.focus();
                     }
                 } else {
@@ -476,17 +482,22 @@
             }
         }
 
-        function estimateSize(durationSeconds, quality) {
-            const sec = (durationSeconds && durationSeconds > 0) ? durationSeconds : 30;
-            let mbps = 2.5;
-            if (quality && quality.includes('1080')) mbps = 4.5;
-            else if (quality && quality.includes('720')) mbps = 2.2;
-            else if (quality && quality.includes('480')) mbps = 1.1;
-
-            const sizeMB = (mbps * sec) / 8;
-            return `~${Math.round(sizeMB)} MB`;
+        // "Check out this reel https://instagram.com/..." -> just the link
+        function extractUrl(text) {
+            const match = String(text).match(/https?:\/\/[^\s"'<>]+/i);
+            return match ? match[0] : String(text).trim();
         }
 
+        function isSupportedUrl(raw) {
+            try {
+                const host = new URL(raw).hostname.toLowerCase();
+                return ALLOWED_HOSTS.some(h => host === h || host.endsWith('.' + h));
+            } catch (err) {
+                return false;
+            }
+        }
+
+        // Real size reported by the server (read from the video file itself).
         function formatExactBytes(bytes) {
             if (!bytes || bytes <= 0) return null;
             const mb = bytes / (1024 * 1024);
@@ -494,25 +505,74 @@
             return `${mb.toFixed(1)} MB`;
         }
 
+        // Only used if the server could not read a real size.
+        function estimateSize(durationSeconds, quality) {
+            const sec = (durationSeconds && durationSeconds > 0) ? durationSeconds : 30;
+            let mbps = 2.5;
+            if (quality && quality.includes('1080')) mbps = 4.5;
+            else if (quality && quality.includes('720')) mbps = 2.2;
+            else if (quality && quality.includes('540')) mbps = 1.6;
+            else if (quality && quality.includes('480')) mbps = 1.1;
+            else if (quality && quality.includes('360')) mbps = 0.7;
+            else if (quality === 'Audio') mbps = 0.19;
+
+            const sizeMB = Math.max(1, Math.round((mbps * sec) / 8));
+            return `~${sizeMB} MB (est.)`;
+        }
+
+        // Keeps a slow (cold-start) request from looking frozen.
+        let progressTimer = null;
+
+        function startProgressMessages() {
+            const statusText = document.getElementById('statusText');
+            const messages = [
+                "Connecting to server...",
+                "Reading the video link...",
+                "Still working — the server may be waking up from idle (up to ~50s the first time)...",
+                "Almost there, collecting qualities and sizes..."
+            ];
+            let idx = 0;
+            statusText.textContent = messages[0];
+
+            progressTimer = setInterval(() => {
+                idx = Math.min(idx + 1, messages.length - 1);
+                statusText.textContent = messages[idx];
+            }, 6000);
+        }
+
+        function stopProgressMessages() {
+            if (progressTimer) {
+                clearInterval(progressTimer);
+                progressTimer = null;
+            }
+        }
+
         async function fetchVideoData() {
             const input = document.getElementById('videoUrlInput');
             const btn = document.getElementById('fetchVideoBtn');
             const statusBox = document.getElementById('statusBox');
-            const statusText = document.getElementById('statusText');
             const errorBanner = document.getElementById('errorBanner');
             const resultCard = document.getElementById('resultCard');
 
-            const url = input.value.trim();
-            if (!url) {
+            const raw = input.value.trim();
+            if (!raw) {
                 showError("Please paste an Instagram Reel or Facebook video link.");
+                return;
+            }
+
+            const url = extractUrl(raw);
+            input.value = url;
+
+            if (!isSupportedUrl(url)) {
+                showError("Only Instagram and Facebook video links are supported.");
                 return;
             }
 
             errorBanner.style.display = 'none';
             resultCard.style.display = 'none';
             statusBox.style.display = 'block';
-            statusText.textContent = "Connecting to fast stream server...";
             btn.disabled = true;
+            startProgressMessages();
 
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -526,88 +586,100 @@
                 });
 
                 clearTimeout(timeoutId);
-                const data = await response.json();
 
-                if (!response.ok) {
-                    throw new Error(data.detail || "Unable to extract video from this link.");
+                let data = {};
+                try {
+                    data = await response.json();
+                } catch (err) {
+                    data = {};
                 }
 
-                renderResults(data.title, data.uploader, data.thumbnail, data.formats, data.duration);
+                if (!response.ok) {
+                    throw new Error(data.detail || `Server error (${response.status}). Please try again in a moment.`);
+                }
+
+                renderResults(data, url);
 
             } catch (err) {
                 clearTimeout(timeoutId);
                 if (err.name === 'AbortError') {
-                    showError("Request timed out. Server might be waking up, please tap Fetch again.");
+                    showError("The server took too long to respond — it may be waking up from idle. Please tap Fetch Video again.");
                 } else {
-                    showError(err.message || "Failed to process video link. Make sure the video is public.");
+                    showError(err.message || "Failed to process the video link. Make sure the video is public.");
                 }
             } finally {
+                stopProgressMessages();
                 statusBox.style.display = 'none';
                 btn.disabled = false;
             }
         }
 
-        function renderResults(title, author, thumbnail, formats, duration) {
+        function makeEl(tag, className, text) {
+            const node = document.createElement(tag);
+            if (className) node.className = className;
+            if (text !== undefined) node.textContent = text;
+            return node;
+        }
+
+        function buildDownloadUrl(sourceUrl, item, title) {
+            const params = new URLSearchParams({
+                video_url: sourceUrl,
+                format_id: item.format_id,
+                title: title || 'video',
+                type: item.type
+            });
+            return `${BACKEND_URL}/api/download?${params.toString()}`;
+        }
+
+        function describeFormat(item) {
+            if (item.type === 'audio') return 'Converted to MP3 on the server • Audio only';
+            if (item.merge) return 'Merged on the server • Video + Audio (starts a little slower)';
+            return 'Direct fast stream • Video + Audio';
+        }
+
+        function renderResults(data, sourceUrl) {
             const resultCard = document.getElementById('resultCard');
             const mediaThumb = document.getElementById('mediaThumb');
             const mediaTitle = document.getElementById('mediaTitle');
             const mediaMeta = document.getElementById('mediaMeta');
             const container = document.getElementById('formatsContainer');
 
-            mediaThumb.src = thumbnail || "https://placehold.co/600x400/241C19/ffffff?text=Video+Ready";
-            mediaTitle.textContent = title;
-            mediaMeta.textContent = `Source: ${author || 'Instagram / Facebook'}`;
+            mediaThumb.onerror = () => {
+                mediaThumb.onerror = null;
+                mediaThumb.src = PLACEHOLDER_THUMB;
+            };
+            mediaThumb.src = data.thumbnail || PLACEHOLDER_THUMB;
+            mediaTitle.textContent = data.title || 'Video';
+            mediaMeta.textContent = `Source: ${data.uploader || 'Instagram / Facebook'}`;
             container.innerHTML = '';
 
-            formats.forEach(item => {
-                const sizeLabel = formatExactBytes(item.filesize) || estimateSize(duration, item.quality);
-                const row = document.createElement('div');
-                row.className = 'format-row';
+            (data.formats || []).forEach(item => {
+                const sizeLabel = formatExactBytes(item.filesize) || estimateSize(data.duration, item.quality);
 
-                row.innerHTML = `
-                    <div class="format-info-left">
-                        <div class="format-header-line">
-                            <span class="format-label">${item.label}</span>
-                            <span class="size-badge">${sizeLabel}</span>
-                        </div>
-                        <div class="format-sub">Fast CDN Stream • Full Audio & Video</div>
-                    </div>
-                    <button onclick="downloadDirectFile('${item.download_url}', '${title}.mp4', event)" class="btn-download-media">
-                        <i class="fa-solid fa-download"></i> Download
-                    </button>
-                `;
+                const row = makeEl('div', 'format-row');
+
+                const left = makeEl('div', 'format-info-left');
+                const head = makeEl('div', 'format-header-line');
+                head.appendChild(makeEl('span', 'format-label', item.label));
+                head.appendChild(makeEl('span', 'size-badge', sizeLabel));
+                left.appendChild(head);
+                left.appendChild(makeEl('div', 'format-sub', describeFormat(item)));
+
+                // Plain link to the server: the browser's own download manager
+                // handles progress, big files and resuming.
+                const link = makeEl('a', 'btn-download-media');
+                link.setAttribute('href', buildDownloadUrl(sourceUrl, item, data.title));
+                link.setAttribute('target', '_blank');
+                link.setAttribute('rel', 'noopener noreferrer');
+                link.appendChild(makeEl('i', 'fa-solid fa-download'));
+                link.appendChild(document.createTextNode(' Download'));
+
+                row.appendChild(left);
+                row.appendChild(link);
                 container.appendChild(row);
             });
 
             resultCard.style.display = 'flex';
-        }
-
-        // Direct Download Saver
-        async function downloadDirectFile(videoUrl, filename, ev) {
-            const btn = ev.currentTarget;
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
-            btn.disabled = true;
-
-            try {
-                const res = await fetch(videoUrl);
-                const blob = await res.blob();
-                const blobUrl = window.URL.createObjectURL(blob);
-                
-                const a = document.createElement('a');
-                a.href = blobUrl;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(blobUrl);
-            } catch (err) {
-                // If browser restrictions prevent direct Blob download, open stream
-                window.open(videoUrl, '_blank');
-            } finally {
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
-            }
         }
 
         function showError(msg) {
